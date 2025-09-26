@@ -254,6 +254,8 @@ export default function Home() {
       setIsLoading(false);
       return;
     }
+    // @ts-ignore
+    process.env.GENKIT_API_KEY = apiKey;
     
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
@@ -542,6 +544,8 @@ export default function Home() {
       setIsLoading(false);
       return;
     }
+     // @ts-ignore
+    process.env.GENKIT_API_KEY = apiKey;
 
     try {
       const result = await parseScheduleFromText({ text });

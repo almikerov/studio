@@ -10,7 +10,8 @@
  * - TranslateTextOutput - The return type for the translateText function.
  */
 
-import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const TranslateTextInputSchema = z.object({
@@ -25,16 +26,21 @@ const TranslateTextOutputSchema = z.object({
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
 export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
-  const result = await translateTextFlow(input);
-  return result;
-}
+  const apiKey = (process.env.GENKIT_API_KEY) as string;
+  if (!apiKey) {
+    throw new Error('GENKIT_API_KEY is not set');
+  }
 
-const prompt = ai.definePrompt({
-  name: 'translateTextPrompt',
-  input: {schema: TranslateTextInputSchema},
-  output: {schema: TranslateTextOutputSchema},
-  model: 'googleai/gemini-1.5-flash',
-  prompt: `You are a translation expert. You will be given a text and a list of target languages.
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'translateTextPrompt',
+    input: {schema: TranslateTextInputSchema},
+    output: {schema: TranslateTextOutputSchema},
+    model: 'googleai/gemini-1.5-flash',
+    prompt: `You are a translation expert. You will be given a text and a list of target languages.
 Your job is to translate the text into each of the target languages.
 Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values.
 
@@ -45,16 +51,20 @@ Target Languages:
 {{#each targetLanguages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
 Output JSON:`, 
-});
+  });
 
-const translateTextFlow = ai.defineFlow(
-  {
-    name: 'translateTextFlow',
-    inputSchema: TranslateTextInputSchema,
-    outputSchema: TranslateTextOutputSchema,
-  },
-  async (input) => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+  const translateTextFlow = ai.defineFlow(
+    {
+      name: 'translateTextFlow',
+      inputSchema: TranslateTextInputSchema,
+      outputSchema: TranslateTextOutputSchema,
+    },
+    async (input) => {
+      const {output} = await prompt(input);
+      return output!;
+    }
+  );
+
+  const result = await translateTextFlow(input);
+  return result;
+}

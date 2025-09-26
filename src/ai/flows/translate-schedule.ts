@@ -10,7 +10,8 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const TranslateScheduleInputSchema = z.object({
@@ -25,16 +26,21 @@ const TranslateScheduleOutputSchema = z.object({
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
 export async function translateSchedule(input: TranslateScheduleInput): Promise<Record<string, string>> {
-  const result = await translateScheduleFlow(input);
-  return result.translations;
-}
+  const apiKey = (process.env.GENKIT_API_KEY) as string;
+  if (!apiKey) {
+    throw new Error('GENKIT_API_KEY is not set');
+  }
 
-const prompt = ai.definePrompt({
-  name: 'translateSchedulePrompt',
-  input: {schema: TranslateScheduleInputSchema},
-  output: {schema: TranslateScheduleOutputSchema},
-  model: 'googleai/gemini-1.5-flash',
-  prompt: `Твоя задача — перевести присланное расписание тренировок.
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'translateSchedulePrompt',
+    input: {schema: TranslateScheduleInputSchema},
+    output: {schema: TranslateScheduleOutputSchema},
+    model: 'googleai/gemini-1.5-flash',
+    prompt: `Твоя задача — перевести присланное расписание тренировок.
 
 **Ключевые инструкции по переводу:**
 Используй следующий футбольный вокабуляр:
@@ -54,16 +60,20 @@ Only translate to these languages:
 {{#each targetLanguages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 
 Output JSON:`, 
-});
+  });
 
-const translateScheduleFlow = ai.defineFlow(
-  {
-    name: 'translateScheduleFlow',
-    inputSchema: TranslateScheduleInputSchema,
-    outputSchema: TranslateScheduleOutputSchema,
-  },
-  async (input) => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+  const translateScheduleFlow = ai.defineFlow(
+    {
+      name: 'translateScheduleFlow',
+      inputSchema: TranslateScheduleInputSchema,
+      outputSchema: TranslateScheduleOutputSchema,
+    },
+    async (input) => {
+      const {output} = await prompt(input);
+      return output!;
+    }
+  );
+
+  const result = await translateScheduleFlow(input);
+  return result.translations;
+}

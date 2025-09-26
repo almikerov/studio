@@ -9,7 +9,8 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleFromText function.
  */
 
-import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const ParseScheduleTextInputSchema = z.object({
@@ -31,16 +32,21 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
-  const result = await parseScheduleFlow(input);
-  return result;
-}
+  const apiKey = (process.env.GENKIT_API_KEY) as string;
+  if (!apiKey) {
+    throw new Error('GENKIT_API_KEY is not set');
+  }
 
-const prompt = ai.definePrompt({
-  name: 'parseSchedulePrompt',
-  input: {schema: ParseScheduleTextInputSchema},
-  output: {schema: ParseScheduleTextOutputSchema},
-  model: 'googleai/gemini-1.5-flash',
-  prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+  const ai = genkit({
+    plugins: [googleAI({ apiKey })],
+  });
+
+  const prompt = ai.definePrompt({
+    name: 'parseSchedulePrompt',
+    input: {schema: ParseScheduleTextInputSchema},
+    output: {schema: ParseScheduleTextOutputSchema},
+    model: 'googleai/gemini-1.5-flash',
+    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
 
 - Extract or generate a main title for the schedule and put it in 'cardTitle'.
@@ -68,16 +74,20 @@ Output JSON:
 }
 
 Output JSON:`, 
-});
+  });
 
-const parseScheduleFlow = ai.defineFlow(
-  {
-    name: 'parseScheduleFlow',
-    inputSchema: ParseScheduleTextInputSchema,
-    outputSchema: ParseScheduleTextOutputSchema,
-  },
-  async (input) => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+  const parseScheduleFlow = ai.defineFlow(
+    {
+      name: 'parseScheduleFlow',
+      inputSchema: ParseScheduleTextInputSchema,
+      outputSchema: ParseScheduleTextOutputSchema,
+    },
+    async (input) => {
+      const {output} = await prompt(input);
+      return output!;
+    }
+  );
+
+  const result = await parseScheduleFlow(input);
+  return result;
+}
