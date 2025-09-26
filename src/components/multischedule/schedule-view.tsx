@@ -469,15 +469,15 @@ export function ScheduleView({
                                     </div>
                                 </div>
                             ) : item.type === 'h1' ? (
-                                <div className="w-full render-align-fix">
+                                <div className="w-full render-header-align-fix">
                                   <h2 className='text-xl font-bold'>{item.description}</h2>
                                 </div>
                             ) : item.type === 'h2' ? (
-                                <div className="w-full render-align-fix">
+                                <div className="w-full render-header-align-fix">
                                   <h3 className='text-lg font-semibold'>{item.description}</h3>
                                 </div>
                             ) : item.type === 'h3' ? (
-                                <div className="w-full render-align-fix">
+                                <div className="w-full render-header-align-fix">
                                   <h4 className='text-base font-medium'>{item.description}</h4>
                                 </div>
                             ) : (
@@ -581,6 +581,7 @@ export function ScheduleView({
     
 
     
+
 
 
 

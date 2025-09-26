@@ -94,6 +94,10 @@ body {
   }
   .cloned-for-rendering .render-align-fix {
     position: relative;
+    top: -4px;
+  }
+  .cloned-for-rendering .render-header-align-fix {
+    position: relative;
     top: -2px;
   }
 }
