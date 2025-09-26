@@ -462,7 +462,6 @@ export function ScheduleView({
                                 </p>
                             ) : item.type === 'date' && item.date ? (
                                 <div className="flex items-center gap-2 flex-1 render-align-fix">
-                                    <CalendarIcon className="h-5 w-5" />
                                     <div className="flex flex-col">
                                         <span className='font-semibold text-lg text-muted-foreground'>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
                                         {item.description && <span className="text-base font-normal text-muted-foreground -mt-1">{item.description}</span>}
@@ -581,6 +580,7 @@ export function ScheduleView({
     
 
     
+
 
 
 
