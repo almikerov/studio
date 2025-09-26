@@ -11,10 +11,6 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { EditableTitle } from '@/components/multischedule/editable-title';
 import { IconName } from '@/components/multischedule/schedule-event-icons';
 import { SavedEvents } from '@/components/multischedule/saved-events';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { translateText } from '@/ai/flows/translate-text';
 
 export type ScheduleItem = { id: string; time: string; description: string; icon?: IconName };
 export type TranslatedSchedule = { lang: string; text: string };
@@ -23,7 +19,6 @@ export type SavedEvent = {
   id: string;
   description: string;
   icon?: IconName;
-  translations: Record<string, string>;
 };
 
 export default function Home() {
@@ -183,49 +178,14 @@ export default function Home() {
   
   const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
     const { description, icon } = scheduleItem;
-    const translatedLanguages = translatedSchedules.map(t => t.lang);
-  
-    if (translatedLanguages.length === 0) {
-      const newSavedEvent: SavedEvent = {
-        id: Date.now().toString(),
-        description,
-        icon,
-        translations: {},
-      };
-      updateSavedEvents([...savedEvents, newSavedEvent]);
-      toast({ title: 'Сохранено', description: 'Событие сохранено без переводов.' });
-      return;
-    }
-  
-    setIsLoading(true);
-    try {
-      const translationResult = await translateText({ text: description, targetLanguages: translatedLanguages });
-      const newSavedEvent: SavedEvent = {
-        id: Date.now().toString(),
-        description,
-        icon,
-        translations: translationResult.translations,
-      };
-      updateSavedEvents([...savedEvents, newSavedEvent]);
-      toast({ title: 'Сохранено', description: 'Событие и его переводы сохранены.' });
-    } catch (error) {
-      console.error('Failed to save event with translations:', error);
-      toast({
-        title: 'Ошибка сохранения',
-        description: 'Не удалось сохранить переводы для события.',
-        variant: 'destructive',
-      });
-      // Save without translations as a fallback
-      const newSavedEvent: SavedEvent = {
-        id: Date.now().toString(),
-        description,
-        icon,
-        translations: {},
-      };
-      updateSavedEvents([...savedEvents, newSavedEvent]);
-    } finally {
-      setIsLoading(false);
-    }
+
+    const newSavedEvent: SavedEvent = {
+      id: Date.now().toString(),
+      description,
+      icon,
+    };
+    updateSavedEvents([...savedEvents, newSavedEvent]);
+    toast({ title: 'Сохранено', description: 'Событие сохранено.' });
   };
 
   const handleAddFromSaved = (savedEvent: SavedEvent) => {
@@ -242,17 +202,11 @@ export default function Home() {
         const currentLanguages = prev.map(t => t.lang);
         const newTranslations = [...prev];
 
-        for (const lang of currentLanguages) {
-            const translatedDesc = savedEvent.translations[lang];
-            if (translatedDesc) {
-                const existingTranslationIndex = newTranslations.findIndex(t => t.lang === lang);
-                if (existingTranslationIndex !== -1) {
-                    const existingText = newTranslations[existingTranslationIndex].text;
-                    const newText = `${existingText}\n${newScheduleEvent.time}: ${translatedDesc}`;
-                    newTranslations[existingTranslationIndex] = { ...newTranslations[existingTranslationIndex], text: newText };
-                }
-            }
-        }
+        // This part needs adjustment since we don't have translations in savedEvent anymore
+        // For simplicity, we will just re-translate the whole schedule
+        // or just add the new event untranslated.
+        // The current implementation of translateSchedule re-translates everything anyway.
+        // Let's rely on the user to re-translate if needed.
         return newTranslations;
     });
   };
