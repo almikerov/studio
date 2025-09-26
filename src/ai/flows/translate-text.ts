@@ -25,10 +25,9 @@ const TranslateTextOutputSchema = z.object({
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
-export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
-  const apiKey = (process.env.GENKIT_API_KEY) as string;
+export async function translateText(input: TranslateTextInput, apiKey: string): Promise<TranslateTextOutput> {
   if (!apiKey) {
-    throw new Error('GENKIT_API_KEY is not set');
+    throw new Error('API key is not provided');
   }
 
   const ai = genkit({

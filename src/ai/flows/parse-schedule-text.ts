@@ -31,10 +31,9 @@ const ParseScheduleTextOutputSchema = z.object({
 });
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
-  const apiKey = (process.env.GENKIT_API_KEY) as string;
+export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string): Promise<ParseScheduleTextOutput> {
   if (!apiKey) {
-    throw new Error('GENKIT_API_KEY is not set');
+    throw new Error('API key is not provided');
   }
 
   const ai = genkit({

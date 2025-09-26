@@ -25,10 +25,9 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput): Promise<Record<string, string>> {
-  const apiKey = (process.env.GENKIT_API_KEY) as string;
+export async function translateSchedule(input: TranslateScheduleInput, apiKey: string): Promise<Record<string, string>> {
   if (!apiKey) {
-    throw new Error('GENKIT_API_KEY is not set');
+    throw new Error('API key is not provided');
   }
 
   const ai = genkit({
