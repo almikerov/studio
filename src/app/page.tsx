@@ -342,9 +342,7 @@ export default function Home() {
     <SidebarProvider>
       <main className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="flex justify-end mb-4 lg:hidden">
-            <SidebarTrigger asChild>
-                <Button variant="outline"><PanelRightOpen className="mr-2" /> Инструменты</Button>
-            </SidebarTrigger>
+            <SidebarTrigger variant="outline"><PanelRightOpen className="mr-2" /> Инструменты</SidebarTrigger>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           <section className="lg:col-span-2 space-y-8">
