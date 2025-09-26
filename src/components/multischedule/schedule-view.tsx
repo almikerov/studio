@@ -181,6 +181,7 @@ export function ScheduleView({
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="flex-1 text-lg"
                 rows={editedType === 'comment' ? 3 : 1}
+                autoFocus={false}
             />
         </div>
 
@@ -270,25 +271,36 @@ export function ScheduleView({
                         <Menu />
                     </Button>
                 )}
-                <ImageUploader onSetImageUrl={setImageUrl}>
-                  {imageUrl ? (
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden cursor-pointer group/image">
-                       <Image
-                          src={imageUrl}
-                          alt="Schedule image"
-                          fill
-                          className="object-cover"
-                      />
-                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
-                            <ImagePlus className="h-8 w-8 text-white" />
-                       </div>
-                    </div>
-                  ) : <Button variant="ghost" size="icon" id="image-uploader-trigger"><ImagePlus className="h-5 w-5" /></Button>}
-                </ImageUploader>
+                {!isMobile && (
+                  <ImageUploader onSetImageUrl={setImageUrl}>
+                    {imageUrl ? (
+                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden cursor-pointer group/image">
+                         <Image
+                            src={imageUrl}
+                            alt="Schedule image"
+                            fill
+                            className="object-cover"
+                        />
+                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
+                              <ImagePlus className="h-8 w-8 text-white" />
+                         </div>
+                      </div>
+                    ) : <Button variant="ghost" size="icon" id="image-uploader-trigger"><ImagePlus className="h-5 w-5" /></Button>}
+                  </ImageUploader>
+                )}
+                {isMobile && imageUrl && (
+                   <Image
+                      src={imageUrl}
+                      alt="Schedule image"
+                      width={80}
+                      height={80}
+                      className="object-cover rounded-md aspect-square"
+                  />
+                )}
             </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 sm:p-6 pt-0">
+      <CardContent data-schedule-content className="p-4 sm:p-6 pt-0">
           <Droppable droppableId="schedule" isDropDisabled={!!isMobile}>
             {(provided) => (
               <div className="space-y-2 group/list" {...provided.droppableProps} ref={provided.innerRef}>
