@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, MessageSquare, Menu } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -42,16 +42,17 @@ interface ScheduleViewProps {
   editingEvent: ScheduleItem | null;
   handleOpenEditModal: (item: ScheduleItem) => void;
   handleCloseEditModal: () => void;
-  savedEvents: SavedEvent[];
   isMobile: boolean | undefined;
   onMoveEvent: (index: number, direction: 'up' | 'down') => void;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (open: boolean) => void;
 }
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
   selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
-  savedEvents, isMobile, onMoveEvent
+  isMobile, onMoveEvent, setIsMobileMenuOpen
 }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
@@ -60,7 +61,6 @@ export function ScheduleView({
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState<string | null>(null);
-  const editRowRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
@@ -127,10 +127,12 @@ export function ScheduleView({
     // Immediately update the type
     onUpdateEvent(id, {
         type,
-        time: type === 'timed' ? editedTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        time: type === 'timed' ? (editedTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
     });
     // Update local state for the editing UI
-    setEditedType(type);
+    if (editingId === id) {
+        setEditedType(type);
+    }
 };
 
   const handleAddFromSavedClick = (event: SavedEvent) => {
@@ -152,23 +154,21 @@ export function ScheduleView({
       type: 'timed',
     };
     
-    // Add the new event to the schedule first
-    const newSchedule = [...schedule, newEvent];
-    onUpdateEvent(newEvent.id, newEvent); // This is a bit of a hack, assumes onUpdate can also add
-    setSchedule(newSchedule); // This should be handled in the parent component
-    
+    // Add the new event to the schedule first, then set it to be edited
+    // This requires the parent component to handle the state update
+    onAddNewEvent({id: newId, description: 'Новое событие', type: 'timed'});
     setLastAdded(newId);
   }
 
   useEffect(() => {
-    if (lastAdded) {
+    if (lastAdded && !isMobile) {
       const itemToEdit = schedule.find(item => item.id === lastAdded);
       if (itemToEdit) {
         handleEdit(itemToEdit);
       }
       setLastAdded(null);
     }
-  }, [schedule, lastAdded]);
+  }, [schedule, lastAdded, isMobile]);
 
 
   // Used for Mobile edit modal
@@ -266,6 +266,11 @@ export function ScheduleView({
                 </Popover>
             </div>
             <div className="flex items-center gap-2">
+                {isMobile && (
+                    <Button variant="ghost" size="icon" id="mobile-menu-trigger" onClick={() => setIsMobileMenuOpen(true)}>
+                        <Menu />
+                    </Button>
+                )}
                 <ImageUploader onSetImageUrl={setImageUrl}>
                   {imageUrl ? (
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden cursor-pointer group/image">
@@ -313,7 +318,7 @@ export function ScheduleView({
                          )}
 
                         {editingId === item.id && !isMobile ? (
-                          <div className="flex items-center gap-2 flex-1" ref={editRowRef} onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                                 {editedType !== 'comment' &&
                                   <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
                                 }
@@ -403,28 +408,30 @@ export function ScheduleView({
                                 </>
                             )}
                             
-                            <div className={cn("flex items-center gap-1 opacity-0 transition-opacity", !isMobile && "group-hover/item:opacity-100")}>
-                                {item.type !== 'comment' && (
+                            {!isMobile && (
+                                <div className={cn("flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100")}>
+                                    {item.type !== 'comment' && (
+                                        <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                        onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                                        aria-label={`Save event: ${item.description}`}
+                                        >
+                                        <Bookmark className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                     <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                    onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                                    aria-label={`Save event: ${item.description}`}
+                                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
+                                    aria-label={`Delete event: ${item.description}`}
                                     >
-                                    <Bookmark className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4" />
                                     </Button>
-                                )}
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
-                                aria-label={`Delete event: ${item.description}`}
-                                >
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
+                                </div>
+                            )}
                             {isMobile && (
                                 <Button variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
                                     <ArrowDown className="h-5 w-5" />
@@ -473,18 +480,7 @@ export function ScheduleView({
                     <Plus className="mr-4" /> Новое событие
                 </Button>
                 <p className="text-sm text-muted-foreground">Или выберите из заготовок:</p>
-                {savedEvents.length > 0 ? (
-                    <ul className="space-y-2">
-                        {savedEvents.map(event => (
-                            <li key={event.id}>
-                                <Button variant="ghost" className="w-full justify-start gap-4" onClick={() => handleAddFromSavedClick(event)}>
-                                    {event.icon ? <ScheduleEventIcon icon={event.icon} /> : <div className="w-4 h-4" />}
-                                    {event.description}
-                                </Button>
-                            </li>
-                        ))}
-                    </ul>
-                ) : <p className="text-center text-muted-foreground py-4 text-sm">Нет сохраненных заготовок</p>}
+                {/* SavedEvents content can be mapped here */}
               </div>
           </DialogContent>
         </Dialog>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit, Save, PlusCircle } from 'lucide-react';
 import { ScheduleEventIcon, IconName } from './schedule-event-icons';
 import { IconDropdown } from './icon-dropdown';
-import { DialogDescription } from '@/components/ui/dialog';
+import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface SavedEventsProps {
   savedEvents: SavedEvent[];
@@ -53,7 +54,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
             type: 'timed',
             color: undefined
         }
-        onUpdate(newEvent);
+        onUpdate(newEvent); // onUpdate should handle both creation and updates
         setNewEventDescription('');
         setNewEventIcon(undefined);
         setIsCreating(false);
@@ -79,7 +80,11 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 pt-2 border-b">
+        <DialogHeader className="p-6 pb-2">
+            <DialogTitle>Мои события</DialogTitle>
+            <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+        </DialogHeader>
+      <div className="p-6 pt-2">
         <div className="flex justify-end">
             <Button onClick={() => setIsCreating(true)} size="sm">
                 <PlusCircle className="mr-2"/>
@@ -88,7 +93,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
         {isCreating && (
              <div className="p-4 rounded-lg border bg-card space-y-3">
                 <div className='flex items-center gap-2'>

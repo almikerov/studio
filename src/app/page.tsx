@@ -16,13 +16,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { SavedEvents } from '@/components/multischedule/saved-events';
 import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -92,6 +94,7 @@ export default function Home() {
   const [isAiParserOpen, setIsAiParserOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 
   useEffect(() => {
@@ -203,6 +206,7 @@ export default function Home() {
     }
 
     setIsLoading(true);
+    setIsMobileMenuOpen(false);
 
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
@@ -262,6 +266,9 @@ export default function Home() {
             });
             const imageUploaderTrigger = clonedDoc.getElementById('image-uploader-trigger');
             if(imageUploaderTrigger) imageUploaderTrigger.style.display = 'none';
+            
+            const mobileMenuTrigger = clonedDoc.getElementById('mobile-menu-trigger');
+            if(mobileMenuTrigger) mobileMenuTrigger.style.display = 'none';
         }
       });
       return canvas;
@@ -340,7 +347,7 @@ export default function Home() {
       id: Date.now().toString(),
       description,
       icon,
-      time,
+      time: type === 'timed' ? time : undefined,
       type,
       color,
     };
@@ -375,6 +382,7 @@ export default function Home() {
   const handleAiParse = async (text: string) => {
     setIsLoading(true);
     setIsAiParserOpen(false);
+    setIsMobileMenuOpen(false);
     try {
       const result = await parseScheduleFromText({ text });
       const newScheduleItems = result.schedule.map(item => ({
@@ -460,13 +468,13 @@ export default function Home() {
                 imageUrl={imageUrl}
                 setImageUrl={setImageUrl}
                 onSaveEvent={handleSaveEvent}
-                onSaveTemplate={handleSaveTemplate}
                 editingEvent={editingEvent}
                 handleOpenEditModal={handleOpenEditModal}
                 handleCloseEditModal={handleCloseEditModal}
-                savedEvents={savedEvents}
                 isMobile={isMobile}
                 onMoveEvent={moveEvent}
+                isMobileMenuOpen={isMobileMenuOpen}
+                setIsMobileMenuOpen={setIsMobileMenuOpen}
               />
             </DragDropContext>
             <TranslatedSchedulesView 
@@ -478,34 +486,31 @@ export default function Home() {
         
 
         {isMobile && (
-           <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button className="rounded-full w-16 h-16 shadow-lg" size="icon"><Save /></Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 mb-2 mr-2 p-2">
-                  <div className="flex flex-col gap-2">
-                    <Button onClick={handleDownloadImage} variant="ghost" className="justify-start" disabled={isDownloading}>
-                      {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
-                      Скачать
-                    </Button>
-                    <Button onClick={handleCopyImage} variant="ghost" className="justify-start" disabled={isDownloading}>
-                      {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
-                      Копировать
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetContent>
+                  <SheetHeader>
+                      <SheetTitle>Меню</SheetTitle>
+                  </SheetHeader>
+                  <div className="py-4 flex flex-col gap-4">
+                    <div>
+                      <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
+                      <Button onClick={handleDownloadImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
+                        Скачать PNG
+                      </Button>
+                      <Button onClick={handleCopyImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
+                        Копировать PNG
+                      </Button>
+                    </div>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button className="rounded-full w-16 h-16 shadow-lg" size="icon"><Construction /></Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 mb-2 mr-2 p-2">
-                   <div className="flex flex-col gap-2">
-                      <Dialog>
+                    <Separator />
+
+                    <div>
+                      <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Инструменты</h3>
+                        <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start">
+                            <Button variant="ghost" className="justify-start w-full">
                               <Languages className="mr-2" /> Перевести
                             </Button>
                           </DialogTrigger>
@@ -534,7 +539,7 @@ export default function Home() {
                         </Dialog>
                         <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
                           <DialogTrigger asChild>
-                             <Button variant="ghost" className="justify-start">
+                             <Button variant="ghost" className="justify-start w-full">
                               <Wand2 className="mr-2" /> ИИ-редактор
                             </Button>
                           </DialogTrigger>
@@ -547,25 +552,21 @@ export default function Home() {
                           </DialogContent>
                         </Dialog>
                    </div>
-                </PopoverContent>
-              </Popover>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                   <Button className="rounded-full w-16 h-16 shadow-lg" size="icon"><BookOpen /></Button>
-                </PopoverTrigger>
-                 <PopoverContent className="w-56 mb-2 mr-2 p-2">
-                    <div className="flex flex-col gap-2">
+                   <Separator />
+
+                    <div>
+                      <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Библиотека</h3>
                        <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start">
+                            <Button variant="ghost" className="justify-start w-full">
                               <BookOpen className="mr-2" /> Шаблоны
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
                             <SavedTemplates 
                               templates={savedTemplates}
-                              onLoad={handleLoadTemplate}
+                              onLoad={(template) => { handleLoadTemplate(template); setIsTemplatesOpen(false); setIsMobileMenuOpen(false); }}
                               onDelete={handleDeleteTemplate}
                               onClose={() => setIsTemplatesOpen(false)}
                             />
@@ -573,20 +574,17 @@ export default function Home() {
                         </Dialog>
                         <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
                            <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start">
+                            <Button variant="ghost" className="justify-start w-full">
                               <Save className="mr-2" /> Заготовки
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                            <DialogHeader className="p-6 pb-0">
-                                <DialogTitle>Мои события</DialogTitle>
-                                <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
-                            </DialogHeader>
                              <SavedEvents
                                 savedEvents={savedEvents}
                                 onAdd={(event) => {
                                   handleAddNewEvent(event);
                                   setIsSavedEventsOpen(false);
+                                  setIsMobileMenuOpen(false);
                                 }}
                                 onUpdate={handleUpdateSavedEvent}
                                 onDelete={(id) => {
@@ -597,10 +595,10 @@ export default function Home() {
                           </DialogContent>
                         </Dialog>
                     </div>
-                 </PopoverContent>
-              </Popover>
 
-           </div>
+                  </div>
+              </SheetContent>
+           </Sheet>
         )}
       </div>
     </main>
