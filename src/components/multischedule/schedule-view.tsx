@@ -75,6 +75,26 @@ export function ScheduleView({
     }
   }, [editingEvent]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
+        if(editingId) {
+            handleSave(editingId);
+        }
+      }
+    };
+
+    if (editingId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [editingId, editRowRef.current, editedTime, editedDescription, editedType, editedDate]);
+
   const handleEdit = (item: ScheduleItem) => {
     if (isMobile) {
       handleOpenEditModal(item);
@@ -131,15 +151,18 @@ export function ScheduleView({
   }
   
   const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
-    onUpdateEvent(id, {
-        type,
-        time: type === 'timed' ? (schedule.find(i => i.id === id)?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
-    });
+    const currentTime = schedule.find(i => i.id === id)?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newTime = type === 'timed' ? currentTime : '';
+    onUpdateEvent(id, { type, time: newTime });
 
-    if (editingId === id || (isMobile && editingEvent?.id === id)) {
+    if (!isMobile && editingId === id) {
+        setEditingId(null); // Save and exit edit mode
+    }
+
+    if (isMobile && editingEvent?.id === id) {
         setEditedType(type);
     }
-};
+  };
 
   const handleAddNewEventAndEdit = () => {
     const newId = Date.now().toString() + Math.random(); // ensure unique id
@@ -329,7 +352,7 @@ export function ScheduleView({
                                   <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
                                 }
                             
-                                <Select value={editedType} onValueChange={(value) => setEditedType(value as ScheduleItem['type'])}>
+                                <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
                                     <SelectTrigger className="w-[150px]">
                                         <SelectValue />
                                     </SelectTrigger>
