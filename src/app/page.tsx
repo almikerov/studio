@@ -404,6 +404,7 @@ export default function Home() {
         if (!blob) {
           throw new Error('Не удалось создать blob из canvas');
         }
+        window.focus(); // Ensure document is focused before clipboard write
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
@@ -934,4 +935,5 @@ export default function Home() {
   );
 }
 
+    
     
