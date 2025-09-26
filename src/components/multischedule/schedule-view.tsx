@@ -5,16 +5,18 @@ import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
 import { IconDropdown } from './icon-dropdown';
 import { IconName, ScheduleEventIcon } from './schedule-event-icons';
+import Image from 'next/image';
+
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
-  onUpdateEvent: (id: string, time: string, description: string, icon: IconName) => void;
+  onUpdateEvent: (id: string, time: string, description: string, icon?: IconName) => void;
   onDeleteEvent: (id: string) => void;
   onAddNewEvent: () => void;
   cardTitle: string;
@@ -23,13 +25,14 @@ interface ScheduleViewProps {
   setCardDescription: (desc: string) => void;
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
+  onSaveEvent: (item: ScheduleItem) => void;
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription, imageUrl, setImageUrl }: ScheduleViewProps) {
+export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription, imageUrl, setImageUrl, onSaveEvent }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
-  const [editedIcon, setEditedIcon] = useState<IconName>('star');
+  const [editedIcon, setEditedIcon] = useState<IconName | undefined>(undefined);
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingId(item.id);
@@ -57,7 +60,19 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
 
   return (
     <Card className="shadow-lg overflow-hidden relative">
-      <CardHeader>
+      {imageUrl && (
+          <div className="relative h-40">
+              <Image
+                  src={imageUrl}
+                  alt="Schedule background"
+                  fill
+                  className="object-cover"
+                  crossOrigin="anonymous"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
+          </div>
+      )}
+      <CardHeader className={imageUrl ? "pt-2" : ""}>
         <div className="flex justify-between items-start">
             <div className="flex-1 mr-4">
                 <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
@@ -105,8 +120,8 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                           </>
                         ) : (
                           <>
-                            <div className="w-8 h-8 flex items-center justify-center">
-                                <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
+                            <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
+                                {item.icon ? <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="h-5 w-5" />}
                             </div>
                             <div className="font-mono text-base font-semibold text-primary-foreground bg-primary rounded-md px-3 py-1 w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.time}
@@ -114,6 +129,15 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                             <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.description}
                             </p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => onSaveEvent(item)}
+                              aria-label={`Save event: ${item.description}`}
+                            >
+                              <Bookmark className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

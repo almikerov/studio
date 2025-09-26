@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, Link, ImagePlus, X, Edit } from 'lucide-react';
+import { Upload, Link, ImagePlus, X, Edit, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 
 interface ImageUploaderProps {
@@ -48,38 +48,14 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <div className="w-24 h-16 bg-muted rounded-md flex items-center justify-center relative group overflow-hidden">
-            {imageUrl ? (
-                <>
-                    <Image
-                        src={imageUrl}
-                        alt="Uploaded schedule image"
-                        fill
-                        className="object-cover"
-                        crossOrigin="anonymous"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20 hover:text-white">
-                                <Edit className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <Button variant="ghost" size="icon" onClick={handleRemoveImage} className="h-7 w-7 text-white hover:bg-destructive/80 hover:text-white">
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </>
-            ) : (
-                <DialogTrigger asChild>
-                    <Button variant="ghost" className="w-full h-full">
-                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                    </Button>
-                </DialogTrigger>
-            )}
-        </div>
+       <DialogTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <ImageIcon className="h-5 w-5" />
+        </Button>
+       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Добавить изображение</DialogTitle>
+          <DialogTitle>Изменить изображение</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <Button onClick={() => fileInputRef.current?.click()} variant="outline">
@@ -104,6 +80,12 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
             />
           </div>
           <Button onClick={handleUrlSubmit}>Добавить по URL</Button>
+          {imageUrl && (
+            <Button onClick={handleRemoveImage} variant="destructive">
+              <X className="mr-2" />
+              Удалить изображение
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
