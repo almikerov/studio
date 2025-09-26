@@ -60,25 +60,26 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
 
   return (
     <Card className="shadow-lg overflow-hidden relative">
-      {imageUrl && (
-          <div className="relative h-40">
-              <Image
-                  src={imageUrl}
-                  alt="Schedule background"
-                  fill
-                  className="object-cover"
-                  crossOrigin="anonymous"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
-          </div>
-      )}
-      <CardHeader className={imageUrl ? "pt-2" : ""}>
+      <CardHeader>
         <div className="flex justify-between items-start">
             <div className="flex-1 mr-4">
                 <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
                 <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground mt-1.5" />
             </div>
-            <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
+            <div className="flex items-center gap-2">
+              {imageUrl && (
+                  <div className="relative h-16 w-16 rounded-md overflow-hidden">
+                      <Image
+                          src={imageUrl}
+                          alt="Schedule background"
+                          fill
+                          className="object-cover"
+                          crossOrigin="anonymous"
+                      />
+                  </div>
+              )}
+              <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
+            </div>
         </div>
       </CardHeader>
       <CardContent>

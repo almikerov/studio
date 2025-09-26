@@ -50,7 +50,7 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
        <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
-          <ImageIcon className="h-5 w-5" />
+          <ImagePlus className="h-5 w-5" />
         </Button>
        </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -81,7 +81,7 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
           </div>
           <Button onClick={handleUrlSubmit}>Добавить по URL</Button>
           {imageUrl && (
-            <Button onClick={handleRemoveImage} variant="destructive">
+            <Button onClick={(e) => { handleRemoveImage(e); setDialogOpen(false); }} variant="destructive">
               <X className="mr-2" />
               Удалить изображение
             </Button>
