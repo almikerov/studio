@@ -139,9 +139,9 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                             <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
                                 {item.icon ? <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="h-5 w-5" />}
                             </div>
-                            <div className="font-mono text-base font-semibold w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
+                            <p className="font-mono text-base font-semibold w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.time}
-                            </div>
+                            </p>
                             <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.description}
                             </p>
