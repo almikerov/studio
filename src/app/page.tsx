@@ -247,10 +247,6 @@ export default function Home() {
   
     setIsDownloading(true);
     try {
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-  
       await new Promise(resolve => setTimeout(resolve, 50));
   
       const canvas = await html2canvas(element, {
@@ -262,7 +258,7 @@ export default function Home() {
           const printableArea = clonedDoc.querySelector<HTMLDivElement>('.printable-area-for-render');
           if (printableArea) {
             if (isMobile) {
-              printableArea.style.width = 'auto'; // Make it narrower for mobile
+              printableArea.style.width = 'auto';
             } else {
               printableArea.style.maxWidth = '500px';
             }
