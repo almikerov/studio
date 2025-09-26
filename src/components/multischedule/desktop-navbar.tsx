@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
 import { toast } from '@/hooks/use-toast';
+import { ImageUploader } from './image-uploader';
 
 const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
@@ -44,6 +45,7 @@ interface DesktopNavbarProps {
   setIsAiParserOpen: (open: boolean) => void;
   isSavedEventsOpen: boolean;
   setIsSavedEventsOpen: (open: boolean) => void;
+  setImageUrl: (url: string | null) => void;
 }
 
 export function DesktopNavbar({
@@ -66,6 +68,7 @@ export function DesktopNavbar({
   setIsAiParserOpen,
   isSavedEventsOpen,
   setIsSavedEventsOpen,
+  setImageUrl,
 }: DesktopNavbarProps) {
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
@@ -110,6 +113,11 @@ export function DesktopNavbar({
             <MenubarMenu>
                 <MenubarTrigger>Инструменты</MenubarTrigger>
                 <MenubarContent>
+                    <ImageUploader onSetImageUrl={setImageUrl}>
+                       <MenubarItem onSelect={(e) => e.preventDefault()}>
+                            <ImagePlus className="mr-2" /> Изменить изображение
+                       </MenubarItem>
+                    </ImageUploader>
                     <Dialog open={isTranslateDialogOpen} onOpenChange={setIsTranslateDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>

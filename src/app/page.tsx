@@ -557,6 +557,7 @@ export default function Home() {
             onTranslate={handleTranslate}
             isAiParserOpen={isAiParserOpen}
             setIsAiParserOpen={setIsAiParserOpen}
+            setImageUrl={setImageUrl}
         />}
 
         

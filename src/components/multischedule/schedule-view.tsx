@@ -268,30 +268,12 @@ export function ScheduleView({
                         <Menu />
                     </Button>
                 )}
-                {!isMobile && (
-                  <ImageUploader onSetImageUrl={setImageUrl}>
-                    {imageUrl ? (
-                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden cursor-pointer group/image">
-                         <Image
-                            src={imageUrl}
-                            alt="Schedule image"
-                            fill
-                            className="object-cover"
-                            crossOrigin="anonymous"
-                        />
-                         <div data-no-print="true" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
-                              <ImagePlus className="h-8 w-8 text-white" />
-                         </div>
-                      </div>
-                    ) : <Button variant="ghost" size="icon"><ImagePlus className="h-5 w-5" /></Button>}
-                  </ImageUploader>
-                )}
-                {isMobile && imageUrl && (
+                {imageUrl && (
                    <Image
                       src={imageUrl}
                       alt="Schedule image"
-                      width={80}
-                      height={80}
+                      width={isMobile ? 80 : 96}
+                      height={isMobile ? 80 : 96}
                       className="object-cover rounded-md aspect-square"
                       crossOrigin="anonymous"
                   />
@@ -508,4 +490,5 @@ export function ScheduleView({
     </Card>
   );
 }
+
 
