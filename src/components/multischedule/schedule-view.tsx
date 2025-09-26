@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -404,7 +404,7 @@ export function ScheduleView({
                                         )}
                                     </div>
                                     
-                                    <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left">
+                                    <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                       {item.type === 'timed' ? (
                                         <p className="font-mono text-base font-semibold">
                                             {item.time}
@@ -509,8 +509,3 @@ export function ScheduleView({
   );
 }
 
-const ChevronDown = (props: any) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="m6 9 6 6 6-6"/>
-  </svg>
-);

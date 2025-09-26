@@ -246,21 +246,27 @@ export default function Home() {
     if (!element) return null;
   
     setIsDownloading(true);
+
+    // --- NEW LOGIC FROM SCRATCH ---
     
+    // 1. Create a clone
     const clone = element.cloneNode(true) as HTMLElement;
 
-    // Prepare clone for rendering
+    // 2. Pre-process the clone
     clone.classList.add('cloned-for-rendering');
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
-    clone.style.width = '768px';
+    clone.style.width = '768px'; // Force desktop width
     clone.style.height = 'auto';
-
-    document.body.appendChild(clone);
 
     // Remove UI elements that shouldn't be in the render
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
+
+    // Ensure all text is visible (remove truncation)
+    clone.querySelectorAll('.truncate').forEach(el => {
+      el.classList.remove('truncate');
+    });
 
     // Make sure content is not collapsed or scrollable
     const content = clone.querySelector<HTMLDivElement>('[data-schedule-content]');
@@ -270,38 +276,61 @@ export default function Home() {
       content.style.overflow = 'visible';
     }
 
-    // Ensure all text is visible (remove truncation)
-    clone.querySelectorAll('.truncate').forEach(el => {
-      el.classList.remove('truncate');
-    });
-
-    // Make sure desktop-only elements are visible and mobile are hidden
-    clone.querySelectorAll('[data-desktop-only-on-render="true"]').forEach(el => {
-      if (el instanceof HTMLElement) {
-        el.style.display = 'flex';
-      }
-    });
-
-    // Replace Next.js optimized image with a standard img tag
+    // 3. Handle the user-inserted image (THE CORE FIX)
     const imageWrapper = clone.querySelector('[data-id="schedule-image-wrapper"]');
-    if (imageWrapper && imageUrl) {
-      const img = imageWrapper.querySelector('img');
-      if (img) {
-          img.src = imageUrl;
-          img.crossOrigin = "anonymous";
-          // We might need to wait for this image to load.
-          await new Promise(resolve => {
-              img.onload = resolve;
-              img.onerror = resolve; // Continue even if image fails to load
-          });
-      }
+    const imageElement = imageWrapper?.querySelector('img');
+
+    // This function pre-loads an image and returns a promise with its base64 representation
+    const loadImageAsBase64 = (url: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new window.Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('Failed to get canvas context'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = (e) => {
+                console.error("Image load error:", e);
+                // Resolve with an empty string or placeholder if it fails
+                reject(new Error(`Failed to load image at ${url}`));
+            };
+            img.src = url;
+        });
+    };
+
+    if (imageElement && imageUrl) {
+        try {
+            // Wait for the image to be fully loaded and converted to base64
+            const base64Url = await loadImageAsBase64(imageUrl);
+            // Replace the src in the clone with the reliable base64 data
+            imageElement.src = base64Url;
+        } catch (error) {
+            console.error(error);
+            toast({
+              title: "Ошибка загрузки изображения",
+              description: "Не удалось загрузить фоновое изображение для рендеринга. Проверьте URL.",
+              variant: "destructive"
+            });
+            // Continue without the image if it fails
+        }
     }
 
-
+    // 4. Append clone to body for rendering
+    document.body.appendChild(clone);
+    
+    // 5. Render canvas
     try {
       const canvas = await html2canvas(clone, {
         scale: 2,
-        useCORS: true,
+        useCORS: true, // Keep this for other potential resources
         logging: false,
         backgroundColor: null,
       });
@@ -309,12 +338,13 @@ export default function Home() {
     } catch (err) {
       console.error("Error generating canvas: ", err);
       toast({
-        title: "Ошибка обработки изображения",
-        description: "Не удалось обработать изображение. Убедитесь, что CORS разрешен для URL изображения.",
+        title: "Ошибка рендеринга",
+        description: "Не удалось создать изображение расписания.",
         variant: "destructive"
       });
       return null;
     } finally {
+      // 6. Cleanup
       document.body.removeChild(clone);
       setIsDownloading(false);
     }
