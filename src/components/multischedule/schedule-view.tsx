@@ -38,7 +38,7 @@ interface ScheduleViewProps {
   setSelectedDate: (date: Date) => void;
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
-  onSaveEvent: (item: ScheduleItem) => void;
+  onSaveEvent: (item: Partial<ScheduleItem>) => void;
   editingEvent: ScheduleItem | null;
   handleOpenEditModal: (item: ScheduleItem) => void;
   handleCloseEditModal: () => void;
@@ -169,70 +169,85 @@ export function ScheduleView({
 
 
   // Used for Mobile edit modal
-  const renderEditContent = (item: ScheduleItem) => (
-    <div className="flex flex-col gap-4 p-1">
-        <div className="flex items-center gap-2">
-            {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
-             <Textarea
-                value={editedDescription}
-                onChange={(e) => setEditedDescription(e.target.value)}
-                className="flex-1 text-lg"
-                rows={editedType === 'comment' ? 3 : 1}
-                autoFocus={false}
-            />
-        </div>
+  const renderEditContent = (item: ScheduleItem) => {
+    const handleSaveToPreset = () => {
+        const currentItemState = schedule.find(s => s.id === item.id) || item;
+        const eventToSave = {
+            ...currentItemState,
+            description: editedDescription,
+            time: editedType === 'timed' ? editedTime : '',
+            type: editedType,
+        };
+        onSaveEvent(eventToSave);
+        handleCloseEditModal();
+    };
 
-        <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
-            <Label htmlFor={`type-select-native-${item.id}`} className="text-base font-normal">Тип события</Label>
-            <div className="relative">
-                <select
-                    id={`type-select-native-${item.id}`}
-                    value={editedType}
-                    onChange={(e) => handleTypeChange(item.id, e.target.value as ScheduleItem['type'])}
-                    className="appearance-none w-full bg-transparent pr-8 text-right font-medium"
-                >
-                    <option value="timed">Со временем</option>
-                    <option value="untimed">Без времени</option>
-                    <option value="comment">Комментарий</option>
-                </select>
-                <ChevronDown className="h-4 w-4 opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-        </div>
-
-        {
-            editedType === 'timed' && (
-                <Input
-                type="time"
-                value={editedTime}
-                onChange={(e) => setEditedTime(e.target.value)}
-                className="w-full text-lg h-12"
+    return (
+        <div className="flex flex-col gap-4 p-1">
+            <div className="flex items-center gap-2">
+                {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                <Textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    className="flex-1 text-lg"
+                    rows={editedType === 'comment' ? 3 : 1}
+                    autoFocus={false}
                 />
-            )
-        }
-      
-        { editedType !== 'comment' && (
-            <div>
-                <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
-                <div className="flex gap-2 justify-around">
-                  <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
-                      <div className="h-6 w-6 rounded-full border" />
-                  </Button>
-                  {ITEM_COLORS.map(color => (
-                    <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
-                      <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
-                    </Button>
-                  ))}
+            </div>
+
+            <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
+                <Label htmlFor={`type-select-native-${item.id}`} className="text-base font-normal">Тип события</Label>
+                <div className="relative">
+                    <select
+                        id={`type-select-native-${item.id}`}
+                        value={editedType}
+                        onChange={(e) => handleTypeChange(item.id, e.target.value as ScheduleItem['type'])}
+                        className="appearance-none w-full bg-transparent pr-8 text-right font-medium"
+                    >
+                        <option value="timed">Со временем</option>
+                        <option value="untimed">Без времени</option>
+                        <option value="comment">Комментарий</option>
+                    </select>
+                    <ChevronDown className="h-4 w-4 opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
             </div>
-        )}
 
-        <div className="flex gap-2 mt-4">
-             <Button onClick={() => { onSaveEvent(item); handleCloseEditModal(); }} variant="outline" className="w-full" size="lg"><Bookmark /></Button>
-             <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
+            {
+                editedType === 'timed' && (
+                    <Input
+                    type="time"
+                    value={editedTime}
+                    onChange={(e) => setEditedTime(e.target.value)}
+                    className="w-full text-lg h-12"
+                    />
+                )
+            }
+        
+            { editedType !== 'comment' && (
+                <div>
+                    <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
+                    <div className="flex gap-2 justify-around">
+                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
+                        <div className="h-6 w-6 rounded-full border" />
+                    </Button>
+                    {ITEM_COLORS.map(color => (
+                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
+                        <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
+                        </Button>
+                    ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="flex gap-2 mt-4">
+                <Button onClick={handleSaveToPreset} variant="outline" className="w-full" size="lg"><Bookmark /></Button>
+                <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
+            </div>
+            <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
         </div>
-        <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
-    </div>
-  );
+    );
+  };
+
 
 
   return (
@@ -490,5 +505,6 @@ export function ScheduleView({
     </Card>
   );
 }
+
 
 

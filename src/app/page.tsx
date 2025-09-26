@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -99,6 +99,8 @@ export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
+  const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
+  const [renderAction, setRenderAction] = useState<(() => void) | null>(null);
   const [templateName, setTemplateName] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
 
@@ -250,34 +252,28 @@ export default function Home() {
     }
   };
 
-  const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
+  const generateCanvas = async (options: { renderAsMobile: boolean }): Promise<HTMLCanvasElement | null> => {
     const element = printableAreaRef.current;
     if (!element) return null;
   
     setIsDownloading(true);
-
-    // --- NEW LOGIC FROM SCRATCH ---
     
-    // 1. Create a clone
     const clone = element.cloneNode(true) as HTMLElement;
 
-    // 2. Pre-process the clone
     clone.classList.add('cloned-for-rendering');
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
-    clone.style.width = '768px'; // Force desktop width
+    clone.style.width = options.renderAsMobile ? '420px' : '768px';
     clone.style.height = 'auto';
 
-    // Remove UI elements that shouldn't be in the render
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
+    clone.querySelector('#card-footer')?.remove();
 
-    // Ensure all text is visible (remove truncation)
     clone.querySelectorAll('.truncate').forEach(el => {
       el.classList.remove('truncate');
     });
 
-    // Make sure content is not collapsed or scrollable
     const content = clone.querySelector<HTMLDivElement>('[data-schedule-content]');
     if (content) {
       content.style.height = 'auto';
@@ -285,11 +281,9 @@ export default function Home() {
       content.style.overflow = 'visible';
     }
 
-    // 3. Handle the user-inserted image (THE CORE FIX)
     const imageWrapper = clone.querySelector('[data-id="schedule-image-wrapper"]');
     const imageElement = imageWrapper?.querySelector('img');
 
-    // This function pre-loads an image and returns a promise with its base64 representation
     const loadImageAsBase64 = (url: string): Promise<string> => {
         return new Promise((resolve, reject) => {
             const img = new window.Image();
@@ -316,9 +310,7 @@ export default function Home() {
 
     if (imageElement && imageUrl) {
         try {
-            // Wait for the image to be fully loaded and converted to base64
             const base64Url = await loadImageAsBase64(imageUrl);
-            // Replace the src in the clone with the reliable base64 data
             imageElement.src = base64Url;
         } catch (error) {
             console.error(error);
@@ -327,18 +319,15 @@ export default function Home() {
               description: "Не удалось загрузить фоновое изображение для рендеринга. Проверьте URL.",
               variant: "destructive"
             });
-            // Continue without the image if it fails
         }
     }
 
-    // 4. Append clone to body for rendering
     document.body.appendChild(clone);
     
-    // 5. Render canvas
     try {
       const canvas = await html2canvas(clone, {
         scale: 2,
-        useCORS: true, // Keep this for other potential resources
+        useCORS: true,
         logging: false,
         backgroundColor: null,
       });
@@ -352,15 +341,14 @@ export default function Home() {
       });
       return null;
     } finally {
-      // 6. Cleanup
       document.body.removeChild(clone);
       setIsDownloading(false);
     }
   };
 
 
-  const handleDownloadImage = async () => {
-    const canvas = await generateCanvas();
+  const handleDownloadImage = async (options: { renderAsMobile: boolean }) => {
+    const canvas = await generateCanvas(options);
     if (!canvas) return;
     
     const link = document.createElement('a');
@@ -369,8 +357,8 @@ export default function Home() {
     link.click();
   };
 
-  const handleCopyImage = async () => {
-    const canvas = await generateCanvas();
+  const handleCopyImage = async (options: { renderAsMobile: boolean }) => {
+    const canvas = await generateCanvas(options);
     if (!canvas) return;
 
     try {
@@ -396,8 +384,8 @@ export default function Home() {
     }
   }
 
-    const handleShareImage = async () => {
-    const canvas = await generateCanvas();
+  const handleShareImage = async (options: { renderAsMobile: boolean }) => {
+    const canvas = await generateCanvas(options);
     if (!canvas) return;
 
     canvas.toBlob(async (blob) => {
@@ -444,11 +432,11 @@ export default function Home() {
     setTranslatedSchedules(prev => prev.map(t => t.lang === lang ? { ...t, text: newText } : t));
   };
   
-  const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
-    const { description, icon, time, type, color } = scheduleItem;
+  const handleSaveEvent = async (eventData: Partial<ScheduleItem>) => {
+    const { description, icon, time, type, color } = eventData;
 
-    if (type === 'comment') {
-        toast({ title: 'Нельзя сохранить', description: 'Комментарии нельзя сохранять как заготовки.', variant: 'default' });
+    if (!description || type === 'comment') {
+        toast({ title: 'Нельзя сохранить', description: 'Комментарии или пустые события нельзя сохранять.', variant: 'default' });
         return;
     }
 
@@ -462,7 +450,7 @@ export default function Home() {
       description,
       icon,
       time: type === 'timed' ? time : undefined,
-      type,
+      type: type || 'untimed',
       color,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
@@ -558,6 +546,14 @@ export default function Home() {
     }
   };
 
+  const openRenderOptions = (action: (options: {renderAsMobile: boolean}) => void) => {
+    setRenderAction(() => (options: { renderAsMobile: boolean }) => {
+      action(options);
+      setIsRenderOptionsOpen(false);
+    });
+    setIsRenderOptionsOpen(true);
+  };
+
 
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -565,8 +561,8 @@ export default function Home() {
         {!isMobile && <DesktopNavbar 
             isLoading={isLoading}
             isDownloading={isDownloading}
-            onDownload={handleDownloadImage}
-            onCopy={handleCopyImage}
+            onDownload={() => openRenderOptions(handleDownloadImage)}
+            onCopy={() => openRenderOptions(handleCopyImage)}
             savedTemplates={savedTemplates}
             onLoadTemplate={handleLoadTemplate}
             onDeleteTemplate={handleDeleteTemplate}
@@ -619,6 +615,26 @@ export default function Home() {
             />
           </div>
         
+        {/* Render Options Dialog */}
+        <Dialog open={isRenderOptionsOpen} onOpenChange={setIsRenderOptionsOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Параметры рендеринга</DialogTitle>
+                    <DialogDescription>Выберите как вы хотите сохранить изображение.</DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 py-4">
+                    <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false })}>
+                        <Laptop className="h-8 w-8" />
+                        <span>Десктоп (широкий)</span>
+                    </Button>
+                    <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true })}>
+                        <Smartphone className="h-8 w-8" />
+                        <span>Мобильный (узкий)</span>
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
 
         {isMobile && (
            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -629,15 +645,15 @@ export default function Home() {
                   <div className="py-4 flex flex-col gap-4">
                     <div>
                       <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
-                      <Button onClick={handleDownloadImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                      <Button onClick={() => openRenderOptions(handleDownloadImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                         {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
                         Скачать PNG
                       </Button>
-                       <Button onClick={handleCopyImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                       <Button onClick={() => openRenderOptions(handleCopyImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                         {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
                         Копировать
                       </Button>
-                      <Button onClick={handleShareImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                      <Button onClick={() => openRenderOptions(handleShareImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                         {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
                         Поделиться...
                       </Button>
