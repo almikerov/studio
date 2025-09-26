@@ -48,6 +48,9 @@ export type SavedEvent = {
   id: string;
   description: string;
   icon?: IconName;
+  time?: string;
+  isUntimed?: boolean;
+  color?: string;
 };
 
 export type ScheduleTemplate = {
@@ -140,13 +143,14 @@ export default function Home() {
   };
   
 
-  const handleAddNewEvent = (fromSaved?: SavedEvent) => {
+  const handleAddNewEvent = (fromSaved?: Partial<SavedEvent>) => {
     const newEvent: ScheduleItem = {
       id: Date.now().toString(),
-      time: fromSaved ? '' : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      description: fromSaved ? fromSaved.description : 'Новое событие',
+      time: fromSaved?.isUntimed ? '' : fromSaved?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      description: fromSaved?.description || 'Новое событие',
       icon: fromSaved?.icon,
-      isUntimed: !!fromSaved,
+      color: fromSaved?.color,
+      isUntimed: fromSaved?.isUntimed ?? !!fromSaved?.description,
     };
     setSchedule(prev => [...prev, newEvent]);
     if (isMobile) {
@@ -312,7 +316,7 @@ export default function Home() {
   };
   
   const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
-    const { description, icon } = scheduleItem;
+    const { description, icon, time, isUntimed, color } = scheduleItem;
 
     if (savedEvents.some(e => e.description === description)) {
       toast({ title: 'Уже сохранено', description: 'Событие с таким описанием уже есть в ваших заготовках.', variant: 'default' });
@@ -323,6 +327,9 @@ export default function Home() {
       id: Date.now().toString(),
       description,
       icon,
+      time: time,
+      isUntimed: isUntimed,
+      color: color,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
     toast({ title: 'Сохранено', description: 'Событие добавлено в заготовки.' });

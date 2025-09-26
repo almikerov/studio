@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -30,7 +31,7 @@ interface ScheduleViewProps {
   schedule: ScheduleItem[];
   onUpdateEvent: (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => void;
   onDeleteEvent: (id: string) => void;
-  onAddNewEvent: (fromSaved?: SavedEvent) => void;
+  onAddNewEvent: (fromSaved?: Partial<SavedEvent>) => void;
   cardTitle: string;
   setCardTitle: (title: string) => void;
   selectedDate: Date;
@@ -129,9 +130,9 @@ export function ScheduleView({
     onUpdateEvent(id, { color });
   }
 
-  const handleToggleUntimed = (id: string, isUntimed: boolean) => {
-    onUpdateEvent(id, { isUntimed, time: isUntimed ? '' : editedTime || '00:00' });
-    if(isUntimed) setEditedTime('');
+  const handleToggleHasTime = (id: string, hasTime: boolean) => {
+    onUpdateEvent(id, { isUntimed: !hasTime, time: hasTime ? editedTime || '00:00' : '' });
+    if(!hasTime) setEditedTime('');
   }
 
   const handleSaveTemplateClick = () => {
@@ -166,20 +167,22 @@ export function ScheduleView({
         </div>
 
         <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
-            <Label htmlFor={`untimed-switch-${item.id}`} className="text-base font-normal">Без времени</Label>
-            <Switch id={`untimed-switch-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
+            <Label htmlFor={`hastime-switch-${item.id}`} className="text-base font-normal">Время</Label>
+            <Switch id={`hastime-switch-${item.id}`} checked={!item.isUntimed} onCheckedChange={(checked) => handleToggleHasTime(item.id, checked)} />
         </div>
 
-        {!item.isUntimed && (
-            <Input
-              type="time"
-              value={editedTime}
-              onChange={(e) => setEditedTime(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, item.id)}
-              className="w-full text-lg h-12"
-              disabled={!!item.isUntimed}
-            />
-        )}
+        {
+            !item.isUntimed && (
+                <Input
+                type="time"
+                value={editedTime}
+                onChange={(e) => setEditedTime(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, item.id)}
+                className="w-full text-lg h-12"
+                disabled={item.isUntimed}
+                />
+            )
+        }
       
         <div>
             <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
@@ -270,7 +273,7 @@ export function ScheduleView({
                          </div>
 
                         {editingId === item.id && !isMobile ? (
-                          <div ref={editRowRef} className="flex items-center gap-2 flex-1">
+                          <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
                             
                             <Input
@@ -280,12 +283,11 @@ export function ScheduleView({
                               onKeyDown={(e) => handleKeyDown(e, item.id)}
                               className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
                               disabled={!!item.isUntimed}
-                              onClick={(e) => e.stopPropagation()}
                             />
                             
-                            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
-                                <Switch id={`untimed-switch-inline-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
-                                <Label htmlFor={`untimed-switch-inline-${item.id}`} className="text-xs font-normal text-muted-foreground">Без вр.</Label>
+                            <div className="flex items-center space-x-1" >
+                                <Switch id={`hastime-switch-inline-${item.id}`} checked={!item.isUntimed} onCheckedChange={(checked) => handleToggleHasTime(item.id, checked)} />
+                                <Label htmlFor={`hastime-switch-inline-${item.id}`} className="text-xs font-normal text-muted-foreground">Время</Label>
                             </div>
                             
                             <Input
@@ -294,14 +296,13 @@ export function ScheduleView({
                               onKeyDown={(e) => handleKeyDown(e, item.id)}
                               className="flex-1"
                               autoFocus
-                              onClick={(e) => e.stopPropagation()}
                             />
 
                             <Popover onOpenChange={setIsPopoverOpen}>
                               <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
+                              <PopoverContent className="w-auto p-2">
                                 <div className="flex gap-1">
                                   <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
                                       <div className="h-4 w-4 rounded-full border" />

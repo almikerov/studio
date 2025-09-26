@@ -50,7 +50,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
             description: newEventDescription,
             icon: newEventIcon
         }
-        onUpdate(newEvent); // This will now correctly add the new event
+        onUpdate(newEvent);
         setNewEventDescription('');
         setNewEventIcon(undefined);
         setIsCreating(false);
@@ -67,6 +67,11 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
       if(editedEvent) {
           setEditedEvent({ ...editedEvent, icon });
       }
+  }
+  
+  const handleAddAndClose = (event: SavedEvent) => {
+    onAdd(event);
+    onClose();
   }
 
   return (
@@ -102,9 +107,9 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
         {savedEvents.length > 0 ? (
           <ul className="space-y-2">
             {savedEvents.map(event => (
-              <li key={event.id} className="group flex items-center justify-between gap-2 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+              <li key={event.id} className="group flex items-center justify-between gap-2 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => handleAddAndClose(event)}>
                 {editingId === event.id && editedEvent ? (
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 space-y-3" onClick={(e) => e.stopPropagation()}>
                     <div className='flex items-center gap-2'>
                         <IconDropdown value={editedEvent.icon} onChange={handleIconChange} />
                         <Input value={editedEvent.description} onChange={handleDescriptionChange} placeholder="Описание события" />
@@ -120,8 +125,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
                             {event.icon ? <ScheduleEventIcon icon={event.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="w-5 h-5"/>}
                             <p className="font-semibold truncate">{event.description}</p>
                         </div>
-                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" onClick={() => onAdd(event)}><Plus className="h-4 w-4" /></Button>
+                        <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" onClick={() => startEditing(event)}><Edit className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(event.id)}><Trash2 className="h-4 w-4" /></Button>
                         </div>
