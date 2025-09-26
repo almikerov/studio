@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,6 +26,7 @@ import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { ImageUploader } from '@/components/multischedule/image-uploader';
+import { Input } from '@/components/ui/input';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -96,6 +97,8 @@ export default function Home() {
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
 
 
   useEffect(() => {
@@ -107,6 +110,10 @@ export default function Home() {
       const storedTemplates = localStorage.getItem('savedTemplates');
       if (storedTemplates) {
         setSavedTemplates(JSON.parse(storedTemplates));
+      }
+      const storedApiKey = localStorage.getItem('genkit-api-key');
+      if (storedApiKey) {
+        setApiKeyInput(storedApiKey);
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
@@ -530,6 +537,17 @@ export default function Home() {
       updateSavedEvents(newEvents);
   }
 
+  const handleSaveApiKey = () => {
+    try {
+      localStorage.setItem('genkit-api-key', apiKeyInput);
+      toast({ title: 'API ключ сохранен' });
+      setIsApiKeyDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to save API key to localStorage", error);
+      toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить API ключ.', variant: 'destructive' });
+    }
+  };
+
 
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -670,6 +688,30 @@ export default function Home() {
                               isLoading={isLoading} 
                               onClose={() => setIsAiParserOpen(false)}
                             />
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" className="justify-start w-full">
+                              <KeyRound className="mr-2" /> Ввести API ключ
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Ввести API ключ</DialogTitle>
+                              <DialogDescription>Введите ваш API ключ для доступа к нейросети.</DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                              <Input
+                                type="password"
+                                placeholder="Ваш API ключ"
+                                value={apiKeyInput}
+                                onChange={(e) => setApiKeyInput(e.target.value)}
+                              />
+                            </div>
+                            <DialogFooter>
+                              <Button onClick={handleSaveApiKey}>Сохранить</Button>
+                            </DialogFooter>
                           </DialogContent>
                         </Dialog>
                    </div>

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
@@ -73,6 +73,15 @@ export function DesktopNavbar({
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
+    const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+    const [apiKeyInput, setApiKeyInput] = useState('');
+
+     React.useEffect(() => {
+        const storedApiKey = localStorage.getItem('genkit-api-key');
+        if (storedApiKey) {
+            setApiKeyInput(storedApiKey);
+        }
+    }, []);
 
     const handleSaveTemplateClick = () => {
         if (templateName.trim()) {
@@ -94,6 +103,17 @@ export function DesktopNavbar({
         onTranslate();
         setIsTranslateDialogOpen(false);
     }
+    
+    const handleSaveApiKey = () => {
+        try {
+            localStorage.setItem('genkit-api-key', apiKeyInput);
+            toast({ title: 'API ключ сохранен' });
+            setIsApiKeyDialogOpen(false);
+        } catch (error) {
+            console.error("Failed to save API key to localStorage", error);
+            toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить API ключ.', variant: 'destructive' });
+        }
+    };
 
   return (
     <div className="flex items-center justify-between rounded-lg border bg-card p-1 h-auto">
@@ -159,6 +179,30 @@ export function DesktopNavbar({
                             <AiScheduleParser onParse={onAiParse} isLoading={isLoading} onClose={() => setIsAiParserOpen(false)} />
                         </DialogContent>
                     </Dialog>
+                     <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                        <DialogTrigger asChild>
+                            <MenubarItem onSelect={(e) => e.preventDefault()}>
+                                <KeyRound className="mr-2" /> Ввести API ключ
+                            </MenubarItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Ввести API ключ</DialogTitle>
+                                <DialogDescription>Введите ваш API ключ для доступа к нейросети.</DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <Input
+                                    type="password"
+                                    placeholder="Ваш API ключ"
+                                    value={apiKeyInput}
+                                    onChange={(e) => setApiKeyInput(e.target.value)}
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={handleSaveApiKey}>Сохранить</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </MenubarContent>
             </MenubarMenu>
 
@@ -197,6 +241,22 @@ export function DesktopNavbar({
                                 ))
                             ) : (
                                 <MenubarItem disabled>Нет сохраненных шаблонов</MenubarItem>
+                            )}
+                        </MenubarSubContent>
+                    </MenubarSub>
+                    <MenubarSub>
+                        <MenubarSubTrigger>
+                            <Trash2 className="mr-2" /> Удалить
+                        </MenubarSubTrigger>
+                        <MenubarSubContent>
+                             {savedTemplates.length > 0 ? (
+                                savedTemplates.map(template => (
+                                    <MenubarItem key={template.id} onClick={() => onDeleteTemplate(template.id)}>
+                                        {template.name}
+                                    </MenubarItem>
+                                ))
+                            ) : (
+                                <MenubarItem disabled>Нет шаблонов для удаления</MenubarItem>
                             )}
                         </MenubarSubContent>
                     </MenubarSub>

@@ -20,7 +20,7 @@ export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema
 const ParsedScheduleItemSchema = z.object({
     time: z.string().describe("The time of the event in HH:mm format. If the event has no specific time, this should be an empty string."),
     description: z.string().describe("The description of the schedule event."),
-    icon: z.enum(['football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium']).optional().describe('An icon for the event.'),
+    icon: z.enum(['football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon']).optional().describe("An icon for the event."),
     color: z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple']).optional().describe('A color for the event row.'),
 });
 
@@ -46,8 +46,7 @@ Your task is to identify the schedule title, events, their times, and relevant m
 - For each event, provide a 'time' and a 'description'.
 - The time should be in HH:mm format.
 - If an event doesn't have a specific time (e.g., it's just a task), the 'time' field should be an empty string.
-- The description should be a concise summary of the event.
-- If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium'.
+- If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon'.
 - If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple'.
 - Ignore any text that isn't a schedule item.
 

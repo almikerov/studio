@@ -458,7 +458,7 @@ export function ScheduleView({
           </div>
         )}
       </CardContent>
-      <CardFooter id="card-footer" className={cn("gap-2 p-4 sm:p-6 justify-center", { "hidden": !isMobile })}>
+      <CardFooter id="card-footer" className={cn("gap-2 p-4 sm:p-6 justify-center", { "hidden": !isMobile })} data-no-print="true">
         <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
           <DialogTrigger asChild>
              <Button className="rounded-full h-16 w-16" size="icon"><Plus className="h-8 w-8" /></Button>

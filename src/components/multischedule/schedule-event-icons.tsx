@@ -11,6 +11,10 @@ import {
   Landmark,
   FileText,
   LucideProps,
+  Home,
+  Bus,
+  Lock,
+  Moon,
 } from 'lucide-react';
 import React from 'react';
 
@@ -28,6 +32,18 @@ const PassportIcon = (props: LucideProps) => (
   </svg>
 );
 
+const SoccerBall = (props: LucideProps) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <circle cx="12" cy="12" r="10"></circle>
+    <polygon points="16.33 7.67 12 10 7.67 7.67 7.67 16.33 12 14 16.33 16.33 16.33 7.67"></polygon>
+    <line x1="12" y1="22" x2="12" y2="10"></line>
+    <line x1="3.46" y1="14.54" x2="7.67" y2="7.67"></line>
+    <line x1="20.54" y1="9.46" x2="16.33" y2="16.33"></line>
+    <line x1="9.46" y1="3.46" x2="16.33" y2="7.67"></line>
+    <line x1="14.54" y1="20.54" x2="7.67" y2="16.33"></line>
+  </svg>
+);
+
 
 export const ICONS = {
   'football-field': FootballField,
@@ -40,6 +56,11 @@ export const ICONS = {
   bed: Bed,
   stadium: Landmark,
   document: FileText,
+  home: Home,
+  bus: Bus,
+  'soccer-ball': SoccerBall,
+  lock: Lock,
+  moon: Moon,
 };
 
 export type IconName = keyof typeof ICONS;
