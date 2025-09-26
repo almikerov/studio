@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -39,7 +39,6 @@ interface ScheduleViewProps {
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
   onSaveEvent: (item: ScheduleItem) => void;
-  onSaveTemplate: (name: string) => void;
   editingEvent: ScheduleItem | null;
   handleOpenEditModal: (item: ScheduleItem) => void;
   handleCloseEditModal: () => void;
@@ -51,7 +50,7 @@ interface ScheduleViewProps {
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
   selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, 
-  onSaveTemplate, editingEvent, handleOpenEditModal, handleCloseEditModal,
+  editingEvent, handleOpenEditModal, handleCloseEditModal,
   savedEvents, isMobile, onMoveEvent
 }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,7 +58,6 @@ export function ScheduleView({
   const [editedDescription, setEditedDescription] = useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const editRowRef = useRef<HTMLDivElement>(null);
-  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -152,10 +150,13 @@ export function ScheduleView({
     let newTime = editedTime;
     if (type === 'timed' && !editedTime) {
       newTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      setEditedTime(newTime);
     } else if (type !== 'timed') {
       newTime = '';
+      setEditedTime(newTime);
     }
-    setEditedTime(newTime);
+    // Save immediately
+    onUpdateEvent(id, { type: type, time: newTime });
   };
 
   const handleAddFromSavedClick = (event: SavedEvent) => {
