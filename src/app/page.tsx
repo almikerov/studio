@@ -241,54 +241,53 @@ export default function Home() {
     }
   };
 
-  const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const element = printableAreaRef.current;
     if (!element) return null;
   
     setIsDownloading(true);
+    
+    const clone = element.cloneNode(true) as HTMLElement;
+
+    // Prepare clone for rendering
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0px';
+    clone.style.width = '768px'; // Force desktop width
+    clone.style.height = 'auto';
+
+    // Remove UI elements that shouldn't be in the render
+    clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
+    clone.querySelector('#card-footer')?.remove();
+
+    // Make sure content is not collapsed or scrollable
+    const content = clone.querySelector<HTMLDivElement>('[data-schedule-content]');
+    if (content) {
+      content.style.height = 'auto';
+      content.style.maxHeight = 'none';
+      content.style.overflow = 'visible';
+    }
+
+    // Ensure all text is visible (remove truncation)
+    clone.querySelectorAll('.truncate').forEach(el => {
+      el.classList.remove('truncate');
+    });
+
+    // Make sure desktop-only elements are visible
+    clone.querySelectorAll('[data-desktop-only-on-render="true"]').forEach(el => {
+      if (el instanceof HTMLElement) {
+        el.style.display = 'flex';
+      }
+    });
+
+    document.body.appendChild(clone);
 
     try {
-      const canvas = await html2canvas(element, {
-        backgroundColor: null,
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         logging: false,
-        onclone: (clonedDoc) => {
-          const printableArea = clonedDoc.querySelector<HTMLDivElement>('.printable-area-for-render');
-          if (printableArea) {
-             printableArea.style.width = '768px';
-          }
-  
-          const content = clonedDoc.querySelector<HTMLDivElement>('[data-schedule-content]');
-          if (content) {
-            content.style.height = 'auto';
-            content.style.maxHeight = 'none';
-            content.style.overflow = 'visible';
-          }
-          
-          clonedDoc.querySelectorAll('.truncate').forEach(el => {
-              el.classList.remove('truncate');
-          });
-  
-          const footer = clonedDoc.getElementById('card-footer');
-          if (footer) footer.style.display = 'none';
-  
-          const imageUploaderTrigger = clonedDoc.getElementById('image-uploader-trigger');
-          if (imageUploaderTrigger) imageUploaderTrigger.style.display = 'none';
-          
-          const mobileMenuTrigger = clonedDoc.getElementById('mobile-menu-trigger');
-          if (mobileMenuTrigger) mobileMenuTrigger.style.display = 'none';
-          
-          clonedDoc.querySelectorAll('[data-mobile-arrow]').forEach(arrow => {
-              if (arrow instanceof HTMLElement) arrow.style.display = 'none';
-          });
-          
-          clonedDoc.querySelectorAll('[data-desktop-only-on-render]').forEach(el => {
-            if (el instanceof HTMLElement) {
-              el.style.display = 'flex';
-            }
-          });
-        }
+        backgroundColor: null,
       });
   
       return canvas;
@@ -296,14 +295,16 @@ export default function Home() {
       console.error("Error generating canvas: ", err);
       toast({
         title: "Ошибка обработки изображения",
-        description: "Не удалось обработать изображение. Попробуйте другой URL или убедитесь, что CORS разрешен.",
+        description: "Не удалось обработать изображение. Убедитесь, что CORS разрешен для URL изображения.",
         variant: "destructive"
       });
       return null;
     } finally {
+      document.body.removeChild(clone);
       setIsDownloading(false);
     }
   };
+
 
   const handleDownloadImage = async () => {
     const canvas = await generateCanvas();
@@ -364,7 +365,6 @@ export default function Home() {
           toast({ title: "Отправлено!", description: "Ваше расписание было успешно отправлено." });
         } catch (error) {
           console.error("Ошибка отправки: ", error);
-          // Don't show a toast if the user cancels the share sheet
           if ((error as Error).name !== 'AbortError') {
             toast({
               title: "Ошибка отправки",
@@ -559,6 +559,10 @@ export default function Home() {
                         {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
                         Скачать PNG
                       </Button>
+                       <Button onClick={handleCopyImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
+                        Копировать
+                      </Button>
                       <Button onClick={handleShareImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                         {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
                         Поделиться...
@@ -568,7 +572,7 @@ export default function Home() {
                     <Separator />
                      <div>
                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Изображение</h3>
-                       <ImageUploader onSetImageUrl={setImageUrl}>
+                       <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={setIsMobileMenuOpen}>
                          <Button variant="ghost" className="justify-start w-full">
                            <ImagePlus className="mr-2" /> Изменить изображение
                          </Button>

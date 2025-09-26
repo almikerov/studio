@@ -12,9 +12,10 @@ import { Slot } from '@radix-ui/react-slot';
 interface ImageUploaderProps {
   children?: React.ReactNode;
   onSetImageUrl: (url: string | null) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
+export function ImageUploader({ children, onSetImageUrl, onOpenChange }: ImageUploaderProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -25,7 +26,7 @@ export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
       const reader = new FileReader();
       reader.onloadend = () => {
         onSetImageUrl(reader.result as string);
-        setDialogOpen(false);
+        closeDialog();
       };
       reader.readAsDataURL(file);
     }
@@ -34,7 +35,7 @@ export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
   const handleUrlSubmit = () => {
     if (urlInput) {
       onSetImageUrl(urlInput);
-      setDialogOpen(false);
+      closeDialog();
       setUrlInput('');
     }
   };
@@ -42,12 +43,22 @@ export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleUrlSubmit();
   }
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    if(onOpenChange) onOpenChange(true); // hack to close mobile menu
+  }
+
+  const handleOpen = (open: boolean) => {
+    setDialogOpen(open);
+    if(onOpenChange) onOpenChange(open);
+  }
   
   const Trigger = children ? Slot : Button;
   
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-       <DialogTrigger asChild id="image-uploader-trigger">
+    <Dialog open={dialogOpen} onOpenChange={handleOpen}>
+       <DialogTrigger asChild id="image-uploader-trigger" data-no-print="true">
           <Trigger variant="ghost" size="icon">{children || <ImagePlus className="h-5 w-5" />}</Trigger>
        </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
@@ -77,7 +88,7 @@ export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
             />
           </div>
           <Button onClick={handleUrlSubmit}>Добавить по URL</Button>
-          <Button onClick={() => { onSetImageUrl(null); setDialogOpen(false); }} variant="destructive">
+          <Button onClick={() => { onSetImageUrl(null); closeDialog(); }} variant="destructive">
               <X className="mr-2" />
               Удалить изображение
           </Button>

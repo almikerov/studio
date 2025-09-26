@@ -264,7 +264,7 @@ export function ScheduleView({
             </div>
             <div className="flex items-center gap-2">
                 {isMobile && (
-                    <Button variant="ghost" size="icon" id="mobile-menu-trigger" onClick={() => setIsMobileMenuOpen(true)}>
+                    <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
                     </Button>
                 )}
@@ -279,11 +279,11 @@ export function ScheduleView({
                             className="object-cover"
                             crossOrigin="anonymous"
                         />
-                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
+                         <div data-no-print="true" className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
                               <ImagePlus className="h-8 w-8 text-white" />
                          </div>
                       </div>
-                    ) : <Button variant="ghost" size="icon" id="image-uploader-trigger"><ImagePlus className="h-5 w-5" /></Button>}
+                    ) : <Button variant="ghost" size="icon"><ImagePlus className="h-5 w-5" /></Button>}
                   </ImageUploader>
                 )}
                 {isMobile && imageUrl && (
@@ -317,12 +317,12 @@ export function ScheduleView({
                         )}
                         onClick={() => editingId !== item.id && handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle data-desktop-only-on-render="true" className={cn("cursor-grab active:cursor-grabbing p-2", isMobile ? "hidden" : "flex")}>
+                         <div {...provided.dragHandleProps} data-drag-handle data-desktop-only-on-render="true" data-no-print="true" className={cn("cursor-grab active:cursor-grabbing p-2", isMobile ? "hidden" : "flex")}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>
                          
                          {isMobile && (
-                            <Button data-mobile-arrow variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'up'); }}>
+                            <Button data-mobile-arrow data-no-print="true" variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'up'); }}>
                                 <ArrowUp className="h-5 w-5" />
                             </Button>
                          )}
@@ -420,7 +420,7 @@ export function ScheduleView({
                                 </>
                             )}
                             
-                            <div data-desktop-only-on-render="true" className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                            <div data-desktop-only-on-render="true" data-no-print="true" className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
                                 {item.type !== 'comment' && (
                                     <Button
                                     variant="ghost"
@@ -443,7 +443,7 @@ export function ScheduleView({
                                 </Button>
                             </div>
                             {isMobile && (
-                                <Button data-mobile-arrow variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
+                                <Button data-mobile-arrow data-no-print="true" variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
                                     <ArrowDown className="h-5 w-5" />
                                 </Button>
                             )}
@@ -455,7 +455,7 @@ export function ScheduleView({
                 ))}
                 {provided.placeholder}
                 {!isMobile && (
-                  <div className="h-10 flex justify-center items-center">
+                  <div className="h-10 flex justify-center items-center" data-no-print="true">
                     <Button
                       variant="ghost"
                       className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
@@ -514,10 +514,3 @@ const ChevronDown = (props: any) => (
     <path d="m6 9 6 6 6-6"/>
   </svg>
 );
-
-    
-
-    
-
-
-
