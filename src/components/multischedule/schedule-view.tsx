@@ -271,7 +271,7 @@ export function ScheduleView({
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500"></div>
 
-      <CardHeader className="p-4 sm:p-6">
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
@@ -295,7 +295,7 @@ export function ScheduleView({
             </div>
         </div>
       </CardHeader>
-      <CardContent data-schedule-content className="p-4 sm:p-6 pt-0">
+      <CardContent data-schedule-content className="p-4 sm:p-6 pt-2 sm:pt-4">
           <Droppable droppableId="schedule" isDropDisabled={!!isMobile}>
             {(provided) => (
               <div className="space-y-2 group/list" {...provided.droppableProps} ref={provided.innerRef}>
