@@ -185,6 +185,7 @@ export default function Home() {
       type: 'timed',
       ...newEventConfig,
     };
+
     if (newEvent.type === 'date') {
         newEvent.time = '';
         newEvent.description = newEvent.description || '';
@@ -193,6 +194,7 @@ export default function Home() {
     if (['h1', 'h2', 'h3', 'untimed', 'comment'].includes(newEvent.type)) {
         newEvent.time = '';
     }
+
     setSchedule(prev => [...prev, newEvent]);
     if (isMobile) {
       setEditingEvent(newEvent);
@@ -613,7 +615,11 @@ export default function Home() {
   }
 
   const addNewTypedEvent = (type: ScheduleItem['type']) => {
-    handleAddNewEvent({ type });
+    const config: Partial<ScheduleItem> = { type };
+    if (type === 'date') {
+      config.date = new Date().toISOString();
+    }
+    handleAddNewEvent(config);
     setIsAddEventDialogOpen(false);
   }
 
