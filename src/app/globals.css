@@ -86,4 +86,10 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  .cloned-for-rendering {
+    background-color: white !important;
+  }
+  .dark .cloned-for-rendering {
+    background-color: black !important;
+  }
 }

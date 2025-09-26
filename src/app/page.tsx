@@ -241,7 +241,7 @@ export default function Home() {
     }
   };
 
-    const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
+  const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const element = printableAreaRef.current;
     if (!element) return null;
   
@@ -250,15 +250,17 @@ export default function Home() {
     const clone = element.cloneNode(true) as HTMLElement;
 
     // Prepare clone for rendering
+    clone.classList.add('cloned-for-rendering');
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
-    clone.style.width = '768px'; // Force desktop width
+    clone.style.width = '768px';
     clone.style.height = 'auto';
+
+    document.body.appendChild(clone);
 
     // Remove UI elements that shouldn't be in the render
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
-    clone.querySelector('#card-footer')?.remove();
 
     // Make sure content is not collapsed or scrollable
     const content = clone.querySelector<HTMLDivElement>('[data-schedule-content]');
@@ -273,14 +275,28 @@ export default function Home() {
       el.classList.remove('truncate');
     });
 
-    // Make sure desktop-only elements are visible
+    // Make sure desktop-only elements are visible and mobile are hidden
     clone.querySelectorAll('[data-desktop-only-on-render="true"]').forEach(el => {
       if (el instanceof HTMLElement) {
         el.style.display = 'flex';
       }
     });
 
-    document.body.appendChild(clone);
+    // Replace Next.js optimized image with a standard img tag
+    const imageWrapper = clone.querySelector('[data-id="schedule-image-wrapper"]');
+    if (imageWrapper && imageUrl) {
+      const img = imageWrapper.querySelector('img');
+      if (img) {
+          img.src = imageUrl;
+          img.crossOrigin = "anonymous";
+          // We might need to wait for this image to load.
+          await new Promise(resolve => {
+              img.onload = resolve;
+              img.onerror = resolve; // Continue even if image fails to load
+          });
+      }
+    }
+
 
     try {
       const canvas = await html2canvas(clone, {
@@ -289,7 +305,6 @@ export default function Home() {
         logging: false,
         backgroundColor: null,
       });
-  
       return canvas;
     } catch (err) {
       console.error("Error generating canvas: ", err);

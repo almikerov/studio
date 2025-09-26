@@ -262,7 +262,7 @@ export function ScheduleView({
                   </PopoverContent>
                 </Popover>
             </div>
-            <div className="flex items-center gap-2">
+            <div data-id="schedule-image-wrapper" className="flex items-center gap-2">
                 {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
