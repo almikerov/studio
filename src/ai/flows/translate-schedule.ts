@@ -18,11 +18,14 @@ const TranslateScheduleInputSchema = z.object({
 });
 export type TranslateScheduleInput = z.infer<typeof TranslateScheduleInputSchema>;
 
-const TranslateScheduleOutputSchema = z.record(z.string(), z.string()).describe('A map of language code to translated schedule text.');
+const TranslateScheduleOutputSchema = z.object({
+  translations: z.record(z.string(), z.string()).describe('A map of language code to translated schedule text. The keys should be the language codes provided in the input, and the values should be the translated schedule text.')
+});
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput): Promise<TranslateScheduleOutput> {
-  return translateScheduleFlow(input);
+export async function translateSchedule(input: TranslateScheduleInput): Promise<Record<string, string>> {
+  const result = await translateScheduleFlow(input);
+  return result.translations;
 }
 
 const prompt = ai.definePrompt({
@@ -30,7 +33,7 @@ const prompt = ai.definePrompt({
   input: {schema: TranslateScheduleInputSchema},
   output: {schema: TranslateScheduleOutputSchema},
   prompt: `You are a translation expert. You will be given a schedule and a list of target languages.
-Your job is to translate the schedule into each of the target languages and return a JSON object where the keys are the language codes and the values are the translated schedules.
+Your job is to translate the schedule into each of the target languages and return a JSON object where the 'translations' key holds an object with language codes as keys and the translated schedules as values.
 
 Schedule:
 {{scheduleText}}
