@@ -397,8 +397,6 @@ export default function Home() {
     onAddEventFromSaved: handleAddNewEvent,
     updateSavedEvents,
     onAiParse: handleAiParse,
-    showLanguageSelector,
-    setShowLanguageSelector,
     selectedLanguages,
     onLanguageToggle: handleLanguageToggle,
     onTranslate: () => handleTranslate(selectedLanguages),
