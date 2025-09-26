@@ -158,7 +158,7 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to save templates to localStorage", error);
     }
-  }
+  };
 
 
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
@@ -305,6 +305,18 @@ export default function Home() {
       content.style.height = 'auto';
       content.style.maxHeight = 'none';
       content.style.overflow = 'visible';
+    }
+
+    // Show drag handles on mobile render if they are hidden
+    if (options.renderAsMobile) {
+        clone.querySelectorAll('[data-drag-handle]').forEach(el => {
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.classList.contains('hidden')) {
+                htmlEl.classList.remove('hidden');
+                htmlEl.classList.add('flex');
+            }
+        });
+        clone.querySelectorAll('[data-mobile-arrow]').forEach(el => el.remove());
     }
 
     const imageWrapper = clone.querySelector('[data-id="schedule-image-wrapper"]');
@@ -921,3 +933,5 @@ export default function Home() {
     </main>
   );
 }
+
+    

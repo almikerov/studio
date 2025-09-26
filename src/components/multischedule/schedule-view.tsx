@@ -229,11 +229,11 @@ export function ScheduleView({
                     >
                         <option value="timed">Со временем</option>
                         <option value="untimed">Без времени</option>
-                        <option value="comment">Комментарий</option>
                         <option value="date">Дата</option>
                         <option value="h1">Заголовок H1</option>
                         <option value="h2">Заголовок H2</option>
                         <option value="h3">Заголовок H3</option>
+                        <option value="comment">Комментарий</option>
                     </select>
                     <ChevronDown className="h-4 w-4 opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -345,7 +345,7 @@ export function ScheduleView({
                         )}
                         onClick={() => editingId !== item.id && handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle data-desktop-only-on-render="true" className={cn("cursor-grab active:cursor-grabbing p-2", isMobile ? "hidden" : "flex")}>
+                         <div {...provided.dragHandleProps} data-drag-handle className={cn("cursor-grab active:cursor-grabbing p-2 flex")}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>
                          
@@ -368,11 +368,11 @@ export function ScheduleView({
                                     <SelectContent>
                                         <SelectItem value="timed">Со временем</SelectItem>
                                         <SelectItem value="untimed">Без времени</SelectItem>
-                                        <SelectItem value="comment">Комментарий</SelectItem>
                                         <SelectItem value="date">Дата</SelectItem>
                                         <SelectItem value="h1">Заголовок H1</SelectItem>
                                         <SelectItem value="h2">Заголовок H2</SelectItem>
                                         <SelectItem value="h3">Заголовок H3</SelectItem>
+                                        <SelectItem value="comment">Комментарий</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -568,5 +568,7 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    
 
     
