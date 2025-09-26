@@ -169,7 +169,7 @@ export function ScheduleView({
   const renderEditContent = (item: ScheduleItem) => (
     <div className="flex flex-col gap-4 p-1">
         <div className="flex items-center gap-2">
-            <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
+            {item.type !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />}
              <Textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
@@ -366,11 +366,8 @@ export function ScheduleView({
 
                             {item.type === 'comment' ? (
                                 <>
-                                    <div className="w-8 h-8 flex items-center justify-center">
-                                      <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                                    </div>
                                     <p 
-                                      className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
+                                      className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full ml-12"
                                       onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
                                     >
                                       {item.description}
