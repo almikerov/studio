@@ -24,8 +24,8 @@ const TranslateTextOutputSchema = z.object({
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
-export async function translateText(input: TranslateTextInput, apiKey: string): Promise<TranslateTextOutput> {
-  const result = await translateTextFlow(input, { apiKey });
+export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
+  const result = await translateTextFlow(input);
   return result;
 }
 
@@ -53,8 +53,8 @@ const translateTextFlow = ai.defineFlow(
     inputSchema: TranslateTextInputSchema,
     outputSchema: TranslateTextOutputSchema,
   },
-  async (input, { apiKey }) => {
-    const {output} = await prompt(input, {}, { apiKey });
+  async (input) => {
+    const {output} = await prompt(input);
     return output!;
   }
 );

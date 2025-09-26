@@ -127,6 +127,8 @@ export default function Home() {
       const storedApiKey = localStorage.getItem('genkit-api-key');
       if (storedApiKey) {
         setApiKeyInput(storedApiKey);
+        // @ts-ignore
+        process.env.GENKIT_API_KEY = storedApiKey;
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
@@ -256,7 +258,7 @@ export default function Home() {
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
     try {
-      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages }, apiKey);
+      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages });
       const newTranslations = Object.entries(result).map(([lang, text]) => ({ lang, text }));
       
       // Update existing or add new
@@ -542,7 +544,7 @@ export default function Home() {
     }
 
     try {
-      const result = await parseScheduleFromText({ text }, apiKey);
+      const result = await parseScheduleFromText({ text });
       const newScheduleItems = result.schedule.map(item => ({
         ...item,
         id: Date.now().toString() + Math.random(),
@@ -585,6 +587,8 @@ export default function Home() {
   const handleSaveApiKey = () => {
     try {
       localStorage.setItem('genkit-api-key', apiKeyInput);
+      // @ts-ignore
+      process.env.GENKIT_API_KEY = apiKeyInput;
       toast({ title: 'API ключ сохранен' });
       setIsApiKeyDialogOpen(false);
     } catch (error) {

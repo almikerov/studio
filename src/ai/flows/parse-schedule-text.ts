@@ -30,8 +30,8 @@ const ParseScheduleTextOutputSchema = z.object({
 });
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string): Promise<ParseScheduleTextOutput> {
-  const result = await parseScheduleFlow(input, { apiKey });
+export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
+  const result = await parseScheduleFlow(input);
   return result;
 }
 
@@ -76,8 +76,8 @@ const parseScheduleFlow = ai.defineFlow(
     inputSchema: ParseScheduleTextInputSchema,
     outputSchema: ParseScheduleTextOutputSchema,
   },
-  async (input, { apiKey }) => {
-    const {output} = await prompt(input, {}, { apiKey });
+  async (input) => {
+    const {output} = await prompt(input);
     return output!;
   }
 );

@@ -24,8 +24,8 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput, apiKey: string): Promise<Record<string, string>> {
-  const result = await translateScheduleFlow(input, { apiKey });
+export async function translateSchedule(input: TranslateScheduleInput): Promise<Record<string, string>> {
+  const result = await translateScheduleFlow(input);
   return result.translations;
 }
 
@@ -62,8 +62,8 @@ const translateScheduleFlow = ai.defineFlow(
     inputSchema: TranslateScheduleInputSchema,
     outputSchema: TranslateScheduleOutputSchema,
   },
-  async (input, { apiKey }) => {
-    const {output} = await prompt(input, {}, { apiKey });
+  async (input) => {
+    const {output} = await prompt(input);
     return output!;
   }
 );
