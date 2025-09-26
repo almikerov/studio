@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -77,9 +76,15 @@ export function ScheduleView({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
-        if(editingId) {
+      const target = event.target as Node;
+      // Check if the click is outside the edit row
+      if (editRowRef.current && !editRowRef.current.contains(target)) {
+        // And check if the click is not inside any popover
+        const popover = document.querySelector('[data-radix-popper-content-wrapper]');
+        if (!popover || !popover.contains(target)) {
+          if (editingId) {
             handleSave(editingId);
+          }
         }
       }
     };
@@ -93,7 +98,7 @@ export function ScheduleView({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [editingId, editRowRef.current, editedTime, editedDescription, editedType, editedDate]);
+  }, [editingId, editRowRef, editedTime, editedDescription, editedType, editedDate]);
 
   const handleEdit = (item: ScheduleItem) => {
     if (isMobile) {
@@ -153,10 +158,13 @@ export function ScheduleView({
   const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
     const currentTime = schedule.find(i => i.id === id)?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const newTime = type === 'timed' ? currentTime : '';
-    onUpdateEvent(id, { type, time: newTime });
-
+    
+    // Immediately save and exit edit mode on desktop when type changes
     if (!isMobile && editingId === id) {
-        setEditingId(null); // Save and exit edit mode
+        onUpdateEvent(id, { type, time: newTime, description: editedDescription });
+        setEditingId(null);
+    } else {
+        onUpdateEvent(id, { type, time: newTime });
     }
 
     if (isMobile && editingEvent?.id === id) {
@@ -295,7 +303,7 @@ export function ScheduleView({
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500"></div>
 
-      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
@@ -402,6 +410,7 @@ export function ScheduleView({
                                       onKeyDown={(e) => handleKeyDown(e, item.id)}
                                       placeholder="Описание (необязательно)"
                                       className="flex-1"
+                                      autoFocus
                                     />
                                   </div>
                                 }
@@ -558,3 +567,5 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    
