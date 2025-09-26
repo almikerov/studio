@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit, Save, X, Languages } from 'lucide-react';
+import { IconName, ScheduleEventIcon } from './schedule-event-icons';
 
 interface SavedEventsProps {
   savedEvents: SavedEvent[];
@@ -109,6 +110,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate }: SavedEve
                   </div>
                 ) : (
                   <div className="flex items-start gap-2">
+                    {event.icon && <ScheduleEventIcon icon={event.icon} className="h-5 w-5 mt-0.5 text-muted-foreground" />}
                     <div className="flex-1 space-y-1">
                       <p className="font-semibold">{event.description}</p>
                       {Object.entries(event.translations).length > 0 && (

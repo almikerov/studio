@@ -49,12 +49,14 @@ export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderP
   }
 
   const Trigger = trigger ? Slot : Button;
-  const triggerProps = trigger ? {} : { variant: "ghost", size: "icon" };
+  const triggerProps = trigger ? {} : { variant: "ghost", size: "icon" as const };
+
+  if (imageUrl && !trigger) return null;
 
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-       <DialogTrigger asChild>
+       <DialogTrigger asChild id="image-uploader-trigger">
           <Trigger {...triggerProps}>
              {trigger || <ImagePlus className="h-5 w-5" />}
           </Trigger>

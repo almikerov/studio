@@ -11,10 +11,13 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
 import Image from 'next/image';
+import { IconDropdown } from './icon-dropdown';
+import { IconName, ScheduleEventIcon } from './schedule-event-icons';
+
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
-  onUpdateEvent: (id: string, time: string, description: string) => void;
+  onUpdateEvent: (id: string, time: string, description: string, icon?: IconName) => void;
   onDeleteEvent: (id: string) => void;
   onAddNewEvent: () => void;
   cardTitle: string;
@@ -30,6 +33,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [editedIcon, setEditedIcon] = useState<IconName>();
   const editRowRef = useRef<HTMLDivElement>(null);
 
 
@@ -43,17 +47,18 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [editingId, editedTime, editedDescription]);
+  }, [editingId, editedTime, editedDescription, editedIcon]);
 
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingId(item.id);
     setEditedTime(item.time);
     setEditedDescription(item.description);
+    setEditedIcon(item.icon);
   };
 
   const handleSave = (id: string) => {
-    onUpdateEvent(id, editedTime, editedDescription);
+    onUpdateEvent(id, editedTime, editedDescription, editedIcon);
     setEditingId(null);
   };
 
@@ -79,19 +84,20 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             </div>
             <div className="flex items-center gap-2">
               {imageUrl ? (
-                  <div className="relative w-24 h-24 rounded-md overflow-hidden cursor-pointer" >
-                     <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} trigger={
-                       <Image
-                          src={imageUrl}
-                          alt="Schedule image"
-                          fill
-                          className="object-cover"
-                      />
-                     } />
+                  <div className="relative w-24 h-24 rounded-md overflow-hidden cursor-pointer" onClick={() => {
+                    // This is a workaround to trigger the dialog
+                    const trigger = document.getElementById('image-uploader-trigger');
+                    if (trigger) trigger.click();
+                  }}>
+                     <Image
+                        src={imageUrl}
+                        alt="Schedule image"
+                        fill
+                        className="object-cover"
+                    />
                   </div>
-              ) : (
-                <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
-              )}
+              ) : null}
+              <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
             </div>
         </div>
       </CardHeader>
@@ -114,19 +120,20 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
 
                         {editingId === item.id ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
+                            <IconDropdown value={editedIcon} onChange={setEditedIcon} />
                             <Input
                               type="time"
                               value={editedTime}
                               onChange={(e) => setEditedTime(e.target.value)}
                               onKeyDown={(e) => handleKeyDown(e, item.id)}
                               className="w-28"
-                              autoFocus
                             />
                             <Input
                               value={editedDescription}
                               onChange={(e) => setEditedDescription(e.target.value)}
                               onKeyDown={(e) => handleKeyDown(e, item.id)}
                               className="flex-1"
+                              autoFocus
                             />
                             <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
                             <Button onClick={handleCancel} size="sm" variant="ghost">Отмена</Button>
@@ -134,7 +141,11 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                         ) : (
                           <>
                             <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
-                                <div className="w-5 h-5" />
+                                {item.icon ? (
+                                    <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
+                                ) : (
+                                    <div className="w-5 h-5" />
+                                )}
                             </div>
                             <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer">
                                 <p className="font-mono text-base font-semibold w-24 text-center">
