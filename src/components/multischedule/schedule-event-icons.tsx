@@ -35,14 +35,20 @@ const PassportIcon = (props: LucideProps) => (
 );
 
 const SoccerBall = (props: LucideProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="12" cy="12" r="10"></circle>
-    <polygon points="16.33 7.67 12 10 7.67 7.67 7.67 16.33 12 14 16.33 16.33 16.33 7.67"></polygon>
-    <line x1="12" y1="22" x2="12" y2="10"></line>
-    <line x1="3.46" y1="14.54" x2="7.67" y2="7.67"></line>
-    <line x1="20.54" y1="9.46" x2="16.33" y2="16.33"></line>
-    <line x1="9.46" y1="3.46" x2="16.33" y2="7.67"></line>
-    <line x1="14.54" y1="20.54" x2="7.67" y2="16.33"></line>
+  <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeMiterlimit="10" {...props}>
+    <circle cx="16" cy="16" r="13"/>
+    <polygon points="16,11 10,15.2 12.3,22 19.7,22 22,15.2 "/>
+    <polyline points="22,15 26,13 27,9.1 "/>
+    <polyline points="12,4 16,6 16,11 "/>
+    <line x1="20" y1="4" x2="16" y2="6"/>
+    <line x1="26" y1="13" x2="28.9" y2="14.8"/>
+    <polyline points="9.9,15 5.9,13 4.9,9.2 "/>
+    <line x1="5.9" y1="13" x2="3.1" y2="14.7"/>
+    <polyline points="5.3,23.4 10,24 12,22 "/>
+    <line x1="12" y1="28" x2="10" y2="24"/>
+    <polyline points="26.6,23.5 22,24 20,22 "/>
+    <line x1="20" y1="28" x2="22" y2="24"/>
   </svg>
 );
 

@@ -69,8 +69,8 @@ export function ScheduleView({
         setEditedTime(editingEvent.time);
         setEditedDescription(editingEvent.description);
         setEditedType(editingEvent.type);
-        if (editingEvent.type === 'date') {
-            setEditedDate(editingEvent.description ? new Date(editingEvent.description) : new Date());
+        if (editingEvent.type === 'date' && editingEvent.date) {
+            setEditedDate(new Date(editingEvent.date));
         }
     }
   }, [editingEvent]);
@@ -83,18 +83,18 @@ export function ScheduleView({
       setEditedTime(item.time);
       setEditedDescription(item.description);
       setEditedType(item.type);
-      if (item.type === 'date') {
-        setEditedDate(item.description ? new Date(item.description) : new Date());
+      if (item.type === 'date' && item.date) {
+        setEditedDate(new Date(item.date));
       }
     }
   };
 
   const handleSave = (id: string) => {
-    const description = editedType === 'date' && editedDate ? editedDate.toISOString() : editedDescription;
     onUpdateEvent(id, { 
       time: editedType === 'timed' ? editedTime : '', 
-      description,
+      description: editedDescription,
       type: editedType,
+      date: editedType === 'date' && editedDate ? editedDate.toISOString() : undefined,
     });
     
     setEditingId(null);
@@ -208,17 +208,25 @@ export function ScheduleView({
             </div>
             
             {editedType === 'date' && (
+              <>
                 <Calendar
                     mode="single"
                     selected={editedDate}
                     onSelect={(date) => {
                         setEditedDate(date);
                         if (date) {
-                            onUpdateEvent(item.id, { description: date.toISOString() });
+                            onUpdateEvent(item.id, { date: date.toISOString() });
                         }
                     }}
                     className="rounded-md border"
                     />
+                <Textarea 
+                    placeholder="Описание (необязательно)"
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    className="text-base"
+                />
+              </>
             )}
 
             { editedType === 'timed' && (
@@ -347,6 +355,7 @@ export function ScheduleView({
                                 }
 
                                 {editedType === 'date' && editedDate &&
+                                  <div className="flex gap-2 items-center flex-1">
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button variant="outline">
@@ -363,6 +372,14 @@ export function ScheduleView({
                                             />
                                         </PopoverContent>
                                     </Popover>
+                                    <Input 
+                                      value={editedDescription}
+                                      onChange={(e) => setEditedDescription(e.target.value)}
+                                      onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                      placeholder="Описание (необязательно)"
+                                      className="flex-1"
+                                    />
+                                  </div>
                                 }
                             
                                 {['timed', 'untimed', 'h1', 'h2', 'h3', 'comment'].includes(editedType) &&
@@ -407,10 +424,11 @@ export function ScheduleView({
                                 >
                                   {item.description}
                                 </p>
-                            ) : item.type === 'date' ? (
+                            ) : item.type === 'date' && item.date ? (
                                 <div className='flex items-center gap-2 font-semibold text-lg text-muted-foreground py-2 w-full'>
                                     <CalendarIcon className="h-5 w-5" />
-                                    <span>{format(new Date(item.description), 'PPP', { locale: ru })}</span>
+                                    <span>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
+                                    {item.description && <span className="text-base font-normal text-muted-foreground">- {item.description}</span>}
                                 </div>
                             ) : item.type === 'h1' ? (
                                 <h2 className='text-xl font-bold w-full'>{item.description}</h2>
@@ -516,6 +534,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-
-

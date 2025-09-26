@@ -70,7 +70,7 @@ export type ScheduleTemplate = {
 };
 
 const defaultSchedule: ScheduleItem[] = [
-    { id: '0', time: '', description: new Date().toISOString(), icon: undefined, type: 'date' },
+    { id: '0', time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
     { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera', color: 'blue', type: 'timed' },
     { id: '2', time: '12:30', description: 'Обед', icon: 'utensils', type: 'timed' },
     { id: '3', time: '', description: 'Купить билеты', icon: 'passport', type: 'untimed' },
@@ -191,7 +191,8 @@ export default function Home() {
     };
     if (newEvent.type === 'date') {
         newEvent.time = '';
-        newEvent.description = newEvent.description || new Date().toISOString();
+        newEvent.description = newEvent.description || '';
+        newEvent.date = newEvent.date || new Date().toISOString();
     }
     if (['h1', 'h2', 'h3', 'untimed', 'comment'].includes(newEvent.type)) {
         newEvent.time = '';
