@@ -32,39 +32,22 @@ const prompt = ai.definePrompt({
   name: 'translateSchedulePrompt',
   input: {schema: TranslateScheduleInputSchema},
   output: {schema: TranslateScheduleOutputSchema},
-  prompt: `Твоя задача — перевести присланное расписание тренировок на английский язык и отформатировать его для прямой отправки в чат WhatsApp.
+  prompt: `Твоя задача — перевести присланное расписание тренировок.
 
-**Ключевые инструкции:**
+**Ключевые инструкции по переводу:**
+Используй следующий футбольный вокабуляр:
+* \`зал\`, \`спортзал\` -> \`gym\`
+* \`тренировка\` -> \`training\`
+* \`разминка\` -> \`warm-up\`
+* \`поле\` -> \`pitch\`
+* \`теория\` -> \`analysis\`
+* \`сбор\` -> \`gathering\`
+* \`заезд\` -> \`base stay\`
 
-1.  **Перевод:** Используй следующий футбольный вокабуляр:
-    * \`зал\`, \`спортзал\` -> \`gym\`
-    * \`тренировка\` -> \`training\`
-    * \`разминка\` -> \`warm-up\`
-    * \`поле\` -> \`pitch\`
-    * \`теория\` -> \`analysis\`
-    * \`сбор\` -> \`gathering\`
-    * \`заезд\` -> \`base stay\`
-
-2.  **Форматирование для WhatsApp:**
-    * Весь ответ должен быть единым текстовым блоком, готовым к копированию и вставке.
-    * Используй звёздочки, чтобы выделить время и заголовки *жирным шрифтом* (например, *10:00*).
-    * Сохраняй структуру списка.
-
-**Пример готового ответа, который ты должен сгенерировать:**
-
-*Расписание на 25.07:*
-*09:00* - Gathering
-*10:00* - Warm-up
-*10:30* - Training on the pitch
-*13:30* - Lunch
-*16:00* - Analysis
-*18:00* - Gym
-
-Теперь, основываясь на этих правилах, переведи и отформатируй следующее расписание:
-
+Теперь, основываясь на этих правилах, переведи следующее расписание:
 {{scheduleText}}
 
-Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values.
+Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values. The translated text should be a single string with line breaks.
 Only translate to these languages:
 {{#each targetLanguages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 

@@ -149,6 +149,8 @@ export default function Home() {
             dragHandles.forEach(handle => {
                 if (handle instanceof HTMLElement) handle.style.display = 'none';
             });
+            const imageUploaderTrigger = clonedDoc.getElementById('image-uploader-trigger');
+            if(imageUploaderTrigger) imageUploaderTrigger.style.display = 'none';
         }
       });
       
