@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -164,11 +164,16 @@ export function ScheduleView({
     const currentTime = schedule.find(i => i.id === id)?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const newTime = type === 'timed' ? currentTime : '';
     
+    const updatePayload: Partial<ScheduleItem> = { type, time: newTime };
+    if (type === 'date') {
+        updatePayload.date = new Date().toISOString();
+    }
+
     if (!isMobile && editingId === id) {
-        onUpdateEvent(id, { type, time: newTime, description: editedDescription });
+        onUpdateEvent(id, { ...updatePayload, description: editedDescription });
         setEditingId(null);
     } else {
-        onUpdateEvent(id, { type, time: newTime });
+        onUpdateEvent(id, updatePayload);
     }
 
     if (isMobile && editingEvent?.id === id) {
@@ -311,7 +316,7 @@ export function ScheduleView({
             <div className="flex-1">
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
-            <div data-id="schedule-image-wrapper" className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                 {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -395,7 +400,6 @@ export function ScheduleView({
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button variant="outline">
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
                                                 {format(editedDate, 'PPP', { locale: ru })}
                                             </Button>
                                         </PopoverTrigger>
@@ -468,15 +472,15 @@ export function ScheduleView({
                                     </div>
                                 </div>
                             ) : item.type === 'h1' ? (
-                                <div className="w-full render-header-align-fix">
+                                <div className="w-full flex items-center render-header-align-fix">
                                   <h2 className='text-xl font-bold'>{item.description}</h2>
                                 </div>
                             ) : item.type === 'h2' ? (
-                                <div className="w-full render-header-align-fix">
+                                <div className="w-full flex items-center render-header-align-fix">
                                   <h3 className='text-lg font-semibold'>{item.description}</h3>
                                 </div>
                             ) : item.type === 'h3' ? (
-                                <div className="w-full render-header-align-fix">
+                                <div className="w-full flex items-center render-header-align-fix">
                                   <h4 className='text-base font-medium'>{item.description}</h4>
                                 </div>
                             ) : (
@@ -505,7 +509,7 @@ export function ScheduleView({
                                 </>
                             )}
                             
-                            <div data-no-print={isMobile} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                            <div data-no-print={isMobile ? "true" : undefined} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
                                 {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
                                     <Button
                                     variant="ghost"
@@ -580,6 +584,7 @@ export function ScheduleView({
     
 
     
+
 
 
 
