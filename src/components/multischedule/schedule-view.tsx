@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, MessageSquare, Menu } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -130,7 +130,7 @@ export function ScheduleView({
         time: type === 'timed' ? (editedTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
     });
     // Update local state for the editing UI
-    if (editingId === id) {
+    if (editingId === id || (isMobile && editingEvent?.id === id)) {
         setEditedType(type);
     }
 };
@@ -181,7 +181,7 @@ export function ScheduleView({
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="flex-1 text-lg"
                 rows={editedType === 'comment' ? 3 : 1}
-                autoFocus={editedType !== 'comment'}
+                autoFocus={false}
             />
         </div>
 

@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -322,6 +322,47 @@ export default function Home() {
     }
   }
 
+    const handleShareImage = async () => {
+    const canvas = await generateCanvas();
+    if (!canvas) return;
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        toast({ title: "Ошибка", description: "Не удалось создать изображение для отправки.", variant: "destructive" });
+        return;
+      }
+      const file = new File([blob], "multischedule.png", { type: "image/png" });
+      const data = {
+        files: [file],
+        title: 'Мое расписание',
+        text: cardTitle,
+      };
+
+      if (navigator.canShare && navigator.canShare(data)) {
+        try {
+          await navigator.share(data);
+          toast({ title: "Отправлено!", description: "Ваше расписание было успешно отправлено." });
+        } catch (error) {
+          console.error("Ошибка отправки: ", error);
+          // Don't show a toast if the user cancels the share sheet
+          if ((error as Error).name !== 'AbortError') {
+            toast({
+              title: "Ошибка отправки",
+              description: "Не удалось поделиться изображением.",
+              variant: "destructive"
+            });
+          }
+        }
+      } else {
+        toast({
+          title: "Не поддерживается",
+          description: "Ваш браузер не поддерживает функцию 'Поделиться'.",
+          variant: "destructive"
+        });
+      }
+    }, 'image/png');
+  };
+
   const handleDeleteTranslation = (lang: string) => {
     setTranslatedSchedules(prev => prev.filter(t => t.lang !== lang));
   };
@@ -498,9 +539,9 @@ export default function Home() {
                         {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
                         Скачать PNG
                       </Button>
-                      <Button onClick={handleCopyImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
-                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
-                        Копировать PNG
+                      <Button onClick={handleShareImage} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
+                        Поделиться...
                       </Button>
                     </div>
 
