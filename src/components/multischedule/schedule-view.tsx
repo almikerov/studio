@@ -66,7 +66,7 @@ export function ScheduleView({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (editingId && !isPopoverOpen && !isMobile && editRowRef.current && !editRowref.current.contains(event.target as Node)) {
+      if (editingId && !isPopoverOpen && !isMobile && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
         handleSave(editingId);
       }
     }
@@ -289,7 +289,7 @@ export function ScheduleView({
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color && !snapshot.isDragging && item.type !== 'comment' ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
-                        onClick={() => item.type !== 'comment' && handleEdit(item)}
+                        onClick={() => handleEdit(item)}
                       >
                          {!isMobile && <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -473,20 +473,6 @@ export function ScheduleView({
                     </ul>
                 ) : <p className="text-center text-muted-foreground py-4 text-sm">Нет сохраненных заготовок</p>}
               </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
-          <DialogTrigger asChild>
-              <Button variant="outline" className="rounded-full h-16 w-16" size="icon"><Save className="h-7 w-7" /></Button>
-          </DialogTrigger>
-          <DialogContent>
-              <DialogHeader><DialogTitle>Сохранить шаблон</DialogTitle></DialogHeader>
-              <div className="py-4">
-                  <Label htmlFor="template-name-mobile">Название шаблона</Label>
-                  <Input id="template-name-mobile" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
-              </div>
-              <DialogFooter><Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </CardFooter>
