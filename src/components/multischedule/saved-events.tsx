@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit, Save, PlusCircle } from 'lucide-react';
 import { ScheduleEventIcon, IconName } from './schedule-event-icons';
 import { IconDropdown } from './icon-dropdown';
-import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface SavedEventsProps {
   savedEvents: SavedEvent[];
@@ -80,10 +79,6 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
 
   return (
     <div className="flex flex-col h-full">
-        <DialogHeader className="p-6 pb-2">
-            <DialogTitle>Мои события</DialogTitle>
-            <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
-        </DialogHeader>
       <div className="p-6 pt-2">
         <div className="flex justify-end">
             <Button onClick={() => setIsCreating(true)} size="sm">

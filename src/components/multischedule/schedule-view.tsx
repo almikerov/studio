@@ -46,20 +46,21 @@ interface ScheduleViewProps {
   onMoveEvent: (index: number, direction: 'up' | 'down') => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
+  isAddEventDialogOpen: boolean;
+  setIsAddEventDialogOpen: (open: boolean) => void;
 }
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
   selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
-  isMobile, onMoveEvent, setIsMobileMenuOpen
+  isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen
 }: ScheduleViewProps) {
   const editRowRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
-  const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState<string | null>(null);
 
@@ -134,16 +135,6 @@ export function ScheduleView({
     }
 };
 
-  const handleAddFromSavedClick = (event: SavedEvent) => {
-    onAddNewEvent(event);
-    setIsAddEventDialogOpen(false);
-  }
-
-  const handleAddNewBlankEvent = () => {
-    onAddNewEvent();
-    setIsAddEventDialogOpen(false);
-  }
-
   const handleAddNewEventAndEdit = () => {
     const newId = Date.now().toString() + Math.random(); // ensure unique id
     const newEvent: ScheduleItem = {
@@ -171,10 +162,11 @@ export function ScheduleView({
   // Used for Mobile edit modal
   const renderEditContent = (item: ScheduleItem) => {
     const handleSaveToPreset = () => {
-        const currentItemState = schedule.find(s => s.id === item.id) || item;
-        const eventToSave = {
-            ...currentItemState,
+        const eventToSave: Partial<ScheduleItem> = {
+            id: item.id,
             description: editedDescription,
+            icon: item.icon,
+            color: item.color,
             time: editedType === 'timed' ? editedTime : '',
             type: editedType,
         };
@@ -474,23 +466,7 @@ export function ScheduleView({
         )}
       </CardContent>
       <CardFooter id="card-footer" className={cn("gap-2 p-4 sm:p-6 justify-center", { "hidden": !isMobile })} data-no-print="true">
-        <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
-          <DialogTrigger asChild>
-             <Button className="rounded-full h-16 w-16" size="icon"><Plus className="h-8 w-8" /></Button>
-          </DialogTrigger>
-          <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Добавить событие</DialogTitle>
-              </DialogHeader>
-              <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                <Button variant="outline" className="w-full justify-start" onClick={handleAddNewBlankEvent}>
-                    <Plus className="mr-4" /> Новое событие
-                </Button>
-                <p className="text-sm text-muted-foreground">Или выберите из заготовок:</p>
-                {/* SavedEvents content can be mapped here */}
-              </div>
-          </DialogContent>
-        </Dialog>
+        <Button className="rounded-full h-16 w-16" size="icon" onClick={() => setIsAddEventDialogOpen(true)}><Plus className="h-8 w-8" /></Button>
       </CardFooter>
 
       {/* Mobile Edit Modal */}
@@ -505,6 +481,5 @@ export function ScheduleView({
     </Card>
   );
 }
-
 
 

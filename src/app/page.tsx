@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Separator } from '@/components/ui/separator';
 import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { Input } from '@/components/ui/input';
+import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -89,6 +90,7 @@ export default function Home() {
   const [savedTemplates, setSavedTemplates] = useState<ScheduleTemplate[]>([]);
 
   const [editingEvent, setEditingEvent] = useState<ScheduleItem | null>(null);
+  const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
 
   const isMobile = useIsMobile();
 
@@ -553,6 +555,16 @@ export default function Home() {
     });
     setIsRenderOptionsOpen(true);
   };
+  
+  const handleAddFromSavedClick = (event: SavedEvent) => {
+    handleAddNewEvent(event);
+    setIsAddEventDialogOpen(false);
+  }
+
+  const handleAddNewBlankEvent = () => {
+    handleAddNewEvent();
+    setIsAddEventDialogOpen(false);
+  }
 
 
   return (
@@ -606,6 +618,8 @@ export default function Home() {
                 onMoveEvent={moveEvent}
                 isMobileMenuOpen={isMobileMenuOpen}
                 setIsMobileMenuOpen={setIsMobileMenuOpen}
+                isAddEventDialogOpen={isAddEventDialogOpen}
+                setIsAddEventDialogOpen={setIsAddEventDialogOpen}
               />
             </DragDropContext>
             <TranslatedSchedulesView 
@@ -787,6 +801,10 @@ export default function Home() {
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                              <DialogHeader className="p-6 pb-0">
+                                <DialogTitle>Мои события</DialogTitle>
+                                <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+                              </DialogHeader>
                              <SavedEvents
                                 savedEvents={savedEvents}
                                 onAdd={(event) => {
@@ -808,6 +826,28 @@ export default function Home() {
               </SheetContent>
            </Sheet>
         )}
+
+        <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Добавить событие</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                <Button variant="outline" className="w-full justify-start text-base py-6" onClick={handleAddNewBlankEvent}>
+                    <Plus className="mr-4" /> Новое событие
+                </Button>
+                
+                {savedEvents.length > 0 && <Separator />}
+
+                {savedEvents.map(event => (
+                  <Button key={event.id} variant="ghost" className="w-full justify-start text-base py-6" onClick={() => handleAddFromSavedClick(event)}>
+                      {event.icon ? <ScheduleEventIcon icon={event.icon} className="h-5 w-5 mr-4 text-muted-foreground" /> : <div className="w-5 h-5 mr-4"/>}
+                      {event.description}
+                  </Button>
+                ))}
+              </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

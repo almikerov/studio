@@ -270,8 +270,8 @@ export function DesktopNavbar({
                             </DialogTrigger>
                             <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
                                 <DialogHeader className="p-6 pb-0">
-                                <DialogTitle>Мои события</DialogTitle>
-                                <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+                                  <DialogTitle>Мои события</DialogTitle>
+                                  <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
                                 </DialogHeader>
                                 <SavedEvents
                                     savedEvents={savedEvents}
