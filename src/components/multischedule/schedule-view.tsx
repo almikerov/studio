@@ -59,6 +59,9 @@ export function ScheduleView({
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
+  const [lastAdded, setLastAdded] = useState<string | null>(null);
+  const editRowRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (editingEvent) { // For mobile modal
@@ -82,7 +85,7 @@ export function ScheduleView({
 
   const handleSave = (id: string) => {
     onUpdateEvent(id, { 
-      time: editedTime, 
+      time: editedType === 'timed' ? editedTime : '', 
       description: editedDescription,
       type: editedType,
     });
@@ -111,7 +114,9 @@ export function ScheduleView({
 
   const handleIconChange = (id: string, icon: IconName | undefined) => {
     onUpdateEvent(id, { icon });
-    setIsIconPopoverOpen(false);
+    if(isMobile) {
+      setIsIconPopoverOpen(false);
+    }
   }
 
   const handleColorChange = (id: string, color: string | undefined) => {
@@ -119,11 +124,13 @@ export function ScheduleView({
   }
   
   const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
+    // Immediately update the type
     onUpdateEvent(id, {
         type,
         time: type === 'timed' ? editedTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
     });
-    setEditedType(type); // also update local state for inline editing
+    // Update local state for the editing UI
+    setEditedType(type);
 };
 
   const handleAddFromSavedClick = (event: SavedEvent) => {
@@ -136,6 +143,34 @@ export function ScheduleView({
     setIsAddEventDialogOpen(false);
   }
 
+  const handleAddNewEventAndEdit = () => {
+    const newId = Date.now().toString() + Math.random(); // ensure unique id
+    const newEvent: ScheduleItem = {
+      id: newId,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      description: 'Новое событие',
+      type: 'timed',
+    };
+    
+    // Add the new event to the schedule first
+    const newSchedule = [...schedule, newEvent];
+    onUpdateEvent(newEvent.id, newEvent); // This is a bit of a hack, assumes onUpdate can also add
+    setSchedule(newSchedule); // This should be handled in the parent component
+    
+    setLastAdded(newId);
+  }
+
+  useEffect(() => {
+    if (lastAdded) {
+      const itemToEdit = schedule.find(item => item.id === lastAdded);
+      if (itemToEdit) {
+        handleEdit(itemToEdit);
+      }
+      setLastAdded(null);
+    }
+  }, [schedule, lastAdded]);
+
+
   // Used for Mobile edit modal
   const renderEditContent = (item: ScheduleItem) => (
     <div className="flex flex-col gap-4 p-1">
@@ -146,6 +181,7 @@ export function ScheduleView({
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="flex-1 text-lg"
                 rows={editedType === 'comment' ? 3 : 1}
+                autoFocus={editedType !== 'comment'}
             />
         </div>
 
@@ -201,23 +237,6 @@ export function ScheduleView({
     </div>
   );
 
-  const [lastAdded, setLastAdded] = useState<string | null>(null);
-
-  const handleAddNewEventAndEdit = () => {
-    const newId = Date.now().toString();
-    onAddNewEvent({id: newId});
-    setLastAdded(newId);
-  }
-
-  useEffect(() => {
-    if (lastAdded) {
-      const itemToEdit = schedule.find(item => item.id === lastAdded);
-      if (itemToEdit) {
-        handleEdit(itemToEdit);
-      }
-      setLastAdded(null);
-    }
-  }, [schedule, lastAdded]);
 
   return (
     <Card className="shadow-lg overflow-hidden relative border-none sm:border sm:rounded-lg">
@@ -281,7 +300,7 @@ export function ScheduleView({
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color && !snapshot.isDragging && item.type !== 'comment' ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
-                        onClick={() => handleEdit(item)}
+                        onClick={() => editingId !== item.id && handleEdit(item)}
                       >
                          {!isMobile && <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -294,8 +313,10 @@ export function ScheduleView({
                          )}
 
                         {editingId === item.id && !isMobile ? (
-                          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                                <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
+                          <div className="flex items-center gap-2 flex-1" ref={editRowRef} onClick={(e) => e.stopPropagation()}>
+                                {editedType !== 'comment' &&
+                                  <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
+                                }
                             
                                 <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
                                     <SelectTrigger className="w-[150px]">
@@ -352,11 +373,9 @@ export function ScheduleView({
                           </div>
                         ) : (
                           <>
-
                             {item.type === 'comment' ? (
                                 <p 
                                   className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
-                                  onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
                                 >
                                   {item.description}
                                 </p>
@@ -384,16 +403,18 @@ export function ScheduleView({
                                 </>
                             )}
                             
-                            <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                  onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                                  aria-label={`Save event: ${item.description}`}
-                                >
-                                  <Bookmark className="h-4 w-4" />
-                                </Button>
+                            <div className={cn("flex items-center gap-1 opacity-0 transition-opacity", !isMobile && "group-hover/item:opacity-100")}>
+                                {item.type !== 'comment' && (
+                                    <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                    onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                                    aria-label={`Save event: ${item.description}`}
+                                    >
+                                    <Bookmark className="h-4 w-4" />
+                                    </Button>
+                                )}
                                 <Button
                                 variant="ghost"
                                 size="icon"
@@ -487,5 +508,7 @@ const ChevronDown = (props: any) => (
     <path d="m6 9 6 6 6-6"/>
   </svg>
 );
+
+    
 
     
