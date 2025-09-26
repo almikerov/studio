@@ -34,6 +34,7 @@ const prompt = ai.definePrompt({
   output: {schema: TranslateScheduleOutputSchema},
   prompt: `You are a translation expert. You will be given a schedule and a list of target languages.
 Your job is to translate the schedule into each of the target languages and return a JSON object where the 'translations' key holds an object with language codes as keys and the translated schedules as values.
+Preserve the line breaks from the original schedule in your translations.
 
 Schedule:
 {{scheduleText}}
