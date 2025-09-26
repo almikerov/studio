@@ -19,11 +19,12 @@ const AVAILABLE_LANGUAGES = [
 
 interface TranslationControlsProps {
   isLoading: boolean;
+  isDownloading: boolean;
   onTranslate: (languages: string[]) => void;
   onDownload: () => void;
 }
 
-export function TranslationControls({ isLoading, onTranslate, onDownload }: TranslationControlsProps) {
+export function TranslationControls({ isLoading, isDownloading, onTranslate, onDownload }: TranslationControlsProps) {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
 
@@ -67,7 +68,7 @@ export function TranslationControls({ isLoading, onTranslate, onDownload }: Tran
         </CardContent>
       )}
       <CardFooter className="flex flex-col sm:flex-row gap-4">
-        <Button onClick={handleTranslateClick} disabled={isLoading} className="w-full sm:w-auto">
+        <Button onClick={handleTranslateClick} disabled={isLoading || isDownloading} className="w-full sm:w-auto">
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -75,9 +76,13 @@ export function TranslationControls({ isLoading, onTranslate, onDownload }: Tran
           )}
           {isLoading ? 'Переводим...' : (showLanguageSelector ? 'Подтвердить перевод' : 'Перевести')}
         </Button>
-        <Button onClick={onDownload} variant="outline" className="w-full sm:w-auto">
-            <Download className="mr-2 h-4 w-4" />
-            Скачать изображение
+        <Button onClick={onDownload} variant="outline" className="w-full sm:w-auto" disabled={isDownloading || isLoading}>
+            {isDownloading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            {isDownloading ? 'Загрузка...' : 'Скачать изображение'}
         </Button>
       </CardFooter>
     </Card>

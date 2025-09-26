@@ -35,6 +35,7 @@ export default function Home() {
   ]);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
   const [mainTitle, setMainTitle] = useState('Название');
@@ -128,26 +129,47 @@ export default function Home() {
     }
   };
 
-  const handleDownloadImage = () => {
+  const handleDownloadImage = async () => {
     const element = printableAreaRef.current;
-    if (element) {
-      html2canvas(element, {
-        backgroundColor: '#1C1917', // dark theme background
+    if (!element) return;
+  
+    setIsDownloading(true);
+  
+    try {
+      // Temporarily remove focus from any active element to avoid weird rendering
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      
+      // Wait a moment for UI to settle
+      await new Promise(resolve => setTimeout(resolve, 50));
+  
+      const canvas = await html2canvas(element, {
+        backgroundColor: null, // Use background from element
         scale: 2,
         useCORS: true,
-      }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'multischedule.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-      }).catch(err => {
-        console.error("Error generating canvas: ", err);
-        toast({
-          title: "Ошибка загрузки изображения",
-          description: "Не удалось обработать изображение. Попробуйте другой URL или убедитесь, что CORS разрешен.",
-          variant: "destructive"
-        })
+        logging: false,
+        onclone: (document) => {
+            // This runs in the cloned document before rendering
+            // We can make final adjustments here to ensure visual consistency
+            // For example, removing focus rings or other dynamic UI states
+        }
       });
+      
+      const link = document.createElement('a');
+      link.download = 'multischedule.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+  
+    } catch (err) {
+      console.error("Error generating canvas: ", err);
+      toast({
+        title: "Ошибка загрузки изображения",
+        description: "Не удалось обработать изображение. Попробуйте другой URL или убедитесь, что CORS разрешен.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -272,6 +294,7 @@ export default function Home() {
 
           <TranslationControls
             isLoading={isLoading}
+            isDownloading={isDownloading}
             onTranslate={handleTranslate}
             onDownload={handleDownloadImage}
           />

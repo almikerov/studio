@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useRef, useEffect } from 'react';
 import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +33,21 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [editedIcon, setEditedIcon] = useState<IconName | undefined>(undefined);
+  const editRowRef = useRef<HTMLDivElement>(null);
+
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (editingId && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
+        handleSave(editingId);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editingId, editRowRef, editedTime, editedDescription, editedIcon]);
+
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingId(item.id);
@@ -100,7 +115,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                          </div>
 
                         {editingId === item.id ? (
-                          <>
+                          <div ref={editRowRef} className="flex items-center gap-2 flex-1">
                             <IconDropdown selectedIcon={editedIcon} onIconChange={setEditedIcon} />
                             <Input
                               type="time"
@@ -118,7 +133,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                             />
                             <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
                             <Button onClick={handleCancel} size="sm" variant="ghost">Отмена</Button>
-                          </>
+                          </div>
                         ) : (
                           <>
                             <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
