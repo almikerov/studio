@@ -57,37 +57,17 @@ export function ScheduleView({
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
-  const editRowRef = useRef<HTMLDivElement>(null);
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (editingId && !isPopoverOpen && !isMobile && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
-        handleSave(editingId);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [editingId, editedTime, editedDescription, editedType, isPopoverOpen, isMobile]);
-
-  useEffect(() => {
-    if (editingEvent) {
+    if (editingEvent) { // For mobile modal
         setEditedTime(editingEvent.time);
         setEditedDescription(editingEvent.description);
         setEditedType(editingEvent.type);
-    } else if (!isMobile && editingId) {
-        const item = schedule.find(i => i.id === editingId);
-        if(item) {
-            setEditedTime(item.time);
-            setEditedDescription(item.description);
-            setEditedType(item.type);
-        }
     }
-  }, [editingEvent, editingId, isMobile, schedule]);
+  }, [editingEvent]);
 
 
   const handleEdit = (item: ScheduleItem) => {
@@ -145,18 +125,13 @@ export function ScheduleView({
     onUpdateEvent(id, { color });
   }
   
-  const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
+  const handleTypeChangeInEdit = (type: ScheduleItem['type']) => {
     setEditedType(type);
-    let newTime = editedTime;
     if (type === 'timed' && !editedTime) {
-      newTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setEditedTime(newTime);
+      setEditedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } else if (type !== 'timed') {
-      newTime = '';
-      setEditedTime(newTime);
+      setEditedTime('');
     }
-    // Save immediately
-    onUpdateEvent(id, { type: type, time: newTime });
   };
 
   const handleAddFromSavedClick = (event: SavedEvent) => {
@@ -169,6 +144,7 @@ export function ScheduleView({
     setIsAddEventDialogOpen(false);
   }
 
+  // Used for Mobile edit modal
   const renderEditContent = (item: ScheduleItem) => (
     <div className="flex flex-col gap-4 p-1">
         <div className="flex items-center gap-2">
@@ -185,7 +161,7 @@ export function ScheduleView({
 
         <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
             <Label htmlFor={`type-select-${item.id}`} className="text-base font-normal">Тип события</Label>
-            <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+            <Select value={editedType} onValueChange={(value) => handleTypeChangeInEdit(value as ScheduleItem['type'])}>
                 <SelectTrigger id={`type-select-${item.id}`} className="w-[180px]">
                     <SelectValue />
                 </SelectTrigger>
@@ -301,10 +277,10 @@ export function ScheduleView({
                          </div>}
 
                         {editingId === item.id && !isMobile ? (
-                          <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                             { editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />}
                             
-                            <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+                            <Select value={editedType} onValueChange={(value) => handleTypeChangeInEdit(value as ScheduleItem['type'])}>
                                 <SelectTrigger className="w-[150px]">
                                     <SelectValue />
                                 </SelectTrigger>
