@@ -10,6 +10,7 @@ import { TranslationControls } from '@/components/multischedule/translation-cont
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { SavedEvents } from '@/components/multischedule/saved-events';
+import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 
 export type ScheduleItem = { 
@@ -26,6 +27,15 @@ export type SavedEvent = {
   id: string;
   description: string;
   icon?: IconName;
+};
+
+export type ScheduleTemplate = {
+  id: string;
+  name: string;
+  schedule: ScheduleItem[];
+  cardTitle: string;
+  comment: string;
+  imageUrl: string | null;
 };
 
 export default function Home() {
@@ -47,6 +57,7 @@ export default function Home() {
   const [comment, setComment] = useState('');
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
+  const [savedTemplates, setSavedTemplates] = useState<ScheduleTemplate[]>([]);
 
   useEffect(() => {
     try {
@@ -54,8 +65,12 @@ export default function Home() {
       if (storedEvents) {
         setSavedEvents(JSON.parse(storedEvents));
       }
+      const storedTemplates = localStorage.getItem('savedTemplates');
+      if (storedTemplates) {
+        setSavedTemplates(JSON.parse(storedTemplates));
+      }
     } catch (error) {
-      console.error("Failed to load saved events from localStorage", error);
+      console.error("Failed to load from localStorage", error);
     }
   }, []);
   
@@ -67,6 +82,15 @@ export default function Home() {
       console.error("Failed to save events to localStorage", error);
     }
   };
+
+  const updateSavedTemplates = (newTemplates: ScheduleTemplate[]) => {
+    setSavedTemplates(newTemplates);
+    try {
+      localStorage.setItem('savedTemplates', JSON.stringify(newTemplates));
+    } catch (error) {
+      console.error("Failed to save templates to localStorage", error);
+    }
+  }
 
 
   const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
@@ -134,17 +158,15 @@ export default function Home() {
     }
   };
 
-  const handleDownloadImage = async () => {
+  const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const element = printableAreaRef.current;
-    if (!element) return;
-  
+    if (!element) return null;
+
     setIsDownloading(true);
-  
     try {
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
-      
       await new Promise(resolve => setTimeout(resolve, 50));
   
       const canvas = await html2canvas(element, {
@@ -169,23 +191,56 @@ export default function Home() {
             }
         }
       });
-      
-      const link = document.createElement('a');
-      link.download = 'multischedule.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-  
+      return canvas;
     } catch (err) {
       console.error("Error generating canvas: ", err);
       toast({
-        title: "Ошибка загрузки изображения",
+        title: "Ошибка обработки изображения",
         description: "Не удалось обработать изображение. Попробуйте другой URL или убедитесь, что CORS разрешен.",
         variant: "destructive"
       });
+      return null;
     } finally {
       setIsDownloading(false);
     }
+  }
+
+  const handleDownloadImage = async () => {
+    const canvas = await generateCanvas();
+    if (!canvas) return;
+    
+    const link = document.createElement('a');
+    link.download = 'multischedule.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   };
+
+  const handleCopyImage = async () => {
+    const canvas = await generateCanvas();
+    if (!canvas) return;
+
+    try {
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          throw new Error('Не удалось создать blob из canvas');
+        }
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        toast({
+          title: "Скопировано",
+          description: "Изображение скопировано в буфер обмена.",
+        });
+      }, 'image/png');
+    } catch (err) {
+      console.error("Ошибка копирования в буфер обмена: ", err);
+      toast({
+        title: "Ошибка копирования",
+        description: "Ваш браузер может не поддерживать эту функцию, или было отказано в доступе.",
+        variant: "destructive"
+      });
+    }
+  }
 
   const handleDeleteTranslation = (lang: string) => {
     setTranslatedSchedules(prev => prev.filter(t => t.lang !== lang));
@@ -224,6 +279,32 @@ export default function Home() {
   const handleUpdateSaved = (updatedEvent: SavedEvent) => {
     updateSavedEvents(savedEvents.map(event => event.id === updatedEvent.id ? updatedEvent : event));
   };
+
+  const handleSaveTemplate = (name: string) => {
+    const newTemplate: ScheduleTemplate = {
+      id: Date.now().toString(),
+      name,
+      schedule,
+      cardTitle,
+      comment,
+      imageUrl,
+    };
+    updateSavedTemplates([...savedTemplates, newTemplate]);
+    toast({ title: 'Шаблон сохранен', description: `Шаблон "${name}" был сохранен.` });
+  };
+  
+  const handleLoadTemplate = (template: ScheduleTemplate) => {
+    setSchedule(template.schedule.map(item => ({...item, id: Date.now().toString() + Math.random()}))); // new IDs
+    setCardTitle(template.cardTitle);
+    setComment(template.comment);
+    setImageUrl(template.imageUrl);
+    setTranslatedSchedules([]); // Clear translations
+    toast({ title: 'Шаблон загружен', description: `Загружен шаблон "${template.name}".` });
+  };
+  
+  const handleDeleteTemplate = (id: string) => {
+    updateSavedTemplates(savedTemplates.filter(template => template.id !== id));
+  };
   
   return (
     <main className="container mx-auto p-4 sm:p-8">
@@ -259,10 +340,17 @@ export default function Home() {
             isDownloading={isDownloading}
             onTranslate={handleTranslate}
             onDownload={handleDownloadImage}
+            onCopy={handleCopyImage}
+            onSaveTemplate={handleSaveTemplate}
           />
         </section>
 
         <aside className="space-y-8">
+            <SavedTemplates 
+              templates={savedTemplates}
+              onLoad={handleLoadTemplate}
+              onDelete={handleDeleteTemplate}
+            />
             <SavedEvents 
                 savedEvents={savedEvents}
                 onAdd={handleAddFromSaved}
@@ -275,3 +363,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
