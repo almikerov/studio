@@ -5,6 +5,7 @@ import type { ScheduleTemplate } from '@/app/page';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Trash2 } from 'lucide-react';
+import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface SavedTemplatesProps {
   templates: ScheduleTemplate[];
@@ -22,10 +23,10 @@ export function SavedTemplates({ templates, onLoad, onDelete, onClose }: SavedTe
 
   return (
     <div className="flex flex-col h-full">
-       <div className="p-6 border-b">
-        <h2 className="text-2xl font-bold">Мои расписания</h2>
-        <p className="text-muted-foreground mt-2">Загрузите один из ваших сохраненных шаблонов, чтобы быстро начать работу.</p>
-      </div>
+       <DialogHeader className="p-6 border-b">
+        <DialogTitle className="text-2xl font-bold">Мои расписания</DialogTitle>
+        <DialogDescription className="mt-2">Загрузите один из ваших сохраненных шаблонов, чтобы быстро начать работу.</DialogDescription>
+      </DialogHeader>
       
       <div className="flex-1 overflow-y-auto p-6">
         {templates.length > 0 ? (

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit, Save, PlusCircle } from 'lucide-react';
 import { ScheduleEventIcon, IconName } from './schedule-event-icons';
 import { IconDropdown } from './icon-dropdown';
+import { DialogDescription } from '@/components/ui/dialog';
 
 interface SavedEventsProps {
   savedEvents: SavedEvent[];
@@ -70,12 +71,14 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 pt-2 border-b flex justify-between items-center">
-        <p className="text-muted-foreground">Управляйте вашими сохраненными событиями.</p>
-        <Button onClick={() => setIsCreating(true)} size="sm">
-            <PlusCircle className="mr-2"/>
-            Создать
-        </Button>
+      <div className="p-6 pt-2 border-b">
+        <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+        <div className="flex justify-end">
+            <Button onClick={() => setIsCreating(true)} size="sm">
+                <PlusCircle className="mr-2"/>
+                Создать
+            </Button>
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto p-6 space-y-4">

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Wand2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface AiScheduleParserProps {
   onParse: (text: string) => Promise<void>;
@@ -33,10 +34,10 @@ export function AiScheduleParser({ onParse, isLoading, onClose }: AiSchedulePars
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6">
-        <h2 className="text-2xl font-bold">ИИ-редактор</h2>
-        <p className="text-muted-foreground mt-2">Вставьте или напишите свое расписание в свободной форме, и ИИ автоматически его структурирует.</p>
-      </div>
+      <DialogHeader className="p-6">
+        <DialogTitle className="text-2xl font-bold">ИИ-редактор</DialogTitle>
+        <DialogDescription className="mt-2">Вставьте или напишите свое расписание в свободной форме, и ИИ автоматически его структурирует.</DialogDescription>
+      </DialogHeader>
 
       <div className="flex-1 px-6">
         <Textarea
