@@ -29,7 +29,7 @@ const DebugModelsOutputSchema = z.object({
 });
 export type DebugModelsOutput = z.infer<typeof DebugModelsOutputSchema>;
 
-const MODELS_TO_TEST = ['gemini-1.5-flash', 'gemini-1.5-pro-001', 'gemini-pro'];
+const MODELS_TO_TEST = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro-001'];
 
 export async function debugModels(
   input: DebugModelsInput
