@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -8,6 +9,7 @@ import {
   Bed,
   Dumbbell,
   Landmark,
+  FileText,
   LucideProps,
 } from 'lucide-react';
 import React from 'react';
@@ -43,6 +45,7 @@ export const ICONS = {
   utensils: Utensils,
   bed: Bed,
   stadium: Landmark,
+  document: FileText,
 };
 
 export type IconName = keyof typeof ICONS;
