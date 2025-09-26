@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { icons, IconName, ScheduleEventIcon } from './schedule-event-icons';
-import { Image as ImageIcon } from 'lucide-react';
+import { ImageIcon } from 'lucide-react';
 
 interface IconDropdownProps {
   selectedIcon?: IconName;

@@ -86,13 +86,12 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             </div>
         </div>
         {imageUrl && (
-            <div className="relative h-48 w-full rounded-md overflow-hidden mt-4">
+             <div className="mt-4 relative w-24 h-24 ml-auto rounded-md overflow-hidden">
                 <Image
                     src={imageUrl}
-                    alt="Schedule background"
+                    alt="Schedule image"
                     fill
                     className="object-cover"
-                    crossOrigin="anonymous"
                 />
             </div>
         )}
@@ -137,11 +136,13 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                         ) : (
                           <>
                             <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
-                                {item.icon ? <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="h-5 w-5" />}
+                                {item.icon ? <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="w-5 h-5" />}
                             </div>
-                            <p className="font-mono text-base font-semibold w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
-                              {item.time}
-                            </p>
+                            <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer">
+                                <p className="font-mono text-base font-semibold w-24 text-center">
+                                    {item.time}
+                                </p>
+                            </div>
                             <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.description}
                             </p>
