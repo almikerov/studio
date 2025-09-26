@@ -261,7 +261,11 @@ export default function Home() {
         onclone: (clonedDoc) => {
           const printableArea = clonedDoc.querySelector<HTMLDivElement>('.printable-area-for-render');
           if (printableArea) {
-            printableArea.style.width = 'auto'; // Make it narrower
+            if (isMobile) {
+              printableArea.style.width = 'auto'; // Make it narrower for mobile
+            } else {
+              printableArea.style.maxWidth = '500px';
+            }
           }
   
           const content = clonedDoc.querySelector<HTMLDivElement>('[data-schedule-content]');
