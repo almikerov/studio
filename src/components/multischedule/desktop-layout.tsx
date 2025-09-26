@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { DragDropContext } from '@hello-pangea/dnd';
@@ -43,6 +44,9 @@ export function DesktopLayout(props: any) {
     handleDeleteSaved,
     handleUpdateSaved,
     handleAiParse,
+    editingEvent,
+    handleOpenEditModal,
+    handleCloseEditModal,
   } = props;
 
   return (
@@ -66,6 +70,10 @@ export function DesktopLayout(props: any) {
                 comment={comment}
                 setComment={setComment}
                 onSaveTemplate={handleSaveTemplate}
+                editingEvent={editingEvent}
+                handleOpenEditModal={handleOpenEditModal}
+                handleCloseEditModal={handleCloseEditModal}
+                savedEvents={savedEvents}
               />
               <TranslatedSchedulesView 
                 translatedSchedules={translatedSchedules}

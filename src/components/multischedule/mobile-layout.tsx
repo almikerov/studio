@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -11,7 +12,7 @@ import { AiTab } from './ai-tab';
 
 const TABS = [
   { id: 'schedule', icon: Calendar, label: 'Расписание' },
-  { id: 'library', icon: BookOpen, label: 'Библиотека' },
+  { id: 'library', icon: BookOpen, label: 'Шаблоны' },
   { id: 'ai', icon: Wand2, label: 'ИИ-редактор' },
 ];
 
@@ -21,7 +22,7 @@ export function MobileLayout(props: any) {
   return (
     <div className="flex flex-col h-screen">
       <main className="flex-1 overflow-y-auto pb-20">
-        <div className="p-4">
+        <div className="p-4 sm:p-2">
           {activeTab === 'schedule' && <ScheduleTab {...props} />}
           {activeTab === 'library' && <LibraryTab {...props} />}
           {activeTab === 'ai' && <AiTab {...props} onScheduleParsed={() => setActiveTab('schedule')} />}

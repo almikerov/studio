@@ -3,11 +3,11 @@
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
-import type { ScheduleItem } from '@/app/page';
+import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus, X, Check } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -22,7 +22,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
@@ -31,7 +32,7 @@ interface ScheduleViewProps {
   schedule: ScheduleItem[];
   onUpdateEvent: (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => void;
   onDeleteEvent: (id: string) => void;
-  onAddNewEvent: () => void;
+  onAddNewEvent: (fromSaved?: SavedEvent) => void;
   cardTitle: string;
   setCardTitle: (title: string) => void;
   selectedDate: Date;
@@ -42,21 +43,33 @@ interface ScheduleViewProps {
   comment: string;
   setComment: (comment: string) => void;
   onSaveTemplate: (name: string) => void;
+  editingEvent: ScheduleItem | null;
+  handleOpenEditModal: (item: ScheduleItem) => void;
+  handleCloseEditModal: () => void;
+  savedEvents: SavedEvent[];
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, setComment, onSaveTemplate }: ScheduleViewProps) {
+export function ScheduleView({ 
+  schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
+  selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, 
+  setComment, onSaveTemplate, editingEvent, handleOpenEditModal, handleCloseEditModal,
+  savedEvents
+}: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const editRowRef = useRef<HTMLDivElement>(null);
   const [templateName, setTemplateName] = useState('');
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
+  const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
+  const isMobile = useIsMobile();
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (editingId && !isPopoverOpen && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
+      if (editingId && !isPopoverOpen && !isMobile && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
         handleSave(editingId);
       }
     }
@@ -64,13 +77,24 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [editingId, editedTime, editedDescription, isPopoverOpen]);
+  }, [editingId, editedTime, editedDescription, isPopoverOpen, isMobile]);
+
+  useEffect(() => {
+    if (editingEvent) {
+        setEditedTime(editingEvent.time);
+        setEditedDescription(editingEvent.description);
+    }
+  }, [editingEvent]);
 
 
   const handleEdit = (item: ScheduleItem) => {
-    setEditingId(item.id);
-    setEditedTime(item.time);
-    setEditedDescription(item.description);
+    if (isMobile) {
+      handleOpenEditModal(item);
+    } else {
+      setEditingId(item.id);
+      setEditedTime(item.time);
+      setEditedDescription(item.description);
+    }
   };
 
   const handleSave = (id: string) => {
@@ -79,14 +103,21 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
         onUpdateEvent(id, { time: editedTime, description: editedDescription });
     }
     setEditingId(null);
+    if (isMobile) {
+      handleCloseEditModal();
+    }
   };
 
   const handleCancel = () => {
     setEditingId(null);
+    if (isMobile) {
+      handleCloseEditModal();
+    }
   };
   
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: string) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, id: string) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSave(id);
     } else if (e.key === 'Escape') {
       handleCancel();
@@ -110,12 +141,72 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     if (templateName.trim()) {
       onSaveTemplate(templateName.trim());
       setTemplateName('');
-      setIsSaveDialogOpen(false);
+      setIsSaveTemplateDialogOpen(false);
     }
   };
 
+  const handleAddFromSavedClick = (event: SavedEvent) => {
+    onAddNewEvent(event);
+    setIsAddEventDialogOpen(false);
+  }
+
+  const handleAddNewBlankEvent = () => {
+    onAddNewEvent();
+    setIsAddEventDialogOpen(false);
+  }
+
+  const renderEditContent = (item: ScheduleItem) => (
+    <div className="flex flex-col gap-4 p-1">
+        <div className="flex items-center gap-2">
+            <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
+            <Input
+              value={editedDescription}
+              onChange={(e) => setEditedDescription(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, item.id)}
+              className="flex-1 text-lg"
+              autoFocus
+            />
+        </div>
+
+        <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
+            <Label htmlFor={`untimed-switch-${item.id}`} className="text-base font-normal">Без времени</Label>
+            <Switch id={`untimed-switch-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
+        </div>
+
+        {!item.isUntimed && (
+            <Input
+              type="time"
+              value={editedTime}
+              onChange={(e) => setEditedTime(e.target.value)}
+              onKeyDown={(e) => handleKeyDown(e, item.id)}
+              className="w-full text-lg h-12"
+              disabled={!!item.isUntimed}
+            />
+        )}
+      
+        <div>
+            <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
+            <div className="flex gap-2 justify-around">
+              <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
+                  <div className="h-6 w-6 rounded-full border" />
+              </Button>
+              {ITEM_COLORS.map(color => (
+                <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
+                  <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
+                </Button>
+              ))}
+            </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+            <Button onClick={() => onDeleteEvent(item.id)} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
+            <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check /></Button>
+        </div>
+    </div>
+  );
+
   return (
-    <Card className="shadow-lg overflow-hidden relative">
+    <Card className="shadow-lg overflow-hidden relative border-none sm:border sm:rounded-lg">
        {/* These are for tailwind to detect and generate dynamic classes */}
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500"></div>
@@ -161,11 +252,11 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
         </div>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
-          <Droppable droppableId="schedule">
+          <Droppable droppableId="schedule" isDropDisabled={isMobile}>
             {(provided) => (
               <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
                 {schedule.map((item, index) => (
-                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                  <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isMobile}>
                     {(provided, snapshot) => (
                       <li
                         ref={provided.innerRef}
@@ -175,16 +266,17 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                           item.color && !snapshot.isDragging ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
+                        onClick={() => handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
+                         <div {...provided.dragHandleProps} data-drag-handle className={cn("cursor-grab active:cursor-grabbing p-2", { "hidden": isMobile })}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>
 
-                        {editingId === item.id ? (
+                        {editingId === item.id && !isMobile ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
                             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
                             
-                            <div className="w-24 sm:w-28">
+                            <div className="w-24">
                                 <Input
                                   type="time"
                                   value={editedTime}
@@ -192,8 +284,9 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                                   onKeyDown={(e) => handleKeyDown(e, item.id)}
                                   className="w-full mb-1 disabled:opacity-50"
                                   disabled={!!item.isUntimed}
+                                  onClick={(e) => e.stopPropagation()}
                                 />
-                              <div className="flex items-center space-x-2 pl-1">
+                              <div className="flex items-center space-x-2 pl-1" onClick={(e) => e.stopPropagation()}>
                                 <Switch id={`untimed-switch-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
                                 <Label htmlFor={`untimed-switch-${item.id}`} className="text-xs font-normal">Без времени</Label>
                               </div>
@@ -205,13 +298,14 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                               onKeyDown={(e) => handleKeyDown(e, item.id)}
                               className="flex-1"
                               autoFocus
+                              onClick={(e) => e.stopPropagation()}
                             />
 
                             <Popover onOpenChange={setIsPopoverOpen}>
                               <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-auto p-2">
+                              <PopoverContent className="w-auto p-2" onClick={(e) => e.stopPropagation()}>
                                 <div className="flex gap-1">
                                   <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
                                       <div className="h-4 w-4 rounded-full border" />
@@ -225,11 +319,11 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                               </PopoverContent>
                             </Popover>
 
-                            <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
+                            <Button onClick={(e) => { e.stopPropagation(); handleSave(item.id);}} size="sm">Сохранить</Button>
                           </div>
                         ) : (
                           <>
-                            <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
+                            <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
                                 {item.icon ? (
                                     <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
                                 ) : (
@@ -237,7 +331,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                                 )}
                             </div>
                             
-                            <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer w-20 sm:w-28 text-center">
+                            <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left">
                               {!item.isUntimed && (
                                 <p className="font-mono text-base font-semibold">
                                     {item.time}
@@ -245,14 +339,14 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                               )}
                             </div>
 
-                            <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
+                            <p className="flex-1 text-card-foreground cursor-pointer">
                               {item.description}
                             </p>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => onSaveEvent(item)}
+                              onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
                               aria-label={`Save event: ${item.description}`}
                             >
                               <Bookmark className="h-4 w-4" />
@@ -261,7 +355,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                               variant="ghost"
                               size="icon"
                               className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => onDeleteEvent(item.id)}
+                              onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
                               aria-label={`Delete event: ${item.description}`}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -301,43 +395,100 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             </div>
         </div>
       </CardContent>
-      <CardFooter id="card-footer" className="gap-2 p-4 sm:p-6">
-        <Button onClick={onAddNewEvent} className="flex-1" variant="outline">
-          <Plus className="mr-2 h-4 w-4" />
-          Добавить новое событие
-        </Button>
-        <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    <Save className="mr-2 h-4 w-4" />
-                    Сохранить шаблон
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Сохранить шаблон расписания</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                    <Label htmlFor="template-name">Название шаблона</Label>
-                    <Input
-                        id="template-name"
-                        value={templateName}
-                        onChange={(e) => setTemplateName(e.target.value)}
-                        placeholder="например, 'День матча'"
-                        onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()}
-                    />
-                </div>
-                <DialogFooter>
-                    <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>
-                        Сохранить
+      <CardFooter id="card-footer" className={cn("gap-2 p-4 sm:p-6", { "justify-center": isMobile })}>
+        {isMobile ? (
+          <>
+            <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
+              <DialogTrigger asChild>
+                 <Button className="rounded-full h-16 w-16" size="icon"><Plus className="h-8 w-8" /></Button>
+              </DialogTrigger>
+              <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Добавить событие</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                    <Button variant="outline" className="w-full justify-start" onClick={handleAddNewBlankEvent}>
+                        <Plus className="mr-4" /> Новое событие
                     </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    <p className="text-sm text-muted-foreground">Или выберите из заготовок:</p>
+                    {savedEvents.length > 0 ? (
+                        <ul className="space-y-2">
+                            {savedEvents.map(event => (
+                                <li key={event.id}>
+                                    <Button variant="ghost" className="w-full justify-start gap-4" onClick={() => handleAddFromSavedClick(event)}>
+                                        {event.icon ? <ScheduleEventIcon icon={event.icon} /> : <div className="w-4 h-4" />}
+                                        {event.description}
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-center text-muted-foreground py-4 text-sm">Нет сохраненных заготовок</p>}
+                  </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+              <DialogTrigger asChild>
+                  <Button variant="outline" className="rounded-full h-16 w-16" size="icon"><Save className="h-7 w-7" /></Button>
+              </DialogTrigger>
+              <DialogContent>
+                  <DialogHeader><DialogTitle>Сохранить шаблон</DialogTitle></DialogHeader>
+                  <div className="py-4">
+                      <Label htmlFor="template-name-mobile">Название шаблона</Label>
+                      <Input id="template-name-mobile" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
+                  </div>
+                  <DialogFooter><Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button></DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        ) : (
+          <>
+            <Button onClick={() => onAddNewEvent()} className="flex-1" variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Добавить новое событие
+            </Button>
+            <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">
+                        <Save className="mr-2 h-4 w-4" />
+                        Сохранить шаблон
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Сохранить шаблон расписания</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="template-name">Название шаблона</Label>
+                        <Input
+                            id="template-name"
+                            value={templateName}
+                            onChange={(e) => setTemplateName(e.target.value)}
+                            placeholder="например, 'День матча'"
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>
+                            Сохранить
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+          </>
+        )}
       </CardFooter>
+
+      {/* Mobile Edit Modal */}
+      <Dialog open={isMobile && !!editingEvent} onOpenChange={(open) => !open && handleCloseEditModal()}>
+          <DialogContent className="max-w-sm">
+              <DialogHeader>
+                  <DialogTitle>Редактировать событие</DialogTitle>
+              </DialogHeader>
+              {editingEvent && renderEditContent(editingEvent)}
+          </DialogContent>
+      </Dialog>
     </Card>
   );
 }
-
-
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useMemo, useEffect } from 'react';
@@ -68,6 +69,8 @@ export default function Home() {
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
   const [savedTemplates, setSavedTemplates] = useState<ScheduleTemplate[]>([]);
 
+  const [editingEvent, setEditingEvent] = useState<ScheduleItem | null>(null);
+
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -107,22 +110,41 @@ export default function Home() {
   const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
 
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
-    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)));
+    const newSchedule = schedule.map(item => (item.id === id ? { ...item, ...updatedValues } : item));
+    setSchedule(newSchedule);
+    if (editingEvent?.id === id) {
+      setEditingEvent(prev => prev ? { ...prev, ...updatedValues } : null);
+    }
+  };
+
+  const handleOpenEditModal = (item: ScheduleItem) => {
+    setEditingEvent(item);
+  };
+  
+  const handleCloseEditModal = () => {
+    setEditingEvent(null);
   };
   
 
-  const handleAddNewEvent = () => {
+  const handleAddNewEvent = (fromSaved?: SavedEvent) => {
     const newEvent: ScheduleItem = {
       id: Date.now().toString(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      description: 'Новое событие',
-      icon: undefined,
+      time: fromSaved ? '' : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      description: fromSaved ? fromSaved.description : 'Новое событие',
+      icon: fromSaved?.icon,
+      isUntimed: !!fromSaved,
     };
     setSchedule(prev => [...prev, newEvent]);
+    if (isMobile) {
+      setEditingEvent(newEvent);
+    }
   };
 
   const handleDeleteEvent = (id: string) => {
     setSchedule(prev => prev.filter(item => item.id !== id));
+    if (editingEvent?.id === id) {
+      setEditingEvent(null);
+    }
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -264,13 +286,19 @@ export default function Home() {
   const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
     const { description, icon } = scheduleItem;
 
+    // Check for duplicates
+    if (savedEvents.some(e => e.description === description)) {
+      toast({ title: 'Уже сохранено', description: 'Событие с таким описанием уже есть в ваших заготовках.', variant: 'default' });
+      return;
+    }
+
     const newSavedEvent: SavedEvent = {
       id: Date.now().toString(),
       description,
       icon,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
-    toast({ title: 'Сохранено', description: 'Событие сохранено.' });
+    toast({ title: 'Сохранено', description: 'Событие добавлено в заготовки.' });
   };
 
   const handleAddFromSaved = (savedEvent: SavedEvent) => {
@@ -375,6 +403,9 @@ export default function Home() {
     handleLoadTemplate,
     handleDeleteTemplate,
     handleAiParse,
+    editingEvent,
+    handleOpenEditModal,
+    handleCloseEditModal,
   };
   
   if (isMobile === undefined) {

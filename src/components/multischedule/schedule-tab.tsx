@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { DragDropContext } from '@hello-pangea/dnd';
@@ -32,6 +33,10 @@ export function ScheduleTab(props: any) {
       handleTranslate,
       handleDownloadImage,
       handleCopyImage,
+      editingEvent,
+      handleOpenEditModal,
+      handleCloseEditModal,
+      savedEvents,
     } = props;
   
     return (
@@ -53,6 +58,10 @@ export function ScheduleTab(props: any) {
               comment={comment}
               setComment={setComment}
               onSaveTemplate={handleSaveTemplate}
+              editingEvent={editingEvent}
+              handleOpenEditModal={handleOpenEditModal}
+              handleCloseEditModal={handleCloseEditModal}
+              savedEvents={savedEvents}
             />
             <TranslatedSchedulesView 
               translatedSchedules={translatedSchedules}
