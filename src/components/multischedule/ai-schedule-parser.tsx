@@ -33,7 +33,6 @@ export function AiScheduleParser({ onParse, isLoading }: AiScheduleParserProps) 
     <Card>
       <CardHeader>
         <CardTitle>ИИ-редактор</CardTitle>
-        <CardDescription>Вставьте текст или напишите, что запланировали, и ИИ создаст расписание.</CardDescription>
       </CardHeader>
       <CardContent>
         <Textarea
