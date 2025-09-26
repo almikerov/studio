@@ -182,7 +182,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
                             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
                             
-                            <div className="w-44">
+                            <div className="w-28">
                               {!item.isUntimed && (
                                 <Input
                                   type="time"

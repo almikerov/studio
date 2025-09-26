@@ -318,6 +318,7 @@ export default function Home() {
         isUntimed: !item.time,
       }));
       setSchedule(newScheduleItems);
+      setCardTitle(result.cardTitle);
       setTranslatedSchedules([]);
       toast({ title: 'Расписание сгенерировано', description: 'ИИ проанализировал ваш текст и создал расписание.' });
     } catch (error) {
@@ -372,7 +373,6 @@ export default function Home() {
         </section>
 
         <aside className="space-y-8">
-            <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
             <SavedTemplates 
               templates={savedTemplates}
               onLoad={handleLoadTemplate}
@@ -384,6 +384,7 @@ export default function Home() {
                 onDelete={handleDeleteSaved}
                 onUpdate={handleUpdateSaved}
             />
+            <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
         </aside>
 
       </div>
