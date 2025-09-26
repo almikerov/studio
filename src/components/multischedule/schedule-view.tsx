@@ -22,8 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 
 
 const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
@@ -47,13 +46,14 @@ interface ScheduleViewProps {
   handleOpenEditModal: (item: ScheduleItem) => void;
   handleCloseEditModal: () => void;
   savedEvents: SavedEvent[];
+  isMobile: boolean | undefined;
 }
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
   selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, 
   setComment, onSaveTemplate, editingEvent, handleOpenEditModal, handleCloseEditModal,
-  savedEvents
+  savedEvents, isMobile
 }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
@@ -64,8 +64,6 @@ export function ScheduleView({
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -252,11 +250,11 @@ export function ScheduleView({
         </div>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
-          <Droppable droppableId="schedule" isDropDisabled={isMobile}>
+          <Droppable droppableId="schedule">
             {(provided) => (
               <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
                 {schedule.map((item, index) => (
-                  <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isMobile}>
+                  <Draggable key={item.id} draggableId={item.id} index={index}>
                     {(provided, snapshot) => (
                       <li
                         ref={provided.innerRef}
@@ -268,7 +266,7 @@ export function ScheduleView({
                         )}
                         onClick={() => handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle className={cn("cursor-grab active:cursor-grabbing p-2", { "hidden": isMobile })}>
+                         <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>
 
@@ -492,3 +490,8 @@ export function ScheduleView({
   );
 }
 
+
+
+
+
+    

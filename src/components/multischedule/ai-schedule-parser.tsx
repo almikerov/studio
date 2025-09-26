@@ -9,15 +9,16 @@ import { Wand2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AiScheduleParserProps {
-  onParse: (text: string) => void;
+  onParse: (text: string) => Promise<void>;
   isLoading: boolean;
+  onClose: () => void;
 }
 
-export function AiScheduleParser({ onParse, isLoading }: AiScheduleParserProps) {
+export function AiScheduleParser({ onParse, isLoading, onClose }: AiScheduleParserProps) {
   const [text, setText] = useState('');
   const { toast } = useToast();
 
-  const handleParseClick = () => {
+  const handleParseClick = async () => {
     if (!text.trim()) {
       toast({
         title: 'Ошибка',
@@ -26,25 +27,29 @@ export function AiScheduleParser({ onParse, isLoading }: AiScheduleParserProps) 
       });
       return;
     }
-    onParse(text);
+    await onParse(text);
+    onClose();
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>ИИ-редактор</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="flex flex-col h-full">
+      <div className="p-6">
+        <h2 className="text-2xl font-bold">ИИ-редактор</h2>
+        <p className="text-muted-foreground mt-2">Вставьте или напишите свое расписание в свободной форме, и ИИ автоматически его структурирует.</p>
+      </div>
+
+      <div className="flex-1 px-6">
         <Textarea
           placeholder="например: 10:00 встреча, 13:00 обед, потом купить билеты..."
           value={text}
           onChange={(e) => setText(e.target.value)}
-          rows={6}
+          className="h-full resize-none text-base"
           disabled={isLoading}
         />
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleParseClick} disabled={isLoading} className="w-full">
+      </div>
+
+      <div className="p-6 border-t">
+        <Button onClick={handleParseClick} disabled={isLoading} className="w-full" size="lg">
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -52,9 +57,7 @@ export function AiScheduleParser({ onParse, isLoading }: AiScheduleParserProps) 
           )}
           {isLoading ? 'Генерация...' : 'Сгенерировать расписание'}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
-
-    

@@ -15,12 +15,7 @@ import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
-import { Sidebar, SidebarProvider, SidebarTrigger, SidebarContent } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { PanelRightOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DesktopLayout } from '@/components/multischedule/desktop-layout';
-import { MobileLayout } from '@/components/multischedule/mobile-layout';
 
 
 export type ScheduleItem = { 
@@ -167,7 +162,7 @@ export default function Home() {
     const languagesToTranslate = languages.filter(lang => !languageMap.has(lang));
     
     if (languagesToTranslate.length === 0) {
-      toast({ title: 'Ошибка', description: 'Все выбранные языки уже переведены.', variant: 'destructive' });
+      toast({ title: 'Перевод не требуется', description: 'Все выбранные языки уже переведены.' });
       return;
     }
 
@@ -370,57 +365,56 @@ export default function Home() {
     }
   };
 
-  const commonProps = {
-    schedule,
-    translatedSchedules,
-    isLoading,
-    isDownloading,
-    printableAreaRef,
-    cardTitle,
-    selectedDate,
-    imageUrl,
-    comment,
-    savedEvents,
-    savedTemplates,
-    setCardTitle,
-    setSelectedDate,
-    setImageUrl,
-    setComment,
-    handleUpdateEvent,
-    handleDeleteEvent,
-    handleAddNewEvent,
-    onDragEnd,
-    handleTranslate,
-    handleDownloadImage,
-    handleCopyImage,
-    handleDeleteTranslation,
-    handleUpdateTranslation,
-    handleSaveEvent,
-    handleAddFromSaved,
-    handleDeleteSaved,
-    handleUpdateSaved,
-    handleSaveTemplate,
-    handleLoadTemplate,
-    handleDeleteTemplate,
-    handleAiParse,
-    editingEvent,
-    handleOpenEditModal,
-    handleCloseEditModal,
-  };
-  
-  if (isMobile === undefined) {
-    return null; // or a loading skeleton
-  }
-  
   return (
-    <SidebarProvider>
-      {isMobile ? (
-        <MobileLayout {...commonProps} />
-      ) : (
-        <DesktopLayout {...commonProps} />
-      )}
-    </SidebarProvider>
+    <main className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">
+            <ScheduleView
+              schedule={schedule}
+              onUpdateEvent={handleUpdateEvent}
+              onDeleteEvent={handleDeleteEvent}
+              onAddNewEvent={handleAddNewEvent}
+              cardTitle={cardTitle}
+              setCardTitle={setCardTitle}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              imageUrl={imageUrl}
+              setImageUrl={setImageUrl}
+              onSaveEvent={handleSaveEvent}
+              comment={comment}
+              setComment={setComment}
+              onSaveTemplate={handleSaveTemplate}
+              editingEvent={editingEvent}
+              handleOpenEditModal={handleOpenEditModal}
+              handleCloseEditModal={handleCloseEditModal}
+              savedEvents={savedEvents}
+              isMobile={isMobile}
+            />
+            <TranslatedSchedulesView 
+              translatedSchedules={translatedSchedules}
+              onDelete={handleDeleteTranslation}
+              onUpdate={handleUpdateTranslation}
+            />
+          </div>
+        </DragDropContext>
+
+        <TranslationControls
+          isLoading={isLoading}
+          isDownloading={isDownloading}
+          onTranslate={handleTranslate}
+          onDownload={handleDownloadImage}
+          onCopy={handleCopyImage}
+          templates={savedTemplates}
+          onLoadTemplate={handleLoadTemplate}
+          onDeleteTemplate={handleDeleteTemplate}
+          onAiParse={handleAiParse}
+        />
+      </div>
+    </main>
   );
 }
+
+    
 
     
