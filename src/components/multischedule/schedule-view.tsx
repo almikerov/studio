@@ -277,6 +277,7 @@ export function ScheduleView({
                             alt="Schedule image"
                             fill
                             className="object-cover"
+                            crossOrigin="anonymous"
                         />
                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
                               <ImagePlus className="h-8 w-8 text-white" />
@@ -292,6 +293,7 @@ export function ScheduleView({
                       width={80}
                       height={80}
                       className="object-cover rounded-md aspect-square"
+                      crossOrigin="anonymous"
                   />
                 )}
             </div>
@@ -403,10 +405,12 @@ export function ScheduleView({
                                     </div>
                                     
                                     <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left">
-                                      {item.type === 'timed' && (
+                                      {item.type === 'timed' ? (
                                         <p className="font-mono text-base font-semibold">
                                             {item.time}
                                         </p>
+                                      ) : (
+                                        <div className="w-12" />
                                       )}
                                     </div>
 
@@ -514,3 +518,4 @@ const ChevronDown = (props: any) => (
     
 
     
+
