@@ -48,7 +48,10 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
         const newEvent: SavedEvent = {
             id: Date.now().toString(),
             description: newEventDescription,
-            icon: newEventIcon
+            icon: newEventIcon,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            type: 'timed',
+            color: undefined
         }
         onUpdate(newEvent);
         setNewEventDescription('');
@@ -148,3 +151,5 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
     </div>
   );
 }
+
+    

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -41,7 +42,7 @@ export type ScheduleItem = {
   description: string; 
   icon?: IconName; 
   color?: string;
-  isUntimed?: boolean;
+  type: 'timed' | 'untimed' | 'comment';
 };
 export type TranslatedSchedule = { lang: string; text: string };
 
@@ -50,7 +51,7 @@ export type SavedEvent = {
   description: string;
   icon?: IconName;
   time?: string;
-  isUntimed?: boolean;
+  type: 'timed' | 'untimed';
   color?: string;
 };
 
@@ -59,17 +60,17 @@ export type ScheduleTemplate = {
   name: string;
   schedule: ScheduleItem[];
   cardTitle: string;
-  comment: string;
   imageUrl: string | null;
 };
 
 export default function Home() {
   const { toast } = useToast();
   const [schedule, setSchedule] = useState<ScheduleItem[]>([
-    { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera', color: 'blue' },
-    { id: '2', time: '12:30', description: 'Обед', icon: 'utensils' },
-    { id: '3', time: '18:00', description: 'Завершение рабочего дня', icon: 'bed' },
-    { id: '4', time: '', description: 'Купить билеты', icon: 'passport', isUntimed: true },
+    { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera', color: 'blue', type: 'timed' },
+    { id: '2', time: '12:30', description: 'Обед', icon: 'utensils', type: 'timed' },
+    { id: '3', time: '', description: 'Купить билеты', icon: 'passport', type: 'untimed' },
+    { id: '4', time: '', description: 'Не забыть проанализировать тактику соперника перед матчем.', type: 'comment' },
+    { id: '5', time: '18:00', description: 'Завершение рабочего дня', icon: 'bed', type: 'timed' },
   ]);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +80,6 @@ export default function Home() {
   const [cardTitle, setCardTitle] = useState('Расписание на день');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [comment, setComment] = useState('');
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
   const [savedTemplates, setSavedTemplates] = useState<ScheduleTemplate[]>([]);
@@ -89,9 +89,8 @@ export default function Home() {
   const isMobile = useIsMobile();
 
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isAiParserOpen, setIsAiParserOpen] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
 
 
@@ -149,11 +148,11 @@ export default function Home() {
   const handleAddNewEvent = (fromSaved?: Partial<SavedEvent>) => {
     const newEvent: ScheduleItem = {
       id: Date.now().toString(),
-      time: fromSaved?.isUntimed ? '' : fromSaved?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: fromSaved?.type === 'timed' ? (fromSaved?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
       description: fromSaved?.description || 'Новое событие',
       icon: fromSaved?.icon,
       color: fromSaved?.color,
-      isUntimed: fromSaved?.isUntimed ?? !!fromSaved?.description,
+      type: fromSaved?.type || 'timed',
     };
     setSchedule(prev => [...prev, newEvent]);
     if (isMobile) {
@@ -204,7 +203,6 @@ export default function Home() {
     }
 
     setIsLoading(true);
-    setShowLanguageSelector(false);
 
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
@@ -264,11 +262,6 @@ export default function Home() {
             });
             const imageUploaderTrigger = clonedDoc.getElementById('image-uploader-trigger');
             if(imageUploaderTrigger) imageUploaderTrigger.style.display = 'none';
-
-            if (!comment) {
-              const commentsContainer = clonedDoc.getElementById('comments-container');
-              if (commentsContainer) commentsContainer.style.display = 'none';
-            }
         }
       });
       return canvas;
@@ -331,7 +324,12 @@ export default function Home() {
   };
   
   const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
-    const { description, icon, time, isUntimed, color } = scheduleItem;
+    const { description, icon, time, type, color } = scheduleItem;
+
+    if (type === 'comment') {
+        toast({ title: 'Нельзя сохранить', description: 'Комментарии нельзя сохранять как заготовки.', variant: 'default' });
+        return;
+    }
 
     if (savedEvents.some(e => e.description === description)) {
       toast({ title: 'Уже сохранено', description: 'Событие с таким описанием уже есть в ваших заготовках.', variant: 'default' });
@@ -342,9 +340,9 @@ export default function Home() {
       id: Date.now().toString(),
       description,
       icon,
-      time: time,
-      isUntimed: isUntimed,
-      color: color,
+      time,
+      type,
+      color,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
     toast({ title: 'Сохранено', description: 'Событие добавлено в заготовки.' });
@@ -356,7 +354,6 @@ export default function Home() {
       name,
       schedule,
       cardTitle,
-      comment,
       imageUrl,
     };
     updateSavedTemplates([...savedTemplates, newTemplate]);
@@ -366,7 +363,6 @@ export default function Home() {
   const handleLoadTemplate = (template: ScheduleTemplate) => {
     setSchedule(template.schedule.map(item => ({...item, id: Date.now().toString() + Math.random()}))); // new IDs
     setCardTitle(template.cardTitle);
-    setComment(template.comment);
     setImageUrl(template.imageUrl);
     setTranslatedSchedules([]); // Clear translations
     toast({ title: 'Шаблон загружен', description: `Загружен шаблон "${template.name}".` });
@@ -384,8 +380,8 @@ export default function Home() {
       const newScheduleItems = result.schedule.map(item => ({
         ...item,
         id: Date.now().toString() + Math.random(),
-        isUntimed: !item.time,
-      }));
+        type: item.time ? 'timed' : 'untimed',
+      } as ScheduleItem));
       setSchedule(newScheduleItems);
       setCardTitle(result.cardTitle);
       setTranslatedSchedules([]);
@@ -408,13 +404,6 @@ export default function Home() {
     );
   };
 
-  const onTranslateClick = () => {
-    if (!showLanguageSelector) {
-      setShowLanguageSelector(true);
-    } else {
-      handleTranslate();
-    }
-  };
 
   const handleUpdateSavedEvent = (updatedEvent: SavedEvent) => {
       const exists = savedEvents.some(e => e.id === updatedEvent.id);
@@ -441,8 +430,13 @@ export default function Home() {
             onDeleteTemplate={handleDeleteTemplate}
             onSaveTemplate={handleSaveTemplate}
             savedEvents={savedEvents}
-            onAddEventFromSaved={handleAddNewEvent}
+            onAddEventFromSaved={(event) => {
+              handleAddNewEvent(event);
+              setIsSavedEventsOpen(false);
+            }}
             updateSavedEvents={updateSavedEvents}
+            isSavedEventsOpen={isSavedEventsOpen}
+            setIsSavedEventsOpen={setIsSavedEventsOpen}
             onAiParse={handleAiParse}
             selectedLanguages={selectedLanguages}
             onLanguageToggle={handleLanguageToggle}
@@ -466,8 +460,6 @@ export default function Home() {
                 imageUrl={imageUrl}
                 setImageUrl={setImageUrl}
                 onSaveEvent={handleSaveEvent}
-                comment={comment}
-                setComment={setComment}
                 onSaveTemplate={handleSaveTemplate}
                 editingEvent={editingEvent}
                 handleOpenEditModal={handleOpenEditModal}
@@ -614,5 +606,7 @@ export default function Home() {
     </main>
   );
 }
+
+    
 
     

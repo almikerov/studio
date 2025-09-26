@@ -42,6 +42,8 @@ interface DesktopNavbarProps {
   onTranslate: () => void;
   isAiParserOpen: boolean;
   setIsAiParserOpen: (open: boolean) => void;
+  isSavedEventsOpen: boolean;
+  setIsSavedEventsOpen: (open: boolean) => void;
 }
 
 export function DesktopNavbar({
@@ -62,10 +64,11 @@ export function DesktopNavbar({
   onTranslate,
   isAiParserOpen,
   setIsAiParserOpen,
+  isSavedEventsOpen,
+  setIsSavedEventsOpen,
 }: DesktopNavbarProps) {
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
-    const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
 
     const handleSaveTemplateClick = () => {
@@ -223,3 +226,6 @@ export function DesktopNavbar({
     </div>
   );
 }
+
+
+    

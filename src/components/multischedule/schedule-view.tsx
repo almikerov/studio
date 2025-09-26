@@ -5,7 +5,7 @@
 import { useState, type ReactNode, useRef, useEffect } from 'react';
 import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
@@ -16,7 +16,7 @@ import { IconDropdown } from './icon-dropdown';
 import { IconName, ScheduleEventIcon } from './schedule-event-icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
@@ -39,8 +39,6 @@ interface ScheduleViewProps {
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
   onSaveEvent: (item: ScheduleItem) => void;
-  comment: string;
-  setComment: (comment: string) => void;
   onSaveTemplate: (name: string) => void;
   editingEvent: ScheduleItem | null;
   handleOpenEditModal: (item: ScheduleItem) => void;
@@ -52,8 +50,8 @@ interface ScheduleViewProps {
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
-  selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, 
-  setComment, onSaveTemplate, editingEvent, handleOpenEditModal, handleCloseEditModal,
+  selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, 
+  onSaveTemplate, editingEvent, handleOpenEditModal, handleCloseEditModal,
   savedEvents, isMobile, onMoveEvent
 }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -68,7 +66,7 @@ export function ScheduleView({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (editingId && !isPopoverOpen && !isMobile && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
+      if (editingId && !isPopoverOpen && !isMobile && editRowRef.current && !editRowref.current.contains(event.target as Node)) {
         handleSave(editingId);
       }
     }
@@ -99,7 +97,11 @@ export function ScheduleView({
   const handleSave = (id: string) => {
     const item = schedule.find(i => i.id === id);
     if (item) {
-        onUpdateEvent(id, { time: editedTime, description: editedDescription });
+        if (item.type !== 'comment') {
+            onUpdateEvent(id, { time: editedTime, description: editedDescription });
+        } else {
+            onUpdateEvent(id, { description: editedDescription });
+        }
     }
     setEditingId(null);
     if (isMobile) {
@@ -131,9 +133,19 @@ export function ScheduleView({
     onUpdateEvent(id, { color });
   }
 
-  const handleToggleHasTime = (id: string, hasTime: boolean) => {
-    onUpdateEvent(id, { isUntimed: !hasTime, time: hasTime ? editedTime || '00:00' : '' });
-    if(!hasTime) setEditedTime('');
+  const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
+    const currentItem = schedule.find(item => item.id === id);
+    if (!currentItem) return;
+
+    let newTime = currentItem.time;
+    if (type === 'timed' && !currentItem.time) {
+      newTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (type !== 'timed') {
+      newTime = '';
+    }
+    
+    setEditedTime(newTime);
+    onUpdateEvent(id, { type, time: newTime });
   }
 
   const handleSaveTemplateClick = () => {
@@ -158,45 +170,56 @@ export function ScheduleView({
     <div className="flex flex-col gap-4 p-1">
         <div className="flex items-center gap-2">
             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
-            <Input
-              value={editedDescription}
-              onChange={(e) => setEditedDescription(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, item.id)}
-              className="flex-1 text-lg"
+             <Textarea
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, item.id)}
+                className="flex-1 text-lg"
+                rows={item.type === 'comment' ? 3 : 1}
             />
         </div>
 
         <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
-            <Label htmlFor={`hastime-switch-${item.id}`} className="text-base font-normal">Время</Label>
-            <Switch id={`hastime-switch-${item.id}`} checked={!item.isUntimed} onCheckedChange={(checked) => handleToggleHasTime(item.id, checked)} />
+            <Label htmlFor={`type-select-${item.id}`} className="text-base font-normal">Тип события</Label>
+            <Select value={item.type} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+                <SelectTrigger id={`type-select-${item.id}`} className="w-[180px]">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="timed">Со временем</SelectItem>
+                    <SelectItem value="untimed">Без времени</SelectItem>
+                    <SelectItem value="comment">Комментарий</SelectItem>
+                </SelectContent>
+            </Select>
         </div>
 
         {
-            !item.isUntimed && (
+            item.type === 'timed' && (
                 <Input
                 type="time"
                 value={editedTime}
                 onChange={(e) => setEditedTime(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, item.id)}
                 className="w-full text-lg h-12"
-                disabled={item.isUntimed}
                 />
             )
         }
       
-        <div>
-            <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
-            <div className="flex gap-2 justify-around">
-              <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
-                  <div className="h-6 w-6 rounded-full border" />
-              </Button>
-              {ITEM_COLORS.map(color => (
-                <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
-                  <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
-                </Button>
-              ))}
+        { item.type !== 'comment' && (
+            <div>
+                <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
+                <div className="flex gap-2 justify-around">
+                  <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
+                      <div className="h-6 w-6 rounded-full border" />
+                  </Button>
+                  {ITEM_COLORS.map(color => (
+                    <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
+                      <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
+                    </Button>
+                  ))}
+                </div>
             </div>
-        </div>
+        )}
 
         <div className="flex gap-2 mt-4">
             <Button onClick={() => onDeleteEvent(item.id)} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
@@ -252,21 +275,21 @@ export function ScheduleView({
         </div>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
-          <Droppable droppableId="schedule" isDropDisabled={isMobile}>
+          <Droppable droppableId="schedule" isDropDisabled={!!isMobile}>
             {(provided) => (
-              <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
+              <div className="space-y-2 group/list" {...provided.droppableProps} ref={provided.innerRef}>
                 {schedule.map((item, index) => (
-                  <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isMobile}>
+                  <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={!!isMobile}>
                     {(provided, snapshot) => (
-                      <li
+                      <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          'group flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50',
+                          'group/item flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
-                          item.color && !snapshot.isDragging ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
+                           item.color && !snapshot.isDragging && item.type !== 'comment' ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
-                        onClick={() => handleEdit(item)}
+                        onClick={() => item.type !== 'comment' && handleEdit(item)}
                       >
                          {!isMobile && <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -274,47 +297,57 @@ export function ScheduleView({
 
                         {editingId === item.id && !isMobile ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                            <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
+                            { item.type !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />}
                             
-                            <div className="flex items-center space-x-1" >
-                                <Label htmlFor={`hastime-switch-inline-${item.id}`} className="text-xs font-normal text-muted-foreground">Время</Label>
-                                <Switch id={`hastime-switch-inline-${item.id}`} checked={!item.isUntimed} onCheckedChange={(checked) => handleToggleHasTime(item.id, checked)} />
-                            </div>
+                            <Select value={item.type} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+                                <SelectTrigger className="w-[150px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="timed">Со временем</SelectItem>
+                                    <SelectItem value="untimed">Без времени</SelectItem>
+                                    <SelectItem value="comment">Комментарий</SelectItem>
+                                </SelectContent>
+                            </Select>
 
-                            <Input
-                              type="time"
-                              value={editedTime}
-                              onChange={(e) => setEditedTime(e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, item.id)}
-                              className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
-                              disabled={!!item.isUntimed}
-                            />
+                            {item.type === 'timed' &&
+                                <Input
+                                type="time"
+                                value={editedTime}
+                                onChange={(e) => setEditedTime(e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                            }
                             
-                            <Input
+                            <Textarea
                               value={editedDescription}
                               onChange={(e) => setEditedDescription(e.target.value)}
                               onKeyDown={(e) => handleKeyDown(e, item.id)}
                               className="flex-1"
+                              rows={1}
                               autoFocus
                             />
 
-                            <Popover onOpenChange={setIsPopoverOpen}>
-                              <PopoverTrigger asChild>
-                                <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-2">
-                                <div className="flex gap-1">
-                                  <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
-                                      <div className="h-4 w-4 rounded-full border" />
-                                  </Button>
-                                  {ITEM_COLORS.map(color => (
-                                    <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
-                                      <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                            {item.type !== 'comment' &&
+                                <Popover onOpenChange={setIsPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2">
+                                    <div className="flex gap-1">
+                                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
+                                        <div className="h-4 w-4 rounded-full border" />
                                     </Button>
-                                  ))}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
+                                    {ITEM_COLORS.map(color => (
+                                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                        <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                                        </Button>
+                                    ))}
+                                    </div>
+                                </PopoverContent>
+                                </Popover>
+                            }
 
                             <Button onClick={(e) => { e.stopPropagation(); handleSave(item.id);}} size="sm">Сохранить</Button>
                           </div>
@@ -331,38 +364,54 @@ export function ScheduleView({
                               </div>
                             )}
 
-                            <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
-                                {item.icon ? (
-                                    <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
-                                ) : (
-                                    <div className="w-5 h-5" />
-                                )}
-                            </div>
-                            
-                            <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left">
-                              {!item.isUntimed && (
-                                <p className="font-mono text-base font-semibold">
-                                    {item.time}
-                                </p>
-                              )}
-                            </div>
+                            {item.type === 'comment' ? (
+                                <>
+                                    <div className="w-8 h-8 flex items-center justify-center">
+                                      <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <p 
+                                      className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
+                                      onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
+                                    >
+                                      {item.description}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
+                                        {item.icon ? (
+                                            <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
+                                        ) : (
+                                            <div className="w-5 h-5" />
+                                        )}
+                                    </div>
+                                    
+                                    <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left">
+                                      {item.type === 'timed' && (
+                                        <p className="font-mono text-base font-semibold">
+                                            {item.time}
+                                        </p>
+                                      )}
+                                    </div>
 
-                            <p className="flex-1 text-card-foreground cursor-pointer">
-                              {item.description}
-                            </p>
+                                    <p className="flex-1 text-card-foreground cursor-pointer">
+                                      {item.description}
+                                    </p>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                      onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                                      aria-label={`Save event: ${item.description}`}
+                                    >
+                                      <Bookmark className="h-4 w-4" />
+                                    </Button>
+                                </>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                              aria-label={`Save event: ${item.description}`}
-                            >
-                              <Bookmark className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover/item:opacity-100 transition-opacity"
                               onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
                               aria-label={`Delete event: ${item.description}`}
                             >
@@ -370,12 +419,23 @@ export function ScheduleView({
                             </Button>
                           </>
                         )}
-                      </li>
+                      </div>
                     )}
                   </Draggable>
                 ))}
                 {provided.placeholder}
-              </ul>
+                {!isMobile && (
+                  <div className="h-10 flex justify-center items-center">
+                    <Button
+                      variant="ghost"
+                      className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
+                      onClick={() => onAddNewEvent()}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
           </Droppable>
         
@@ -385,106 +445,50 @@ export function ScheduleView({
             <p>Добавьте события, чтобы начать планировать свой день.</p>
           </div>
         )}
-
-        <div id="comments-container">
-            <hr className="my-4"/>
-            <div className="px-2 pt-2">
-              <Label htmlFor="comments" className="text-xs text-muted-foreground flex items-center gap-2 mb-2">
-                <MessageSquare className="w-4 h-4" />
-                Комментарии
-              </Label>
-              <Textarea 
-                id="comments"
-                placeholder="Добавьте заметки..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-        </div>
       </CardContent>
-      <CardFooter id="card-footer" className={cn("gap-2 p-4 sm:p-6", { "justify-center": isMobile })}>
-        {isMobile ? (
-          <>
-            <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
-              <DialogTrigger asChild>
-                 <Button className="rounded-full h-16 w-16" size="icon"><Plus className="h-8 w-8" /></Button>
-              </DialogTrigger>
-              <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Добавить событие</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                    <Button variant="outline" className="w-full justify-start" onClick={handleAddNewBlankEvent}>
-                        <Plus className="mr-4" /> Новое событие
-                    </Button>
-                    <p className="text-sm text-muted-foreground">Или выберите из заготовок:</p>
-                    {savedEvents.length > 0 ? (
-                        <ul className="space-y-2">
-                            {savedEvents.map(event => (
-                                <li key={event.id}>
-                                    <Button variant="ghost" className="w-full justify-start gap-4" onClick={() => handleAddFromSavedClick(event)}>
-                                        {event.icon ? <ScheduleEventIcon icon={event.icon} /> : <div className="w-4 h-4" />}
-                                        {event.description}
-                                    </Button>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : <p className="text-center text-muted-foreground py-4 text-sm">Нет сохраненных заготовок</p>}
-                  </div>
-              </DialogContent>
-            </Dialog>
+      <CardFooter id="card-footer" className={cn("gap-2 p-4 sm:p-6 justify-center", { "hidden": !isMobile })}>
+        <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
+          <DialogTrigger asChild>
+             <Button className="rounded-full h-16 w-16" size="icon"><Plus className="h-8 w-8" /></Button>
+          </DialogTrigger>
+          <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Добавить событие</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                <Button variant="outline" className="w-full justify-start" onClick={handleAddNewBlankEvent}>
+                    <Plus className="mr-4" /> Новое событие
+                </Button>
+                <p className="text-sm text-muted-foreground">Или выберите из заготовок:</p>
+                {savedEvents.length > 0 ? (
+                    <ul className="space-y-2">
+                        {savedEvents.map(event => (
+                            <li key={event.id}>
+                                <Button variant="ghost" className="w-full justify-start gap-4" onClick={() => handleAddFromSavedClick(event)}>
+                                    {event.icon ? <ScheduleEventIcon icon={event.icon} /> : <div className="w-4 h-4" />}
+                                    {event.description}
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : <p className="text-center text-muted-foreground py-4 text-sm">Нет сохраненных заготовок</p>}
+              </div>
+          </DialogContent>
+        </Dialog>
 
-            <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
-              <DialogTrigger asChild>
-                  <Button variant="outline" className="rounded-full h-16 w-16" size="icon"><Save className="h-7 w-7" /></Button>
-              </DialogTrigger>
-              <DialogContent>
-                  <DialogHeader><DialogTitle>Сохранить шаблон</DialogTitle></DialogHeader>
-                  <div className="py-4">
-                      <Label htmlFor="template-name-mobile">Название шаблона</Label>
-                      <Input id="template-name-mobile" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
-                  </div>
-                  <DialogFooter><Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button></DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </>
-        ) : (
-          <>
-            <Button onClick={() => onAddNewEvent()} className="flex-1" variant="outline">
-              <Plus className="mr-2 h-4 w-4" />
-              Добавить новое событие
-            </Button>
-            <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button variant="outline">
-                        <Save className="mr-2 h-4 w-4" />
-                        Сохранить шаблон
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Сохранить шаблон расписания</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="template-name">Название шаблона</Label>
-                        <Input
-                            id="template-name"
-                            value={templateName}
-                            onChange={(e) => setTemplateName(e.target.value)}
-                            placeholder="например, 'День матча'"
-                            onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>
-                            Сохранить
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-          </>
-        )}
+        <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+          <DialogTrigger asChild>
+              <Button variant="outline" className="rounded-full h-16 w-16" size="icon"><Save className="h-7 w-7" /></Button>
+          </DialogTrigger>
+          <DialogContent>
+              <DialogHeader><DialogTitle>Сохранить шаблон</DialogTitle></DialogHeader>
+              <div className="py-4">
+                  <Label htmlFor="template-name-mobile">Название шаблона</Label>
+                  <Input id="template-name-mobile" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
+              </div>
+              <DialogFooter><Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardFooter>
 
       {/* Mobile Edit Modal */}
@@ -499,9 +503,5 @@ export function ScheduleView({
     </Card>
   );
 }
-
-
-
-
 
     
