@@ -78,14 +78,15 @@ export function ScheduleView({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-      // Check if the click is outside the edit row
+      
+      const popper = document.querySelector('[data-radix-popper-content-wrapper]');
+      if (popper && popper.contains(target)) {
+        return;
+      }
+
       if (editRowRef.current && !editRowRef.current.contains(target)) {
-        // And check if the click is not inside any popover
-        const popper = document.querySelector('[data-radix-popper-content-wrapper]');
-        if (!popper || !popper.contains(target)) {
-          if (editingId) {
-            handleSave(editingId);
-          }
+        if (editingId) {
+          handleSave(editingId);
         }
       }
     };
@@ -163,7 +164,6 @@ export function ScheduleView({
     const currentTime = schedule.find(i => i.id === id)?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const newTime = type === 'timed' ? currentTime : '';
     
-    // Immediately save and exit edit mode on desktop when type changes
     if (!isMobile && editingId === id) {
         onUpdateEvent(id, { type, time: newTime, description: editedDescription });
         setEditingId(null);
@@ -177,7 +177,7 @@ export function ScheduleView({
   };
 
   const handleAddNewEventAndEdit = () => {
-    const newId = Date.now().toString() + Math.random(); // ensure unique id
+    const newId = Date.now().toString() + Math.random();
     onAddNewEvent({id: newId, type: 'timed'});
     setLastAdded(newId);
   }
@@ -193,7 +193,6 @@ export function ScheduleView({
   }, [schedule, lastAdded, isMobile]);
 
 
-  // Used for Mobile edit modal
   const renderEditContent = (item: ScheduleItem) => {
     const handleSaveToPreset = () => {
         const eventToSave: Partial<ScheduleItem> = {
@@ -386,7 +385,7 @@ export function ScheduleView({
                                     value={editedTime}
                                     onChange={(e) => setEditedTime(e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                    className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-24"
                                     autoFocus
                                     />
                                 }
@@ -415,7 +414,6 @@ export function ScheduleView({
                                       onKeyDown={(e) => handleKeyDown(e, item.id)}
                                       placeholder="Описание (необязательно)"
                                       className="flex-1"
-                                      autoFocus
                                     />
                                   </div>
                                 }
@@ -463,17 +461,25 @@ export function ScheduleView({
                                   {item.description}
                                 </p>
                             ) : item.type === 'date' && item.date ? (
-                                <>
+                                <div className="flex items-center gap-2 flex-1 render-align-fix">
                                     <CalendarIcon className="h-5 w-5" />
-                                    <span className='font-semibold text-lg text-muted-foreground'>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
-                                    {item.description && <span className="text-base font-normal text-muted-foreground">- {item.description}</span>}
-                                </>
+                                    <div className="flex flex-col">
+                                        <span className='font-semibold text-lg text-muted-foreground'>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
+                                        {item.description && <span className="text-base font-normal text-muted-foreground -mt-1">{item.description}</span>}
+                                    </div>
+                                </div>
                             ) : item.type === 'h1' ? (
-                                <h2 className='text-xl font-bold'>{item.description}</h2>
+                                <div className="w-full render-align-fix">
+                                  <h2 className='text-xl font-bold'>{item.description}</h2>
+                                </div>
                             ) : item.type === 'h2' ? (
-                                <h3 className='text-lg font-semibold'>{item.description}</h3>
+                                <div className="w-full render-align-fix">
+                                  <h3 className='text-lg font-semibold'>{item.description}</h3>
+                                </div>
                             ) : item.type === 'h3' ? (
-                                <h4 className='text-base font-medium'>{item.description}</h4>
+                                <div className="w-full render-align-fix">
+                                  <h4 className='text-base font-medium'>{item.description}</h4>
+                                </div>
                             ) : (
                                 <>
                                     <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
@@ -560,7 +566,6 @@ export function ScheduleView({
         <Button className="rounded-full h-16 w-16" size="icon" onClick={() => setIsAddEventDialogOpen(true)}><Plus className="h-8 w-8" /></Button>
       </CardFooter>
 
-      {/* Mobile Edit Modal */}
       <Dialog open={isMobile && !!editingEvent} onOpenChange={(open) => !open && handleCloseEditModal()}>
           <DialogContent className="max-w-sm">
               <DialogHeader>
@@ -576,4 +581,5 @@ export function ScheduleView({
     
 
     
+
 
