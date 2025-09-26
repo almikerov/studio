@@ -246,10 +246,17 @@ export default function Home() {
     setIsLoading(true);
     setIsMobileMenuOpen(false);
 
+    const apiKey = localStorage.getItem('genkit-api-key');
+    if (!apiKey) {
+      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+      setIsLoading(false);
+      return;
+    }
+    
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
     try {
-      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages });
+      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages }, apiKey);
       const newTranslations = Object.entries(result).map(([lang, text]) => ({ lang, text }));
       
       // Update existing or add new
@@ -270,7 +277,7 @@ export default function Home() {
       console.error('Translation failed:', error);
       toast({
         title: 'Ошибка перевода',
-        description: 'Не удалось перевести расписание. Пожалуйста, попробуйте еще раз.',
+        description: 'Не удалось перевести расписание. Проверьте API ключ и попробуйте еще раз.',
         variant: 'destructive',
       });
     } finally {
@@ -526,8 +533,16 @@ export default function Home() {
     setIsLoading(true);
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
+
+    const apiKey = localStorage.getItem('genkit-api-key');
+    if (!apiKey) {
+      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const result = await parseScheduleFromText({ text });
+      const result = await parseScheduleFromText({ text }, apiKey);
       const newScheduleItems = result.schedule.map(item => ({
         ...item,
         id: Date.now().toString() + Math.random(),
@@ -541,7 +556,7 @@ export default function Home() {
       console.error('AI parsing failed:', error);
       toast({
         title: 'Ошибка генерации',
-        description: 'Не удалось создать расписание из текста. Попробуйте перефразировать запрос.',
+        description: 'Не удалось создать расписание из текста. Проверьте API ключ и попробуйте еще раз.',
         variant: 'destructive',
       });
     } finally {

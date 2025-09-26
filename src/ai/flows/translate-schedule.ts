@@ -23,8 +23,8 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput): Promise<Record<string, string>> {
-  const result = await translateScheduleFlow(input);
+export async function translateSchedule(input: TranslateScheduleInput, apiKey: string): Promise<Record<string, string>> {
+  const result = await translateScheduleFlow(input, { apiKey });
   return result.translations;
 }
 
@@ -32,6 +32,7 @@ const prompt = ai.definePrompt({
   name: 'translateSchedulePrompt',
   input: {schema: TranslateScheduleInputSchema},
   output: {schema: TranslateScheduleOutputSchema},
+  model: 'gemini-1.5-flash',
   prompt: `Твоя задача — перевести присланное расписание тренировок.
 
 **Ключевые инструкции по переводу:**
@@ -60,8 +61,8 @@ const translateScheduleFlow = ai.defineFlow(
     inputSchema: TranslateScheduleInputSchema,
     outputSchema: TranslateScheduleOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input, { apiKey }) => {
+    const {output} = await prompt(input, {}, { apiKey });
     return output!;
   }
 );

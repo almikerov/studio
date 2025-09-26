@@ -23,8 +23,8 @@ const TranslateTextOutputSchema = z.object({
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
-export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
-  const result = await translateTextFlow(input);
+export async function translateText(input: TranslateTextInput, apiKey: string): Promise<TranslateTextOutput> {
+  const result = await translateTextFlow(input, { apiKey });
   return result;
 }
 
@@ -32,6 +32,7 @@ const prompt = ai.definePrompt({
   name: 'translateTextPrompt',
   input: {schema: TranslateTextInputSchema},
   output: {schema: TranslateTextOutputSchema},
+  model: 'gemini-1.5-flash',
   prompt: `You are a translation expert. You will be given a text and a list of target languages.
 Your job is to translate the text into each of the target languages.
 Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values.
@@ -51,8 +52,8 @@ const translateTextFlow = ai.defineFlow(
     inputSchema: TranslateTextInputSchema,
     outputSchema: TranslateTextOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input, { apiKey }) => {
+    const {output} = await prompt(input, {}, { apiKey });
     return output!;
   }
 );

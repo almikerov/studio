@@ -30,8 +30,8 @@ const ParseScheduleTextOutputSchema = z.object({
 });
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
-  const result = await parseScheduleFlow(input);
+export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string): Promise<ParseScheduleTextOutput> {
+  const result = await parseScheduleFlow(input, { apiKey });
   return result;
 }
 
@@ -39,6 +39,7 @@ const prompt = ai.definePrompt({
   name: 'parseSchedulePrompt',
   input: {schema: ParseScheduleTextInputSchema},
   output: {schema: ParseScheduleTextOutputSchema},
+  model: 'gemini-1.5-flash',
   prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
 
@@ -75,8 +76,8 @@ const parseScheduleFlow = ai.defineFlow(
     inputSchema: ParseScheduleTextInputSchema,
     outputSchema: ParseScheduleTextOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input, { apiKey }) => {
+    const {output} = await prompt(input, {}, { apiKey });
     return output!;
   }
 );
