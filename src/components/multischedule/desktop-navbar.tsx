@@ -4,11 +4,10 @@
 import type { ScheduleTemplate, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
@@ -67,7 +66,7 @@ export function DesktopNavbar({
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
-    const [isTranslatePopoverOpen, setIsTranslatePopoverOpen] = useState(false);
+    const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
 
     const handleSaveTemplateClick = () => {
         if (templateName.trim()) {
@@ -87,45 +86,11 @@ export function DesktopNavbar({
     
     const handleTranslateClick = () => {
         onTranslate();
-        setIsTranslatePopoverOpen(false);
+        setIsTranslateDialogOpen(false);
     }
 
   return (
     <div className="flex items-center justify-between rounded-lg border bg-card p-1 h-auto">
-        <div className="flex items-center">
-            <Popover open={isTranslatePopoverOpen} onOpenChange={setIsTranslatePopoverOpen}>
-                <PopoverTrigger asChild>
-                     <Button variant="ghost" className="px-3 py-1.5 h-auto text-sm font-medium">
-                         <Languages className="mr-2 h-4 w-4" /> Перевести
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56" align="start">
-                    <div className="grid gap-4">
-                        <div className="space-y-2">
-                            <h4 className="font-medium leading-none">Перевод</h4>
-                            <p className="text-sm text-muted-foreground">Выберите языки для перевода.</p>
-                        </div>
-                        <div className="grid gap-2">
-                            {AVAILABLE_LANGUAGES.map(lang => (
-                            <div key={lang.code} className="flex items-center space-x-2">
-                                <Checkbox
-                                id={`lang-desktop-${lang.code}`}
-                                checked={selectedLanguages.includes(lang.code)}
-                                onCheckedChange={() => onLanguageToggle(lang.code)}
-                                />
-                                <Label htmlFor={`lang-desktop-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
-                            </div>
-                            ))}
-                        </div>
-                        <Button onClick={handleTranslateClick} disabled={isLoading}>
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Перевести
-                        </Button>
-                    </div>
-                </PopoverContent>
-            </Popover>
-        </div>
-        
         <Menubar className="border-none bg-transparent p-0 h-auto">
             <MenubarMenu>
                 <MenubarTrigger>Файл</MenubarTrigger>
@@ -142,6 +107,37 @@ export function DesktopNavbar({
             <MenubarMenu>
                 <MenubarTrigger>Инструменты</MenubarTrigger>
                 <MenubarContent>
+                    <Dialog open={isTranslateDialogOpen} onOpenChange={setIsTranslateDialogOpen}>
+                        <DialogTrigger asChild>
+                            <MenubarItem onSelect={(e) => e.preventDefault()}>
+                                <Languages className="mr-2" /> Перевести
+                            </MenubarItem>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                             <DialogHeader>
+                                <DialogTitle>Перевод расписания</DialogTitle>
+                                <DialogDescription>Выберите языки для перевода.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-2 gap-4 py-4">
+                                {AVAILABLE_LANGUAGES.map(lang => (
+                                <div key={lang.code} className="flex items-center space-x-2">
+                                    <Checkbox
+                                    id={`lang-desktop-${lang.code}`}
+                                    checked={selectedLanguages.includes(lang.code)}
+                                    onCheckedChange={() => onLanguageToggle(lang.code)}
+                                    />
+                                    <Label htmlFor={`lang-desktop-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                                </div>
+                                ))}
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={handleTranslateClick} disabled={isLoading}>
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Перевести
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                     <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
@@ -204,6 +200,7 @@ export function DesktopNavbar({
                             <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
                                 <DialogHeader className="p-6 pb-0">
                                 <DialogTitle>Мои события</DialogTitle>
+                                <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
                                 </DialogHeader>
                                 <SavedEvents
                                     savedEvents={savedEvents}

@@ -50,7 +50,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
             description: newEventDescription,
             icon: newEventIcon
         }
-        onUpdate(newEvent); // A bit of a hack, but onUpdate can handle creation too
+        onUpdate(newEvent); // This will now correctly add the new event
         setNewEventDescription('');
         setNewEventIcon(undefined);
         setIsCreating(false);
@@ -72,7 +72,6 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 pt-2 border-b">
-        <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
         <div className="flex justify-end">
             <Button onClick={() => setIsCreating(true)} size="sm">
                 <PlusCircle className="mr-2"/>

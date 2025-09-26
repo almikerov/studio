@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Download, Languages, Loader2, Copy, BookOpen, Wand2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 
@@ -123,8 +123,6 @@ export default function Home() {
   }
 
 
-  const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
-
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
     const newSchedule = schedule.map(item => (item.id === id ? { ...item, ...updatedValues } : item));
     setSchedule(newSchedule);
@@ -175,15 +173,14 @@ export default function Home() {
     });
   };
 
-  const handleTranslate = async (languages: string[]) => {
+  const handleTranslate = async () => {
     if (schedule.length === 0) {
       toast({ title: 'Ошибка', description: 'Ваше расписание пустое.', variant: 'destructive' });
       return;
     }
-    const languagesToTranslate = languages.filter(lang => !languageMap.has(lang));
     
-    if (languagesToTranslate.length === 0) {
-      toast({ title: 'Перевод не требуется', description: 'Все выбранные языки уже переведены.' });
+    if (selectedLanguages.length === 0) {
+      toast({ title: 'Перевод не требуется', description: 'Выберите хотя бы один язык для перевода.' });
       return;
     }
 
@@ -193,9 +190,23 @@ export default function Home() {
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
     try {
-      const result = await translateSchedule({ scheduleText, targetLanguages: languagesToTranslate });
+      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages });
       const newTranslations = Object.entries(result).map(([lang, text]) => ({ lang, text }));
-      setTranslatedSchedules(prev => [...prev, ...newTranslations]);
+      
+      // Update existing or add new
+      setTranslatedSchedules(prev => {
+          const updated = [...prev];
+          newTranslations.forEach(newT => {
+              const existingIndex = updated.findIndex(t => t.lang === newT.lang);
+              if (existingIndex > -1) {
+                  updated[existingIndex] = newT;
+              } else {
+                  updated.push(newT);
+              }
+          });
+          return updated;
+      });
+
     } catch (error) {
       console.error('Translation failed:', error);
       toast({
@@ -369,7 +380,6 @@ export default function Home() {
     }
   };
 
-
   const handleLanguageToggle = (code: string) => {
     setSelectedLanguages(prev =>
       prev.includes(code) ? prev.filter(lang => lang !== code) : [...prev, code]
@@ -380,37 +390,44 @@ export default function Home() {
     if (!showLanguageSelector) {
       setShowLanguageSelector(true);
     } else {
-      handleTranslate(selectedLanguages);
+      handleTranslate();
     }
   };
 
-  const commonControlProps = {
-    isLoading,
-    isDownloading,
-    onDownload: handleDownloadImage,
-    onCopy: handleCopyImage,
-    savedTemplates,
-    onLoadTemplate: handleLoadTemplate,
-    onDeleteTemplate: handleDeleteTemplate,
-    onSaveTemplate: handleSaveTemplate,
-    savedEvents,
-    onAddEventFromSaved: handleAddNewEvent,
-    updateSavedEvents,
-    onAiParse: handleAiParse,
-    selectedLanguages,
-    onLanguageToggle: handleLanguageToggle,
-    onTranslate: () => handleTranslate(selectedLanguages),
-    isTemplatesOpen,
-    setIsTemplatesOpen,
-    isAiParserOpen,
-    setIsAiParserOpen,
-  };
+  const handleUpdateSavedEvent = (updatedEvent: SavedEvent) => {
+      const exists = savedEvents.some(e => e.id === updatedEvent.id);
+      let newEvents;
+      if (exists) {
+          newEvents = savedEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+      } else {
+          newEvents = [...savedEvents, updatedEvent];
+      }
+      updateSavedEvents(newEvents);
+  }
 
 
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto space-y-4">
-        {!isMobile && <DesktopNavbar {...commonControlProps} />}
+        {!isMobile && <DesktopNavbar 
+            isLoading={isLoading}
+            isDownloading={isDownloading}
+            onDownload={handleDownloadImage}
+            onCopy={handleCopyImage}
+            savedTemplates={savedTemplates}
+            onLoadTemplate={handleLoadTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
+            onSaveTemplate={handleSaveTemplate}
+            savedEvents={savedEvents}
+            onAddEventFromSaved={handleAddNewEvent}
+            updateSavedEvents={updateSavedEvents}
+            onAiParse={handleAiParse}
+            selectedLanguages={selectedLanguages}
+            onLanguageToggle={handleLanguageToggle}
+            onTranslate={handleTranslate}
+            isAiParserOpen={isAiParserOpen}
+            setIsAiParserOpen={setIsAiParserOpen}
+        />}
 
         <DragDropContext onDragEnd={onDragEnd}>
           <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">

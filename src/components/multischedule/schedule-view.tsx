@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -274,20 +273,19 @@ export function ScheduleView({
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
                             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
                             
-                            <div className="w-24">
-                                <Input
-                                  type="time"
-                                  value={editedTime}
-                                  onChange={(e) => setEditedTime(e.target.value)}
-                                  onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                  className="w-full mb-1 disabled:opacity-50"
-                                  disabled={!!item.isUntimed}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              <div className="flex items-center space-x-2 pl-1" onClick={(e) => e.stopPropagation()}>
-                                <Switch id={`untimed-switch-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
-                                <Label htmlFor={`untimed-switch-${item.id}`} className="text-xs font-normal">Без времени</Label>
-                              </div>
+                            <Input
+                              type="time"
+                              value={editedTime}
+                              onChange={(e) => setEditedTime(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, item.id)}
+                              className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+                              disabled={!!item.isUntimed}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            
+                            <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+                                <Switch id={`untimed-switch-inline-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
+                                <Label htmlFor={`untimed-switch-inline-${item.id}`} className="text-xs font-normal text-muted-foreground">Без вр.</Label>
                             </div>
                             
                             <Input
