@@ -57,7 +57,7 @@ export function ScheduleView({
   const editRowRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
+  const [editedDescription, setEditedDescription] useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const [editedDate, setEditedDate] = useState<Date | undefined>(new Date());
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
@@ -199,14 +199,15 @@ export function ScheduleView({
     return (
         <div className="flex flex-col gap-4 p-1">
             <div className="flex items-center gap-2">
-                {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
-                <Textarea
-                    value={editedDescription}
-                    onChange={(e) => setEditedDescription(e.target.value)}
-                    className="flex-1 text-lg"
-                    rows={editedType === 'comment' ? 3 : 1}
-                    autoFocus={!['date', 'h1', 'h2', 'h3'].includes(item.type)}
-                />
+                {editedType !== 'comment' && editedType !== 'date' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                 {editedType !== 'date' && 
+                    <Textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        className="flex-1 text-lg"
+                        rows={editedType === 'comment' ? 3 : 1}
+                    />
+                 }
             </div>
 
             <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">

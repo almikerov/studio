@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2 } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
 import { toast } from '@/hooks/use-toast';
 import { ImageUploader } from './image-uploader';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
@@ -46,6 +48,7 @@ interface DesktopNavbarProps {
   isSavedEventsOpen: boolean;
   setIsSavedEventsOpen: (open: boolean) => void;
   setImageUrl: (url: string | null) => void;
+  onClearAll: () => void;
 }
 
 export function DesktopNavbar({
@@ -69,6 +72,7 @@ export function DesktopNavbar({
   isSavedEventsOpen,
   setIsSavedEventsOpen,
   setImageUrl,
+  onClearAll,
 }: DesktopNavbarProps) {
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
@@ -203,6 +207,26 @@ export function DesktopNavbar({
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
+                    <MenubarSeparator />
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <MenubarItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                <Trash className="mr-2" /> Очистить всё
+                            </MenubarItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Это действие навсегда удалит ваше текущее расписание. Это действие нельзя будет отменить.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                <AlertDialogAction onClick={onClearAll} className="bg-destructive hover:bg-destructive/90">Очистить</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </MenubarContent>
             </MenubarMenu>
 

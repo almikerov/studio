@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { Input } from '@/components/ui/input';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -71,11 +72,6 @@ export type ScheduleTemplate = {
 
 const defaultSchedule: ScheduleItem[] = [
     { id: '0', time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
-    { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera', color: 'blue', type: 'timed' },
-    { id: '2', time: '12:30', description: 'Обед', icon: 'utensils', type: 'timed' },
-    { id: '3', time: '', description: 'Купить билеты', icon: 'passport', type: 'untimed' },
-    { id: '4', time: '', description: 'Не забыть проанализировать тактику соперника перед матчем.', type: 'comment' },
-    { id: '5', time: '18:00', description: 'Завершение рабочего дня', icon: 'bed', type: 'timed' },
 ];
 
 export default function Home() {
@@ -582,6 +578,7 @@ export default function Home() {
       setIsRenderOptionsOpen(false);
     });
     setIsRenderOptionsOpen(true);
+    setIsMobileMenuOpen(false);
   };
   
   const handleAddFromSavedClick = (event: SavedEvent) => {
@@ -605,6 +602,15 @@ export default function Home() {
   const addNewTypedEvent = (type: ScheduleItem['type']) => {
     handleAddNewEvent({ type });
     setIsAddEventDialogOpen(false);
+  }
+
+  const handleClearAll = () => {
+    setSchedule(defaultSchedule);
+    setCardTitle('Расписание на день');
+    setImageUrl(null);
+    setTranslatedSchedules([]);
+    toast({ title: 'Расписание очищено' });
+    setIsMobileMenuOpen(false);
   }
 
 
@@ -635,6 +641,7 @@ export default function Home() {
             isAiParserOpen={isAiParserOpen}
             setIsAiParserOpen={setIsAiParserOpen}
             setImageUrl={setImageUrl}
+            onClearAll={handleClearAll}
         />}
 
         
@@ -793,6 +800,25 @@ export default function Home() {
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" className="justify-start w-full text-destructive hover:text-destructive">
+                                    <Trash className="mr-2" /> Очистить всё
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Это действие навсегда удалит ваше текущее расписание. Это действие нельзя будет отменить.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">Очистить</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                    </div>
 
                    <Separator />
@@ -874,7 +900,7 @@ export default function Home() {
               <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
                  <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('timed')}>Событие со временем</Button>
                  <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('untimed')}>Событие без времени</Button>
-                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('date')}>Разделитель-дата</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('date')}>Дата</Button>
                  <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('h1')}>Заголовок H1</Button>
                  <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('h2')}>Заголовок H2</Button>
                  <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('h3')}>Заголовок H3</Button>
