@@ -1,5 +1,4 @@
 
-// src/ai/flows/translate-text.ts
 'use server';
 
 /**
@@ -10,28 +9,34 @@
  * - TranslateTextOutput - The return type for the translateText function.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { VertexAI } from '@google-cloud/vertexai';
 import { z } from 'zod';
 
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to translate.'),
-  targetLanguages: z.array(z_string()).describe('The list of target languages to translate the text into.'),
+  targetLanguages: z.array(z.string()).describe('The list of target languages to translate the text into.'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
   translations: z.record(z.string()).describe('An object where keys are the language codes and values are the translated texts.')
 });
-export type TranslateTextOutput = z_infer<typeof TranslateTextOutputSchema>;
+export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
 
-export async function translateText(input: TranslateTextInput, apiKey: string): Promise<TranslateTextOutput> {
+export async function translateText(input: TranslateTextInput, apiKey: string, projectId: string): Promise<TranslateTextOutput> {
   if (!apiKey) {
     throw new Error('API key is not provided');
   }
+  if (!projectId) {
+    throw new Error('Project ID is not provided');
+  }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+  const vertexAI = new VertexAI({ project: projectId, location: 'us-central1' });
+  const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: {
+    // @ts-ignore
+    apiKey,
+  }});
 
   const languages = input.targetLanguages.join(', ');
 

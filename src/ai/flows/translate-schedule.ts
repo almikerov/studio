@@ -1,5 +1,4 @@
 
-// src/ai/flows/translate-schedule.ts
 'use server';
 
 /**
@@ -10,7 +9,7 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { VertexAI } from '@google-cloud/vertexai';
 import { z } from 'zod';
 
 const TranslateScheduleInputSchema = z.object({
@@ -24,13 +23,19 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput, apiKey: string): Promise<Record<string, string>> {
+export async function translateSchedule(input: TranslateScheduleInput, apiKey: string, projectId: string): Promise<Record<string, string>> {
   if (!apiKey) {
     throw new Error('API key is not provided');
   }
+  if (!projectId) {
+    throw new Error('Project ID is not provided');
+  }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+  const vertexAI = new VertexAI({ project: projectId, location: 'us-central1' });
+  const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: {
+    // @ts-ignore
+    apiKey,
+  }});
 
   const languages = input.targetLanguages.join(', ');
 

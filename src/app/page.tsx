@@ -105,6 +105,7 @@ export default function Home() {
   const [renderAction, setRenderAction] = useState<(() => void) | null>(null);
   const [templateName, setTemplateName] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
+  const [projectIdInput, setProjectIdInput] = useState('');
 
 
   useEffect(() => {
@@ -125,9 +126,13 @@ export default function Home() {
       if (storedTemplates) {
         setSavedTemplates(JSON.parse(storedTemplates));
       }
-      const storedApiKey = localStorage.getItem('genkit-api-key');
+      const storedApiKey = localStorage.getItem('vertex-api-key');
       if (storedApiKey) {
         setApiKeyInput(storedApiKey);
+      }
+      const storedProjectId = localStorage.getItem('vertex-project-id');
+      if (storedProjectId) {
+        setProjectIdInput(storedProjectId);
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
@@ -247,9 +252,10 @@ export default function Home() {
     setIsLoading(true);
     setIsMobileMenuOpen(false);
 
-    const apiKey = localStorage.getItem('genkit-api-key');
-    if (!apiKey) {
-      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+    const apiKey = localStorage.getItem('vertex-api-key');
+    const projectId = localStorage.getItem('vertex-project-id');
+    if (!apiKey || !projectId) {
+      toast({ title: 'Ошибка', description: 'API ключ или Project ID не найден. Введите их в меню.', variant: 'destructive' });
       setIsLoading(false);
       return;
     }
@@ -257,7 +263,7 @@ export default function Home() {
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
     try {
-      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages }, apiKey);
+      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages }, apiKey, projectId);
       const newTranslations = Object.entries(result).map(([lang, text]) => ({ lang, text }));
       
       // Update existing or add new
@@ -278,7 +284,7 @@ export default function Home() {
       console.error('Translation failed:', error);
       toast({
         title: 'Ошибка перевода',
-        description: 'Не удалось перевести расписание. Проверьте API ключ и попробуйте еще раз.',
+        description: 'Не удалось перевести расписание. Проверьте API ключ и Project ID, и попробуйте еще раз.',
         variant: 'destructive',
       });
     } finally {
@@ -535,15 +541,16 @@ export default function Home() {
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
 
-    const apiKey = localStorage.getItem('genkit-api-key');
-    if (!apiKey) {
-      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+    const apiKey = localStorage.getItem('vertex-api-key');
+    const projectId = localStorage.getItem('vertex-project-id');
+    if (!apiKey || !projectId) {
+      toast({ title: 'Ошибка', description: 'API ключ или Project ID не найден. Введите их в меню.', variant: 'destructive' });
       setIsLoading(false);
       return;
     }
 
     try {
-      const result = await parseScheduleFromText({ text }, apiKey);
+      const result = await parseScheduleFromText({ text }, apiKey, projectId);
       const newScheduleItems = result.schedule.map(item => ({
         ...item,
         id: Date.now().toString() + Math.random(),
@@ -557,7 +564,7 @@ export default function Home() {
       console.error('AI parsing failed:', error);
       toast({
         title: 'Ошибка генерации',
-        description: 'Не удалось создать расписание из текста. Проверьте API ключ и попробуйте еще раз.',
+        description: 'Не удалось создать расписание из текста. Проверьте API ключ и Project ID, и попробуйте еще раз.',
         variant: 'destructive',
       });
     } finally {
@@ -583,14 +590,15 @@ export default function Home() {
       updateSavedEvents(newEvents);
   }
 
-  const handleSaveApiKey = () => {
+  const handleSaveApiConfig = () => {
     try {
-      localStorage.setItem('genkit-api-key', apiKeyInput);
-      toast({ title: 'API ключ сохранен' });
+      localStorage.setItem('vertex-api-key', apiKeyInput);
+      localStorage.setItem('vertex-project-id', projectIdInput);
+      toast({ title: 'Конфигурация Vertex AI сохранена' });
       setIsApiKeyDialogOpen(false);
     } catch (error) {
-      console.error("Failed to save API key to localStorage", error);
-      toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить API ключ.', variant: 'destructive' });
+      console.error("Failed to save to localStorage", error);
+      toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить конфигурацию.', variant: 'destructive' });
     }
   };
   
@@ -649,9 +657,10 @@ export default function Home() {
   }
 
   const handleDebugModels = async () => {
-    const apiKey = localStorage.getItem('genkit-api-key');
-    if (!apiKey) {
-      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+    const apiKey = localStorage.getItem('vertex-api-key');
+    const projectId = localStorage.getItem('vertex-project-id');
+    if (!apiKey || !projectId) {
+      toast({ title: 'Ошибка', description: 'API ключ или Project ID не найден. Введите их в меню.', variant: 'destructive' });
       return;
     }
     
@@ -659,7 +668,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const results = await debugModels(apiKey);
+      const results = await debugModels({apiKey, projectId});
       
       if (results.successful.length > 0) {
         toast({
@@ -669,7 +678,7 @@ export default function Home() {
       } else {
         toast({
           title: 'Нет рабочих моделей',
-          description: 'Ни одна из тестовых моделей не доступна с вашим ключом.',
+          description: 'Ни одна из тестовых моделей не доступна с вашим ключом и Project ID.',
           variant: 'destructive',
         });
       }
@@ -863,28 +872,41 @@ export default function Home() {
                         <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                           <DialogTrigger asChild>
                             <Button variant="ghost" className="justify-start w-full">
-                              <KeyRound className="mr-2" /> Ввести API ключ
+                              <KeyRound className="mr-2" /> Vertex AI Config
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Ввести API ключ</DialogTitle>
-                              <DialogDescription>Введите ваш API ключ для доступа к нейросети.</DialogDescription>
+                              <DialogTitle>Конфигурация Vertex AI</DialogTitle>
+                              <DialogDescription>Введите ваш API ключ и Project ID для доступа к Vertex AI.</DialogDescription>
                             </DialogHeader>
-                            <div className="py-4">
-                              <Input
-                                type="password"
-                                placeholder="Ваш API ключ"
-                                value={apiKeyInput}
-                                onChange={(e) => setApiKeyInput(e.target.value)}
-                              />
+                            <div className="py-4 space-y-4">
+                               <div>
+                                <Label htmlFor="project-id-mobile">Project ID</Label>
+                                <Input
+                                  id="project-id-mobile"
+                                  placeholder="Ваш Project ID"
+                                  value={projectIdInput}
+                                  onChange={(e) => setProjectIdInput(e.target.value)}
+                                />
+                               </div>
+                               <div>
+                                <Label htmlFor="api-key-mobile">API Key</Label>
+                                <Input
+                                  id="api-key-mobile"
+                                  type="password"
+                                  placeholder="Ваш API ключ"
+                                  value={apiKeyInput}
+                                  onChange={(e) => setApiKeyInput(e.target.value)}
+                                />
+                               </div>
                             </div>
                             <DialogFooter>
                                <Button onClick={handleDebugModels} variant="secondary" disabled={isLoading}>
                                 {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Bug className="mr-2" />}
                                 Отладка
                               </Button>
-                              <Button onClick={handleSaveApiKey}>Сохранить</Button>
+                              <Button onClick={handleSaveApiConfig}>Сохранить</Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>

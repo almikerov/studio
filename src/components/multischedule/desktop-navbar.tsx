@@ -81,11 +81,16 @@ export function DesktopNavbar({
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
     const [apiKeyInput, setApiKeyInput] = useState('');
+    const [projectIdInput, setProjectIdInput] = useState('');
 
      React.useEffect(() => {
-        const storedApiKey = localStorage.getItem('genkit-api-key');
+        const storedApiKey = localStorage.getItem('vertex-api-key');
         if (storedApiKey) {
             setApiKeyInput(storedApiKey);
+        }
+        const storedProjectId = localStorage.getItem('vertex-project-id');
+        if (storedProjectId) {
+            setProjectIdInput(storedProjectId);
         }
     }, []);
 
@@ -110,14 +115,15 @@ export function DesktopNavbar({
         setIsTranslateDialogOpen(false);
     }
     
-    const handleSaveApiKey = () => {
+    const handleSaveApiConfig = () => {
         try {
-            localStorage.setItem('genkit-api-key', apiKeyInput);
-            toast({ title: 'API ключ сохранен' });
+            localStorage.setItem('vertex-api-key', apiKeyInput);
+            localStorage.setItem('vertex-project-id', projectIdInput);
+            toast({ title: 'Конфигурация Vertex AI сохранена' });
             setIsApiKeyDialogOpen(false);
         } catch (error) {
-            console.error("Failed to save API key to localStorage", error);
-            toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить API ключ.', variant: 'destructive' });
+            console.error("Failed to save to localStorage", error);
+            toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить конфигурацию.', variant: 'destructive' });
         }
     };
 
@@ -188,28 +194,41 @@ export function DesktopNavbar({
                      <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <KeyRound className="mr-2" /> Ввести API ключ
+                                <KeyRound className="mr-2" /> Vertex AI Config
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Ввести API ключ</DialogTitle>
-                                <DialogDescription>Введите ваш API ключ для доступа к нейросети.</DialogDescription>
+                                <DialogTitle>Конфигурация Vertex AI</DialogTitle>
+                                <DialogDescription>Введите ваш API ключ и Project ID для доступа к Vertex AI.</DialogDescription>
                             </DialogHeader>
-                            <div className="py-4">
+                            <div className="py-4 space-y-4">
+                                <div>
+                                <Label htmlFor="project-id-desktop">Project ID</Label>
                                 <Input
+                                    id="project-id-desktop"
+                                    placeholder="Ваш Project ID"
+                                    value={projectIdInput}
+                                    onChange={(e) => setProjectIdInput(e.target.value)}
+                                />
+                                </div>
+                                <div>
+                                <Label htmlFor="api-key-desktop">API Key</Label>
+                                <Input
+                                    id="api-key-desktop"
                                     type="password"
                                     placeholder="Ваш API ключ"
                                     value={apiKeyInput}
                                     onChange={(e) => setApiKeyInput(e.target.value)}
                                 />
+                                </div>
                             </div>
                             <DialogFooter className="sm:justify-between">
                                <Button onClick={onDebugModels} variant="secondary" disabled={isLoading}>
                                 {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Bug className="mr-2" />}
                                 Отладка моделей
                               </Button>
-                              <Button onClick={handleSaveApiKey}>Сохранить</Button>
+                              <Button onClick={handleSaveApiConfig}>Сохранить</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
