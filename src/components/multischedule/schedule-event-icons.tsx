@@ -15,6 +15,8 @@ import {
   Bus,
   Lock,
   Moon,
+  CakeSlice,
+  Shirt,
 } from 'lucide-react';
 import React from 'react';
 
@@ -61,6 +63,8 @@ export const ICONS = {
   'soccer-ball': SoccerBall,
   lock: Lock,
   moon: Moon,
+  cake: CakeSlice,
+  shirt: Shirt,
 };
 
 export type IconName = keyof typeof ICONS;

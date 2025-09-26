@@ -98,6 +98,8 @@ export default function Home() {
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
 
 
@@ -306,7 +308,6 @@ export default function Home() {
             };
             img.onerror = (e) => {
                 console.error("Image load error:", e);
-                // Resolve with an empty string or placeholder if it fails
                 reject(new Error(`Failed to load image at ${url}`));
             };
             img.src = url;
@@ -547,6 +548,15 @@ export default function Home() {
       toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить API ключ.', variant: 'destructive' });
     }
   };
+  
+  const handleSaveTemplateClick = () => {
+    if (templateName.trim()) {
+        handleSaveTemplate(templateName.trim());
+        setTemplateName('');
+        setIsSaveTemplateDialogOpen(false);
+        setIsMobileMenuOpen(false);
+    }
+  };
 
 
   return (
@@ -734,6 +744,25 @@ export default function Home() {
                               onClose={() => setIsTemplatesOpen(false)}
                             />
                           </DialogContent>
+                        </Dialog>
+                         <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" className="justify-start w-full">
+                                    <Save className="mr-2" /> Сохранить шаблон
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Сохранить шаблон</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <Label htmlFor="template-name-mobile">Название шаблона</Label>
+                                    <Input id="template-name-mobile" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
+                                </div>
+                                <DialogFooter>
+                                    <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button>
+                                </DialogFooter>
+                            </DialogContent>
                         </Dialog>
                         <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
                            <DialogTrigger asChild>
