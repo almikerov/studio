@@ -17,7 +17,7 @@ export function SavedTemplates({ templates, onLoad, onDelete }: SavedTemplatesPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Шаблоны расписаний</CardTitle>
+        <CardTitle>Мои расписания</CardTitle>
       </CardHeader>
       <CardContent>
         {templates.length > 0 ? (

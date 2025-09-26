@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -45,7 +46,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate }: SavedEve
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Сохраненные события</CardTitle>
+        <CardTitle>Мои события</CardTitle>
       </CardHeader>
       <CardContent>
         {savedEvents.length > 0 ? (
