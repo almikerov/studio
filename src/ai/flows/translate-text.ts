@@ -19,7 +19,7 @@ const TranslateTextInputSchema = z.object({
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
-  translations: z.record(z.string()).describe('An object where keys are the language codes and values are the translated texts.')
+  translations: z.any().describe('An object where keys are the language codes and values are the translated texts.')
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
