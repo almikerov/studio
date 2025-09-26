@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -8,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -17,10 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SavedEvents } from '@/components/multischedule/saved-events';
+import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -91,6 +92,8 @@ export default function Home() {
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isAiParserOpen, setIsAiParserOpen] = useState(false);
+  const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
+
 
   useEffect(() => {
     try {
@@ -165,17 +168,29 @@ export default function Home() {
     }
   };
 
-  const onDragEnd = (result: DropResult) => {
-    const { source, destination } = result;
-    if (!destination) return;
-    
+  const moveEvent = (index: number, direction: 'up' | 'down') => {
     setSchedule(prev => {
       const items = Array.from(prev);
-      const [reorderedItem] = items.splice(source.index, 1);
-      items.splice(destination.index, 0, reorderedItem);
+      const [movedItem] = items.splice(index, 1);
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      
+      if (newIndex < 0 || newIndex >= items.length + 1) {
+        return items; // out of bounds
+      }
+      
+      items.splice(newIndex, 0, movedItem);
       return items;
     });
   };
+
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(schedule);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setSchedule(items);
+  };
+
 
   const handleTranslate = async () => {
     if (schedule.length === 0) {
@@ -436,115 +451,168 @@ export default function Home() {
             setIsAiParserOpen={setIsAiParserOpen}
         />}
 
-        <DragDropContext onDragEnd={onDragEnd}>
+        
           <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">
-            <ScheduleView
-              schedule={schedule}
-              onUpdateEvent={handleUpdateEvent}
-              onDeleteEvent={handleDeleteEvent}
-              onAddNewEvent={handleAddNewEvent}
-              cardTitle={cardTitle}
-              setCardTitle={setCardTitle}
-              selectedDate={selectedDate}
-              setSelectedDate={setSelectedDate}
-              imageUrl={imageUrl}
-              setImageUrl={setImageUrl}
-              onSaveEvent={handleSaveEvent}
-              comment={comment}
-              setComment={setComment}
-              onSaveTemplate={handleSaveTemplate}
-              editingEvent={editingEvent}
-              handleOpenEditModal={handleOpenEditModal}
-              handleCloseEditModal={handleCloseEditModal}
-              savedEvents={savedEvents}
-              isMobile={isMobile}
-            />
+            <DragDropContext onDragEnd={onDragEnd}>
+              <ScheduleView
+                schedule={schedule}
+                onUpdateEvent={handleUpdateEvent}
+                onDeleteEvent={handleDeleteEvent}
+                onAddNewEvent={handleAddNewEvent}
+                cardTitle={cardTitle}
+                setCardTitle={setCardTitle}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                imageUrl={imageUrl}
+                setImageUrl={setImageUrl}
+                onSaveEvent={handleSaveEvent}
+                comment={comment}
+                setComment={setComment}
+                onSaveTemplate={handleSaveTemplate}
+                editingEvent={editingEvent}
+                handleOpenEditModal={handleOpenEditModal}
+                handleCloseEditModal={handleCloseEditModal}
+                savedEvents={savedEvents}
+                isMobile={isMobile}
+                onMoveEvent={moveEvent}
+              />
+            </DragDropContext>
             <TranslatedSchedulesView 
               translatedSchedules={translatedSchedules}
               onDelete={handleDeleteTranslation}
               onUpdate={handleUpdateTranslation}
             />
           </div>
-        </DragDropContext>
+        
 
         {isMobile && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Управление</CardTitle>
-              <CardDescription>Переводите, экспортируйте, используйте шаблоны и ИИ.</CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              {showLanguageSelector && (
-                <div className="space-y-2 mb-6">
-                  <Label>Языки для перевода</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {AVAILABLE_LANGUAGES.map(lang => (
-                      <div key={lang.code} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`lang-${lang.code}`}
-                          checked={selectedLanguages.includes(lang.code)}
-                          onCheckedChange={() => handleLanguageToggle(lang.code)}
-                        />
-                        <Label htmlFor={`lang-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
-                      </div>
-                    ))}
+           <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button className="rounded-full w-16 h-16 shadow-lg" size="icon"><Save /></Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 mb-2 mr-2 p-2">
+                  <div className="flex flex-col gap-2">
+                    <Button onClick={handleDownloadImage} variant="ghost" className="justify-start" disabled={isDownloading}>
+                      {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
+                      Скачать
+                    </Button>
+                    <Button onClick={handleCopyImage} variant="ghost" className="justify-start" disabled={isDownloading}>
+                      {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
+                      Копировать
+                    </Button>
                   </div>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-4">
-                  <Button onClick={onTranslateClick} disabled={isLoading || isDownloading} className="flex-1 min-w-[150px]">
-                      {isLoading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Languages className="mr-2 h-4 w-4" /> )}
-                      {isLoading ? 'Переводим...' : (showLanguageSelector ? 'Подтвердить' : 'Перевести')}
-                  </Button>
-                  <Button onClick={handleDownloadImage} variant="outline" className="flex-1 min-w-[150px]" disabled={isDownloading || isLoading}>
-                      {isDownloading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Download className="mr-2 h-4 w-4" /> )}
-                      {isDownloading ? 'Загрузка...' : 'Скачать'}
-                  </Button>
-                  <Button onClick={handleCopyImage} variant="outline" className="flex-1 min-w-[150px]" disabled={isDownloading || isLoading}>
-                      {isDownloading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Copy className="mr-2 h-4 w-4" /> )}
-                      {isDownloading ? 'Обработка...' : 'Копировать'}
-                  </Button>
-              </div>
-            </CardContent>
+                </PopoverContent>
+              </Popover>
 
-            <CardFooter className="flex flex-wrap gap-4">
-              <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="secondary" className="flex-1 min-w-[150px]">
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Шаблоны
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                  <SavedTemplates 
-                    templates={savedTemplates}
-                    onLoad={handleLoadTemplate}
-                    onDelete={handleDeleteTemplate}
-                    onClose={() => setIsTemplatesOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
-              
-              <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
-                <DialogTrigger asChild>
-                   <Button variant="secondary" className="flex-1 min-w-[150px]">
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    ИИ-редактор
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                  <AiScheduleParser 
-                    onParse={handleAiParse} 
-                    isLoading={isLoading} 
-                    onClose={() => setIsAiParserOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
-            </CardFooter>
-          </Card>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button className="rounded-full w-16 h-16 shadow-lg" size="icon"><Construction /></Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 mb-2 mr-2 p-2">
+                   <div className="flex flex-col gap-2">
+                      <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" className="justify-start">
+                              <Languages className="mr-2" /> Перевести
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Перевод расписания</DialogTitle>
+                              <DialogDescription>Выберите языки для перевода.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-2 gap-4 py-4">
+                              {AVAILABLE_LANGUAGES.map(lang => (
+                                <div key={lang.code} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`lang-mobile-${lang.code}`}
+                                    checked={selectedLanguages.includes(lang.code)}
+                                    onCheckedChange={() => handleLanguageToggle(lang.code)}
+                                  />
+                                  <Label htmlFor={`lang-mobile-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                                </div>
+                              ))}
+                            </div>
+                            <Button onClick={handleTranslate} disabled={isLoading}>
+                              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                              Перевести
+                            </Button>
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
+                          <DialogTrigger asChild>
+                             <Button variant="ghost" className="justify-start">
+                              <Wand2 className="mr-2" /> ИИ-редактор
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                            <AiScheduleParser 
+                              onParse={handleAiParse} 
+                              isLoading={isLoading} 
+                              onClose={() => setIsAiParserOpen(false)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                   </div>
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                   <Button className="rounded-full w-16 h-16 shadow-lg" size="icon"><BookOpen /></Button>
+                </PopoverTrigger>
+                 <PopoverContent className="w-56 mb-2 mr-2 p-2">
+                    <div className="flex flex-col gap-2">
+                       <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" className="justify-start">
+                              <BookOpen className="mr-2" /> Шаблоны
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                            <SavedTemplates 
+                              templates={savedTemplates}
+                              onLoad={handleLoadTemplate}
+                              onDelete={handleDeleteTemplate}
+                              onClose={() => setIsTemplatesOpen(false)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
+                           <DialogTrigger asChild>
+                            <Button variant="ghost" className="justify-start">
+                              <Save className="mr-2" /> Заготовки
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                            <DialogHeader className="p-6 pb-0">
+                                <DialogTitle>Мои события</DialogTitle>
+                                <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+                            </DialogHeader>
+                             <SavedEvents
+                                savedEvents={savedEvents}
+                                onAdd={(event) => {
+                                  handleAddNewEvent(event);
+                                  setIsSavedEventsOpen(false);
+                                }}
+                                onUpdate={handleUpdateSavedEvent}
+                                onDelete={(id) => {
+                                    updateSavedEvents(savedEvents.filter(e => e.id !== id));
+                                }}
+                                onClose={() => setIsSavedEventsOpen(false)}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                    </div>
+                 </PopoverContent>
+              </Popover>
+
+           </div>
         )}
       </div>
     </main>
   );
 }
+
+    

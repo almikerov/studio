@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus, X, Check } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -47,13 +47,14 @@ interface ScheduleViewProps {
   handleCloseEditModal: () => void;
   savedEvents: SavedEvent[];
   isMobile: boolean | undefined;
+  onMoveEvent: (index: number, direction: 'up' | 'down') => void;
 }
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
   selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, 
   setComment, onSaveTemplate, editingEvent, handleOpenEditModal, handleCloseEditModal,
-  savedEvents, isMobile
+  savedEvents, isMobile, onMoveEvent
 }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
@@ -162,7 +163,6 @@ export function ScheduleView({
               onChange={(e) => setEditedDescription(e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, item.id)}
               className="flex-1 text-lg"
-              autoFocus
             />
         </div>
 
@@ -252,11 +252,11 @@ export function ScheduleView({
         </div>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 pt-0">
-          <Droppable droppableId="schedule">
+          <Droppable droppableId="schedule" isDropDisabled={isMobile}>
             {(provided) => (
               <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
                 {schedule.map((item, index) => (
-                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                  <Draggable key={item.id} draggableId={item.id} index={index} isDragDisabled={isMobile}>
                     {(provided, snapshot) => (
                       <li
                         ref={provided.innerRef}
@@ -268,14 +268,19 @@ export function ScheduleView({
                         )}
                         onClick={() => handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
+                         {!isMobile && <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
-                         </div>
+                         </div>}
 
                         {editingId === item.id && !isMobile ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
                             
+                            <div className="flex items-center space-x-1" >
+                                <Label htmlFor={`hastime-switch-inline-${item.id}`} className="text-xs font-normal text-muted-foreground">Время</Label>
+                                <Switch id={`hastime-switch-inline-${item.id}`} checked={!item.isUntimed} onCheckedChange={(checked) => handleToggleHasTime(item.id, checked)} />
+                            </div>
+
                             <Input
                               type="time"
                               value={editedTime}
@@ -284,11 +289,6 @@ export function ScheduleView({
                               className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
                               disabled={!!item.isUntimed}
                             />
-                            
-                            <div className="flex items-center space-x-1" >
-                                <Switch id={`hastime-switch-inline-${item.id}`} checked={!item.isUntimed} onCheckedChange={(checked) => handleToggleHasTime(item.id, checked)} />
-                                <Label htmlFor={`hastime-switch-inline-${item.id}`} className="text-xs font-normal text-muted-foreground">Время</Label>
-                            </div>
                             
                             <Input
                               value={editedDescription}
@@ -320,6 +320,17 @@ export function ScheduleView({
                           </div>
                         ) : (
                           <>
+                            {isMobile && (
+                              <div className="flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" disabled={index === 0} onClick={() => onMoveEvent(index, 'up')}>
+                                  <ArrowUp className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" disabled={index === schedule.length - 1} onClick={() => onMoveEvent(index, 'down')}>
+                                  <ArrowDown className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+
                             <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
                                 {item.icon ? (
                                     <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
