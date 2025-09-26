@@ -1,22 +1,61 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Plus, GripVertical } from 'lucide-react';
+import { Draggable, Droppable } from '@hello-pangea/dnd';
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
-  onUpdateEvent: (id: number, time: string, description: string) => void;
-  onDeleteEvent: (id: number) => void;
-  onMoveEvent: (id: number, direction: 'up' | 'down') => void;
+  onUpdateEvent: (id: string, time: string, description: string) => void;
+  onDeleteEvent: (id: string) => void;
   onAddNewEvent: () => void;
+  cardTitle: string;
+  setCardTitle: (title: string) => void;
+  cardDescription: string;
+  setCardDescription: (desc: string) => void;
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onMoveEvent, onAddNewEvent }: ScheduleViewProps) {
-  const [editingId, setEditingId] = useState<number | null>(null);
+const EditableField = ({ value, setValue, className, as: Component = 'div' }: { value: string; setValue: (val: string) => void; className: string; as?: 'div' | 'p' | 'h1' | 'h2' | 'h3' }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [text, setText] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleBlur = () => {
+    setValue(text);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleBlur();
+    if (e.key === 'Escape') {
+      setText(value);
+      setIsEditing(false);
+    }
+  };
+  
+  if (isEditing) {
+    return <input 
+      ref={inputRef}
+      type="text"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      className={`${className} bg-transparent outline-none ring-2 ring-ring rounded-md`}
+      autoFocus
+    />
+  }
+
+  return <Component onClick={() => setIsEditing(true)} className={`${className} cursor-pointer`}>{value}</Component>
+}
+
+
+export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription }: ScheduleViewProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
 
@@ -26,7 +65,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onMoveEve
     setEditedDescription(item.description);
   };
 
-  const handleSave = (id: number) => {
+  const handleSave = (id: string) => {
     onUpdateEvent(id, editedTime, editedDescription);
     setEditingId(null);
   };
@@ -35,7 +74,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onMoveEve
     setEditingId(null);
   };
   
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: number) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: string) => {
     if (e.key === 'Enter') {
       handleSave(id);
     } else if (e.key === 'Escape') {
@@ -46,78 +85,72 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onMoveEve
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <CardTitle>Расписание на день</CardTitle>
-        <CardDescription>Ваш план на сегодня. Нажмите на событие, чтобы редактировать.</CardDescription>
+        <EditableField as={CardTitle} value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
+        <EditableField as={CardDescription} value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground" />
       </CardHeader>
       <CardContent>
         {schedule.length > 0 ? (
-          <ul className="space-y-2">
-            {schedule.map((item, index) => (
-              <li key={item.id} className="group flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50">
-                <div className="flex flex-col gap-1">
-                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-accent-foreground disabled:opacity-30"
-                    onClick={() => onMoveEvent(item.id, 'up')}
-                    disabled={index === 0}
-                    aria-label="Move up"
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                   <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-accent-foreground disabled:opacity-30"
-                    onClick={() => onMoveEvent(item.id, 'down')}
-                    disabled={index === schedule.length - 1}
-                    aria-label="Move down"
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                </div>
+          <Droppable droppableId="schedule">
+            {(provided) => (
+              <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
+                {schedule.map((item, index) => (
+                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                    {(provided, snapshot) => (
+                      <li
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`group flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50 ${snapshot.isDragging ? 'bg-secondary shadow-lg' : ''}`}
+                      >
+                         <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing p-2">
+                           <GripVertical className="h-5 w-5 text-muted-foreground" />
+                         </div>
 
-                {editingId === item.id ? (
-                  <>
-                    <Input
-                      type="time"
-                      value={editedTime}
-                      onChange={(e) => setEditedTime(e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, item.id)}
-                      className="w-28"
-                      autoFocus
-                    />
-                    <Input
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(e, item.id)}
-                      className="flex-1"
-                    />
-                    <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
-                    <Button onClick={handleCancel} size="sm" variant="ghost">Отмена</Button>
-                  </>
-                ) : (
-                  <>
-                    <div className="font-mono text-base font-semibold text-primary-foreground bg-primary rounded-md px-3 py-1 w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
-                      {item.time}
-                    </div>
-                    <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
-                      {item.description}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => onDeleteEvent(item.id)}
-                      aria-label={`Delete event: ${item.description}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+                        {editingId === item.id ? (
+                          <>
+                            <Input
+                              type="time"
+                              value={editedTime}
+                              onChange={(e) => setEditedTime(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, item.id)}
+                              className="w-28"
+                              autoFocus
+                            />
+                            <Input
+                              value={editedDescription}
+                              onChange={(e) => setEditedDescription(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, item.id)}
+                              className="flex-1"
+                            />
+                            <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
+                            <Button onClick={handleCancel} size="sm" variant="ghost">Отмена</Button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-mono text-base font-semibold text-primary-foreground bg-primary rounded-md px-3 py-1 w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
+                              {item.time}
+                            </div>
+                            <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
+                              {item.description}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => onDeleteEvent(item.id)}
+                              aria-label={`Delete event: ${item.description}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
         ) : (
           <div className="text-center text-muted-foreground py-16">
             <p className="text-lg font-semibold">Ваше расписание пусто</p>
