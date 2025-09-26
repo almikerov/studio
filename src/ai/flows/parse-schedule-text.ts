@@ -9,9 +9,9 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleFromText function.
  */
 
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
-import {z} from 'genkit';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
+
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
@@ -31,21 +31,16 @@ const ParseScheduleTextOutputSchema = z.object({
 });
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
+
 export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string): Promise<ParseScheduleTextOutput> {
   if (!apiKey) {
     throw new Error('API key is not provided');
   }
 
-  const ai = genkit({
-    plugins: [googleAI({ apiKey })],
-  });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
 
-  const prompt = ai.definePrompt({
-    name: 'parseSchedulePrompt',
-    input: {schema: ParseScheduleTextInputSchema},
-    output: {schema: ParseScheduleTextOutputSchema},
-    model: 'googleai/gemini-1.5-flash',
-    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+  const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
 
 - Extract or generate a main title for the schedule and put it in 'cardTitle'.
@@ -57,9 +52,9 @@ Your task is to identify the schedule title, events, their times, and relevant m
 - Ignore any text that isn't a schedule item.
 
 Here is the text to parse:
-{{text}}
+${input.text}
 
-Return a JSON object with a 'cardTitle' and a 'schedule' array.
+Return a JSON object with a 'cardTitle' and a 'schedule' array. Do not wrap the JSON in markdown.
 Example:
 Input text: "My Match Day. 10am meeting in red room, then lunch at 13:00. also need to buy tickets for the trip."
 Output JSON:
@@ -72,21 +67,17 @@ Output JSON:
   ]
 }
 
-Output JSON:`, 
-  });
+Output JSON:`;
 
-  const parseScheduleFlow = ai.defineFlow(
-    {
-      name: 'parseScheduleFlow',
-      inputSchema: ParseScheduleTextInputSchema,
-      outputSchema: ParseScheduleTextOutputSchema,
-    },
-    async (input) => {
-      const {output} = await prompt(input);
-      return output!;
-    }
-  );
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
 
-  const result = await parseScheduleFlow(input);
-  return result;
+  try {
+    const parsedJson = JSON.parse(text);
+    return ParseScheduleTextOutputSchema.parse(parsedJson);
+  } catch (error) {
+    console.error("Failed to parse AI response:", error);
+    throw new Error("AI response was not valid JSON.");
+  }
 }

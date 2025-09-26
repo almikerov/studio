@@ -10,9 +10,8 @@
  * - TranslateTextOutput - The return type for the translateText function.
  */
 
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
-import {z} from 'genkit';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
 
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to translate.'),
@@ -21,49 +20,42 @@ const TranslateTextInputSchema = z.object({
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
-  translations: z.any().describe('An object where keys are the language codes and values are the translated texts.')
+  translations: z.record(z.string()).describe('An object where keys are the language codes and values are the translated texts.')
 });
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
+
 
 export async function translateText(input: TranslateTextInput, apiKey: string): Promise<TranslateTextOutput> {
   if (!apiKey) {
     throw new Error('API key is not provided');
   }
 
-  const ai = genkit({
-    plugins: [googleAI({ apiKey })],
-  });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
 
-  const prompt = ai.definePrompt({
-    name: 'translateTextPrompt',
-    input: {schema: TranslateTextInputSchema},
-    output: {schema: TranslateTextOutputSchema},
-    model: 'googleai/gemini-1.5-flash',
-    prompt: `You are a translation expert. You will be given a text and a list of target languages.
+  const languages = input.targetLanguages.join(', ');
+
+  const prompt = `You are a translation expert. You will be given a text and a list of target languages.
 Your job is to translate the text into each of the target languages.
-Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values.
+Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values. Do not wrap the JSON in markdown.
 
 Text:
-"{{text}}"
+"${input.text}"
 
 Target Languages:
-{{#each targetLanguages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+${languages}
 
-Output JSON:`, 
-  });
-
-  const translateTextFlow = ai.defineFlow(
-    {
-      name: 'translateTextFlow',
-      inputSchema: TranslateTextInputSchema,
-      outputSchema: TranslateTextOutputSchema,
-    },
-    async (input) => {
-      const {output} = await prompt(input);
-      return output!;
-    }
-  );
-
-  const result = await translateTextFlow(input);
-  return result;
+Output JSON:`;
+  
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
+  
+  try {
+    const parsedJson = JSON.parse(text);
+    return TranslateTextOutputSchema.parse(parsedJson);
+  } catch (error) {
+    console.error("Failed to parse AI response:", error);
+    throw new Error("AI response was not valid JSON.");
+  }
 }

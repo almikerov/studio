@@ -10,9 +10,8 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
-import {z} from 'genkit';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
 
 const TranslateScheduleInputSchema = z.object({
   scheduleText: z.string().describe('The schedule text to translate.'),
@@ -21,7 +20,7 @@ const TranslateScheduleInputSchema = z.object({
 export type TranslateScheduleInput = z.infer<typeof TranslateScheduleInputSchema>;
 
 const TranslateScheduleOutputSchema = z.object({
-  translations: z.any().describe('An object where keys are the language codes and values are the translated schedule text.')
+  translations: z.record(z.string()).describe('An object where keys are the language codes and values are the translated schedule text.')
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
@@ -30,16 +29,12 @@ export async function translateSchedule(input: TranslateScheduleInput, apiKey: s
     throw new Error('API key is not provided');
   }
 
-  const ai = genkit({
-    plugins: [googleAI({ apiKey })],
-  });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
 
-  const prompt = ai.definePrompt({
-    name: 'translateSchedulePrompt',
-    input: {schema: TranslateScheduleInputSchema},
-    output: {schema: TranslateScheduleOutputSchema},
-    model: 'googleai/gemini-1.5-flash',
-    prompt: `Твоя задача — перевести присланное расписание тренировок.
+  const languages = input.targetLanguages.join(', ');
+
+  const prompt = `Твоя задача — перевести присланное расписание тренировок.
 
 **Ключевые инструкции по переводу:**
 Используй следующий футбольный вокабуляр:
@@ -52,27 +47,24 @@ export async function translateSchedule(input: TranslateScheduleInput, apiKey: s
 * \`заезд\` -> \`base stay\`
 
 Теперь, основываясь на этих правилах, переведи следующее расписание:
-{{scheduleText}}
+${input.scheduleText}
 
-Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values. The translated text should be a single string with line breaks.
+Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values. The translated text should be a single string with line breaks. Do not wrap the JSON in markdown.
 Only translate to these languages:
-{{#each targetLanguages}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+${languages}
 
-Output JSON:`, 
-  });
+Output JSON:`;
 
-  const translateScheduleFlow = ai.defineFlow(
-    {
-      name: 'translateScheduleFlow',
-      inputSchema: TranslateScheduleInputSchema,
-      outputSchema: TranslateScheduleOutputSchema,
-    },
-    async (input) => {
-      const {output} = await prompt(input);
-      return output!;
-    }
-  );
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
 
-  const result = await translateScheduleFlow(input);
-  return result.translations;
+  try {
+    const parsedJson = JSON.parse(text);
+    const validated = TranslateScheduleOutputSchema.parse(parsedJson);
+    return validated.translations;
+  } catch (error) {
+    console.error("Failed to parse AI response:", error);
+    throw new Error("AI response was not valid JSON.");
+  }
 }
