@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, MessageSquare } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -58,8 +58,7 @@ export function ScheduleView({
   const [editedDescription, setEditedDescription] = useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
-  
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (editingEvent) { // For mobile modal
@@ -82,15 +81,8 @@ export function ScheduleView({
   };
 
   const handleSave = (id: string) => {
-    let newTime = editedTime;
-    if (editedType === 'timed' && !editedTime) {
-        newTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (editedType !== 'timed') {
-        newTime = '';
-    }
-  
     onUpdateEvent(id, { 
-      time: newTime, 
+      time: editedTime, 
       description: editedDescription,
       type: editedType,
     });
@@ -119,20 +111,20 @@ export function ScheduleView({
 
   const handleIconChange = (id: string, icon: IconName | undefined) => {
     onUpdateEvent(id, { icon });
+    setIsIconPopoverOpen(false);
   }
 
   const handleColorChange = (id: string, color: string | undefined) => {
     onUpdateEvent(id, { color });
   }
   
-  const handleTypeChangeInEdit = (type: ScheduleItem['type']) => {
-    setEditedType(type);
-    if (type === 'timed' && !editedTime) {
-      setEditedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    } else if (type !== 'timed') {
-      setEditedTime('');
-    }
-  };
+  const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
+    onUpdateEvent(id, {
+        type,
+        time: type === 'timed' ? editedTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+    });
+    setEditedType(type); // also update local state for inline editing
+};
 
   const handleAddFromSavedClick = (event: SavedEvent) => {
     onAddNewEvent(event);
@@ -148,29 +140,30 @@ export function ScheduleView({
   const renderEditContent = (item: ScheduleItem) => (
     <div className="flex flex-col gap-4 p-1">
         <div className="flex items-center gap-2">
-            {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />}
+            {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsIconPopoverOpen} />}
              <Textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, item.id)}
                 className="flex-1 text-lg"
                 rows={editedType === 'comment' ? 3 : 1}
-                autoFocus={!isMobile}
             />
         </div>
 
         <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
-            <Label htmlFor={`type-select-${item.id}`} className="text-base font-normal">Тип события</Label>
-            <Select value={editedType} onValueChange={(value) => handleTypeChangeInEdit(value as ScheduleItem['type'])}>
-                <SelectTrigger id={`type-select-${item.id}`} className="w-[180px]">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="timed">Со временем</SelectItem>
-                    <SelectItem value="untimed">Без времени</SelectItem>
-                    <SelectItem value="comment">Комментарий</SelectItem>
-                </SelectContent>
-            </Select>
+            <Label htmlFor={`type-select-native-${item.id}`} className="text-base font-normal">Тип события</Label>
+            <div className="relative">
+                <select
+                    id={`type-select-native-${item.id}`}
+                    value={editedType}
+                    onChange={(e) => handleTypeChange(item.id, e.target.value as ScheduleItem['type'])}
+                    className="appearance-none w-full bg-transparent pr-8 text-right font-medium"
+                >
+                    <option value="timed">Со временем</option>
+                    <option value="untimed">Без времени</option>
+                    <option value="comment">Комментарий</option>
+                </select>
+                <ChevronDown className="h-4 w-4 opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
         </div>
 
         {
@@ -179,7 +172,6 @@ export function ScheduleView({
                 type="time"
                 value={editedTime}
                 onChange={(e) => setEditedTime(e.target.value)}
-                onKeyDown={(e) => handleKeyDown(e, item.id)}
                 className="w-full text-lg h-12"
                 />
             )
@@ -202,11 +194,30 @@ export function ScheduleView({
         )}
 
         <div className="flex gap-2 mt-4">
-            <Button onClick={() => onDeleteEvent(item.id)} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
-            <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check /></Button>
+             <Button onClick={() => { onSaveEvent(item); handleCloseEditModal(); }} variant="outline" className="w-full" size="lg"><Bookmark /></Button>
+             <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
         </div>
+        <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
     </div>
   );
+
+  const [lastAdded, setLastAdded] = useState<string | null>(null);
+
+  const handleAddNewEventAndEdit = () => {
+    const newId = Date.now().toString();
+    onAddNewEvent({id: newId});
+    setLastAdded(newId);
+  }
+
+  useEffect(() => {
+    if (lastAdded) {
+      const itemToEdit = schedule.find(item => item.id === lastAdded);
+      if (itemToEdit) {
+        handleEdit(itemToEdit);
+      }
+      setLastAdded(null);
+    }
+  }, [schedule, lastAdded]);
 
   return (
     <Card className="shadow-lg overflow-hidden relative border-none sm:border sm:rounded-lg">
@@ -275,85 +286,80 @@ export function ScheduleView({
                          {!isMobile && <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>}
+                         
+                         {isMobile && (
+                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'up'); }}>
+                                <ArrowUp className="h-5 w-5" />
+                            </Button>
+                         )}
 
                         {editingId === item.id && !isMobile ? (
                           <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                            { editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />}
+                                <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
                             
-                            <Select value={editedType} onValueChange={(value) => handleTypeChangeInEdit(value as ScheduleItem['type'])}>
-                                <SelectTrigger className="w-[150px]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="timed">Со временем</SelectItem>
-                                    <SelectItem value="untimed">Без времени</SelectItem>
-                                    <SelectItem value="comment">Комментарий</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+                                    <SelectTrigger className="w-[150px]">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="timed">Со временем</SelectItem>
+                                        <SelectItem value="untimed">Без времени</SelectItem>
+                                        <SelectItem value="comment">Комментарий</SelectItem>
+                                    </SelectContent>
+                                </Select>
 
-                            {editedType === 'timed' &&
-                                <Input
-                                type="time"
-                                value={editedTime}
-                                onChange={(e) => setEditedTime(e.target.value)}
+                                {editedType === 'timed' &&
+                                    <Input
+                                    type="time"
+                                    value={editedTime}
+                                    onChange={(e) => setEditedTime(e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                    className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    />
+                                }
+                            
+                                <Textarea
+                                value={editedDescription}
+                                onChange={(e) => setEditedDescription(e.target.value)}
                                 onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1"
+                                rows={1}
+                                autoFocus
                                 />
-                            }
-                            
-                            <Textarea
-                              value={editedDescription}
-                              onChange={(e) => setEditedDescription(e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, item.id)}
-                              className="flex-1"
-                              rows={1}
-                              autoFocus
-                            />
 
-                            {editedType !== 'comment' &&
-                                <Popover onOpenChange={setIsPopoverOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-2">
-                                    <div className="flex gap-1">
-                                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
-                                        <div className="h-4 w-4 rounded-full border" />
-                                    </Button>
-                                    {ITEM_COLORS.map(color => (
-                                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
-                                        <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                                {editedType !== 'comment' &&
+                                    <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-2">
+                                        <div className="flex gap-1">
+                                        <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
+                                            <div className="h-4 w-4 rounded-full border" />
                                         </Button>
-                                    ))}
-                                    </div>
-                                </PopoverContent>
-                                </Popover>
-                            }
+                                        {ITEM_COLORS.map(color => (
+                                            <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                            <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                                            </Button>
+                                        ))}
+                                        </div>
+                                    </PopoverContent>
+                                    </Popover>
+                                }
 
-                            <Button onClick={(e) => { e.stopPropagation(); handleSave(item.id);}} size="sm">Сохранить</Button>
+                                <Button onClick={(e) => { e.stopPropagation(); handleSave(item.id);}} size="sm">Сохранить</Button>
+                                <Button onClick={(e) => { e.stopPropagation(); handleCancel();}} size="sm" variant="ghost">Отмена</Button>
                           </div>
                         ) : (
                           <>
-                            {isMobile && (
-                              <div className="flex flex-col" onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" disabled={index === 0} onClick={() => onMoveEvent(index, 'up')}>
-                                  <ArrowUp className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" disabled={index === schedule.length - 1} onClick={() => onMoveEvent(index, 'down')}>
-                                  <ArrowDown className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
 
                             {item.type === 'comment' ? (
-                                <>
-                                    <p 
-                                      className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full ml-10"
-                                      onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
-                                    >
-                                      {item.description}
-                                    </p>
-                                </>
+                                <p 
+                                  className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
+                                  onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
+                                >
+                                  {item.description}
+                                </p>
                             ) : (
                                 <>
                                     <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
@@ -372,29 +378,37 @@ export function ScheduleView({
                                       )}
                                     </div>
 
-                                    <p className="flex-1 text-card-foreground cursor-pointer">
+                                    <p className="flex-1 text-card-foreground cursor-pointer truncate">
                                       {item.description}
                                     </p>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover/item:opacity-100 transition-opacity"
-                                      onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                                      aria-label={`Save event: ${item.description}`}
-                                    >
-                                      <Bookmark className="h-4 w-4" />
-                                    </Button>
                                 </>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover/item:opacity-100 transition-opacity"
-                              onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
-                              aria-label={`Delete event: ${item.description}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            
+                            <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                  onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                                  aria-label={`Save event: ${item.description}`}
+                                >
+                                  <Bookmark className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
+                                aria-label={`Delete event: ${item.description}`}
+                                >
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            {isMobile && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
+                                    <ArrowDown className="h-5 w-5" />
+                                </Button>
+                            )}
                           </>
                         )}
                       </div>
@@ -407,7 +421,7 @@ export function ScheduleView({
                     <Button
                       variant="ghost"
                       className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
-                      onClick={() => onAddNewEvent()}
+                      onClick={() => handleAddNewEventAndEdit()}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -467,3 +481,11 @@ export function ScheduleView({
     </Card>
   );
 }
+
+const ChevronDown = (props: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
+
+    
