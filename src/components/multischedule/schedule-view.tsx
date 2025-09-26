@@ -465,11 +465,17 @@ export function ScheduleView({
                                     {item.description && <span className="text-base font-normal text-muted-foreground">- {item.description}</span>}
                                 </div>
                             ) : item.type === 'h1' ? (
-                                <h2 className='text-xl font-bold w-full'>{item.description}</h2>
+                                <div className="flex items-center w-full">
+                                    <h2 className='text-xl font-bold'>{item.description}</h2>
+                                </div>
                             ) : item.type === 'h2' ? (
-                                <h3 className='text-lg font-semibold w-full'>{item.description}</h3>
+                                <div className="flex items-center w-full">
+                                    <h3 className='text-lg font-semibold'>{item.description}</h3>
+                                </div>
                             ) : item.type === 'h3' ? (
-                                <h4 className='text-base font-medium w-full'>{item.description}</h4>
+                                <div className="flex items-center w-full">
+                                    <h4 className='text-base font-medium'>{item.description}</h4>
+                                </div>
                             ) : (
                                 <>
                                     <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
@@ -496,7 +502,7 @@ export function ScheduleView({
                                 </>
                             )}
                             
-                            <div data-desktop-only-on-render="true" data-no-print="true" className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                            <div data-no-print={isMobile} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
                                 {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
                                     <Button
                                     variant="ghost"
