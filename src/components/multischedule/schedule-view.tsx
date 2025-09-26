@@ -80,8 +80,8 @@ export function ScheduleView({
       // Check if the click is outside the edit row
       if (editRowRef.current && !editRowRef.current.contains(target)) {
         // And check if the click is not inside any popover
-        const popover = document.querySelector('[data-radix-popper-content-wrapper]');
-        if (!popover || !popover.contains(target)) {
+        const popper = document.querySelector('[data-radix-popper-content-wrapper]');
+        if (!popper || !popper.contains(target)) {
           if (editingId) {
             handleSave(editingId);
           }
@@ -303,7 +303,7 @@ export function ScheduleView({
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500"></div>
 
-      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-0">
+      <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
@@ -345,7 +345,7 @@ export function ScheduleView({
                         )}
                         onClick={() => editingId !== item.id && handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle data-desktop-only-on-render="true" data-no-print="true" className={cn("cursor-grab active:cursor-grabbing p-2", isMobile ? "hidden" : "flex")}>
+                         <div {...provided.dragHandleProps} data-drag-handle data-desktop-only-on-render="true" className={cn("cursor-grab active:cursor-grabbing p-2", isMobile ? "hidden" : "flex")}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>
                          
@@ -383,6 +383,7 @@ export function ScheduleView({
                                     onChange={(e) => setEditedTime(e.target.value)}
                                     onKeyDown={(e) => handleKeyDown(e, item.id)}
                                     className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    autoFocus
                                     />
                                 }
 
