@@ -8,6 +8,8 @@ import { ScheduleView } from '@/components/multischedule/schedule-view';
 import { TranslationControls } from '@/components/multischedule/translation-controls';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { ImageUploader } from '@/components/multischedule/image-uploader';
+import { EditableTitle } from '@/components/multischedule/editable-title';
 
 export type ScheduleItem = { id: string; time: string; description: string };
 export type TranslatedSchedules = Record<string, string>;
@@ -26,6 +28,7 @@ export default function Home() {
   const [mainTitle, setMainTitle] = useState('Название');
   const [cardTitle, setCardTitle] = useState('Расписание на день');
   const [cardDescription, setCardDescription] = useState('Ваш план на сегодня. Нажмите на событие, чтобы редактировать.');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const handleUpdateEvent = (id: string, time: string, description: string) => {
     setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description } : item)).sort((a,b) => a.time.localeCompare(b.time)));
@@ -92,49 +95,23 @@ export default function Home() {
       html2canvas(element, {
         backgroundColor: '#1C1917', // dark theme background
         scale: 2,
+        useCORS: true,
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = 'multischedule.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
+      }).catch(err => {
+        console.error("Error generating canvas: ", err);
+        toast({
+          title: "Ошибка загрузки изображения",
+          description: "Не удалось обработать изображение. Попробуйте другой URL или убедитесь, что CORS разрешен.",
+          variant: "destructive"
+        })
       });
     }
   };
   
-  const EditableTitle = ({ value, setValue, className }: { value: string, setValue: (val: string) => void, className: string }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [text, setText] = useState(value);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    const handleBlur = () => {
-      setValue(text);
-      setIsEditing(false);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') handleBlur();
-      if (e.key === 'Escape') {
-        setText(value);
-        setIsEditing(false);
-      }
-    };
-    
-    if (isEditing) {
-      return <input 
-        ref={inputRef}
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        className={`${className} bg-transparent outline-none ring-2 ring-ring rounded-md`}
-        autoFocus
-      />
-    }
-
-    return <h1 onClick={() => setIsEditing(true)} className={`${className} cursor-pointer`}>{value}</h1>
-  }
-
   return (
     <main className="container mx-auto p-4 sm:p-8">
       <header className="text-center mb-12">
@@ -145,6 +122,9 @@ export default function Home() {
         <section className="space-y-8">
           <DragDropContext onDragEnd={onDragEnd}>
             <div ref={printableAreaRef} className="space-y-8 bg-background p-0 sm:p-4 rounded-lg">
+               <div className="relative">
+                <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
+              </div>
               <ScheduleView
                 schedule={schedule}
                 onUpdateEvent={handleUpdateEvent}
@@ -163,7 +143,6 @@ export default function Home() {
             isLoading={isLoading}
             onTranslate={handleTranslate}
             onDownload={handleDownloadImage}
-            hasTranslations={!!translatedSchedules}
           />
         </section>
       </div>

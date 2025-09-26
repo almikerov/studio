@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Trash2, Plus, GripVertical } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
+import { EditableField } from './editable-field';
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
@@ -18,41 +19,6 @@ interface ScheduleViewProps {
   cardDescription: string;
   setCardDescription: (desc: string) => void;
 }
-
-const EditableField = ({ value, setValue, className, as: Component = 'div' }: { value: string; setValue: (val: string) => void; className: string; as?: 'div' | 'p' | 'h1' | 'h2' | 'h3' }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [text, setText] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleBlur = () => {
-    setValue(text);
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleBlur();
-    if (e.key === 'Escape') {
-      setText(value);
-      setIsEditing(false);
-    }
-  };
-  
-  if (isEditing) {
-    return <input 
-      ref={inputRef}
-      type="text"
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      className={`${className} bg-transparent outline-none ring-2 ring-ring rounded-md`}
-      autoFocus
-    />
-  }
-
-  return <Component onClick={() => setIsEditing(true)} className={`${className} cursor-pointer`}>{value}</Component>
-}
-
 
 export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -85,8 +51,8 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   return (
     <Card className="shadow-lg">
       <CardHeader>
-        <EditableField as={CardTitle} value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
-        <EditableField as={CardDescription} value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground" />
+        <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
+        <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground" />
       </CardHeader>
       <CardContent>
         {schedule.length > 0 ? (
