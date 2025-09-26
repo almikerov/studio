@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -77,8 +78,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                 <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground mt-1.5" />
             </div>
             <div className="flex items-center gap-2">
-              <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
-              {imageUrl && (
+              {imageUrl ? (
                   <div className="relative w-24 h-24 rounded-md overflow-hidden cursor-pointer" >
                      <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} trigger={
                        <Image
@@ -89,6 +89,8 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                       />
                      } />
                   </div>
+              ) : (
+                <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
               )}
             </div>
         </div>
