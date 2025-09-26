@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useMemo, useEffect } from 'react';
@@ -11,7 +12,14 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { SavedEvents } from '@/components/multischedule/saved-events';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 
-export type ScheduleItem = { id: string; time: string; description: string; icon?: IconName; };
+export type ScheduleItem = { 
+  id: string; 
+  time: string; 
+  description: string; 
+  icon?: IconName; 
+  color?: string;
+  isUntimed?: boolean;
+};
 export type TranslatedSchedule = { lang: string; text: string };
 
 export type SavedEvent = {
@@ -23,9 +31,10 @@ export type SavedEvent = {
 export default function Home() {
   const { toast } = useToast();
   const [schedule, setSchedule] = useState<ScheduleItem[]>([
-    { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera' },
+    { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera', color: 'blue' },
     { id: '2', time: '12:30', description: 'Обед', icon: 'utensils' },
     { id: '3', time: '18:00', description: 'Завершение рабочего дня', icon: 'bed' },
+    { id: '4', time: '', description: 'Купить билеты', icon: 'passport', isUntimed: true },
   ]);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +44,7 @@ export default function Home() {
   const [cardTitle, setCardTitle] = useState('Расписание на день');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [comment, setComment] = useState('');
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
 
@@ -61,9 +71,14 @@ export default function Home() {
 
   const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
 
-  const handleUpdateEvent = (id: string, time: string, description: string, icon?: IconName) => {
-    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description, icon } : item)).sort((a,b) => a.time.localeCompare(b.time)));
+  const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
+    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)).sort((a, b) => {
+        if (a.isUntimed && !b.isUntimed) return 1;
+        if (!a.isUntimed && b.isUntimed) return -1;
+        return a.time.localeCompare(b.time);
+    }));
   };
+  
 
   const handleAddNewEvent = () => {
     const newEvent: ScheduleItem = {
@@ -227,6 +242,8 @@ export default function Home() {
                 imageUrl={imageUrl}
                 setImageUrl={setImageUrl}
                 onSaveEvent={handleSaveEvent}
+                comment={comment}
+                setComment={setComment}
               />
               <TranslatedSchedulesView 
                 translatedSchedules={translatedSchedules}

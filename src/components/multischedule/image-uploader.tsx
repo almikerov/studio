@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, type ReactElement } from 'react';
@@ -9,12 +10,11 @@ import { Slot } from '@radix-ui/react-slot';
 
 
 interface ImageUploaderProps {
-  imageUrl: string | null;
-  setImageUrl: (url: string | null) => void;
-  trigger?: ReactElement;
+  children?: React.ReactNode;
+  onSetImageUrl: (url: string | null) => void;
 }
 
-export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderProps) {
+export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,7 +24,7 @@ export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderP
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageUrl(reader.result as string);
+        onSetImageUrl(reader.result as string);
         setDialogOpen(false);
       };
       reader.readAsDataURL(file);
@@ -33,7 +33,7 @@ export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderP
 
   const handleUrlSubmit = () => {
     if (urlInput) {
-      setImageUrl(urlInput);
+      onSetImageUrl(urlInput);
       setDialogOpen(false);
       setUrlInput('');
     }
@@ -42,24 +42,15 @@ export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderP
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleUrlSubmit();
   }
-
-  const handleRemoveImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setImageUrl(null);
-  }
-
-  const Trigger = trigger ? Slot : Button;
-  const triggerProps = trigger ? {} : { variant: "ghost", size: "icon" as const };
-
-  if (imageUrl && !trigger) return null;
-
-
+  
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
        <DialogTrigger asChild id="image-uploader-trigger">
-          <Trigger {...triggerProps}>
-             {trigger || <ImagePlus className="h-5 w-5" />}
-          </Trigger>
+          {children || (
+            <Button variant="ghost" size="icon">
+              <ImagePlus className="h-5 w-5" />
+            </Button>
+          )}
        </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -88,12 +79,10 @@ export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderP
             />
           </div>
           <Button onClick={handleUrlSubmit}>Добавить по URL</Button>
-          {imageUrl && (
-            <Button onClick={(e) => { handleRemoveImage(e); setDialogOpen(false); }} variant="destructive">
+          <Button onClick={() => { onSetImageUrl(null); setDialogOpen(false); }} variant="destructive">
               <X className="mr-2" />
               Удалить изображение
-            </Button>
-          )}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

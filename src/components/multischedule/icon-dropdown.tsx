@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -6,7 +7,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { SmilePlus } from 'lucide-react';
+import { SmilePlus, SquareDashed } from 'lucide-react';
 import {
   IconName,
   ScheduleEventIcon,
@@ -16,11 +17,12 @@ import {
 interface IconDropdownProps {
   value?: IconName;
   onChange: (value: IconName | undefined) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function IconDropdown({ value, onChange }: IconDropdownProps) {
+export function IconDropdown({ value, onChange, onOpenChange }: IconDropdownProps) {
   return (
-    <Popover>
+    <Popover onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
           {value ? (
@@ -30,7 +32,7 @@ export function IconDropdown({ value, onChange }: IconDropdownProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" data-radix-popover-content-wrapper>
+      <PopoverContent className="w-auto p-2">
         <div className="grid grid-cols-5 gap-2">
           <Button
             variant={!value ? 'secondary' : 'ghost'}
@@ -38,7 +40,7 @@ export function IconDropdown({ value, onChange }: IconDropdownProps) {
             onClick={() => onChange(undefined)}
             className="h-8 w-8"
           >
-            <SmilePlus className="h-4 w-4" />
+            <SquareDashed className="h-4 w-4 text-muted-foreground" />
           </Button>
           {Object.keys(ICONS).map((icon) => (
             <Button
