@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, type ReactElement } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, Link, ImagePlus, X, Edit, Image as ImageIcon } from 'lucide-react';
-import Image from 'next/image';
+import { Upload, Link, ImagePlus, X } from 'lucide-react';
+import { Slot } from '@radix-ui/react-slot';
+
 
 interface ImageUploaderProps {
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
+  trigger?: ReactElement;
 }
 
-export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
+export function ImageUploader({ imageUrl, setImageUrl, trigger }: ImageUploaderProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,12 +48,16 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
     setImageUrl(null);
   }
 
+  const Trigger = trigger ? Slot : Button;
+  const triggerProps = trigger ? {} : { variant: "ghost", size: "icon" };
+
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
        <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <ImagePlus className="h-5 w-5" />
-        </Button>
+          <Trigger {...triggerProps}>
+             {trigger || <ImagePlus className="h-5 w-5" />}
+          </Trigger>
        </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

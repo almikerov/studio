@@ -9,16 +9,15 @@ import { TranslationControls } from '@/components/multischedule/translation-cont
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { EditableTitle } from '@/components/multischedule/editable-title';
-import { IconName } from '@/components/multischedule/schedule-event-icons';
 import { SavedEvents } from '@/components/multischedule/saved-events';
 
-export type ScheduleItem = { id: string; time: string; description: string; icon?: IconName };
+export type ScheduleItem = { id: string; time: string; description: string; };
 export type TranslatedSchedule = { lang: string; text: string };
 
 export type SavedEvent = {
   id: string;
   description: string;
-  icon?: IconName;
+  translations: Record<string, string>;
 };
 
 export default function Home() {
@@ -63,8 +62,8 @@ export default function Home() {
 
   const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
 
-  const handleUpdateEvent = (id: string, time: string, description: string, icon?: IconName) => {
-    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description, icon } : item)).sort((a,b) => a.time.localeCompare(b.time)));
+  const handleUpdateEvent = (id: string, time: string, description: string) => {
+    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description } : item)).sort((a,b) => a.time.localeCompare(b.time)));
   };
 
   const handleAddNewEvent = () => {
@@ -131,23 +130,25 @@ export default function Home() {
     setIsDownloading(true);
   
     try {
-      // Temporarily remove focus from any active element to avoid weird rendering
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
       
-      // Wait a moment for UI to settle
       await new Promise(resolve => setTimeout(resolve, 50));
   
       const canvas = await html2canvas(element, {
-        backgroundColor: null, // Use background from element
+        backgroundColor: null,
         scale: 2,
         useCORS: true,
         logging: false,
-        onclone: (document) => {
-            // This runs in the cloned document before rendering
-            // We can make final adjustments here to ensure visual consistency
-            // For example, removing focus rings or other dynamic UI states
+        onclone: (clonedDoc) => {
+            const footer = clonedDoc.getElementById('card-footer');
+            if (footer) footer.style.display = 'none';
+
+            const dragHandles = clonedDoc.querySelectorAll('[data-drag-handle]');
+            dragHandles.forEach(handle => {
+                if (handle instanceof HTMLElement) handle.style.display = 'none';
+            });
         }
       });
       
@@ -177,12 +178,12 @@ export default function Home() {
   };
   
   const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
-    const { description, icon } = scheduleItem;
+    const { description } = scheduleItem;
 
     const newSavedEvent: SavedEvent = {
       id: Date.now().toString(),
       description,
-      icon,
+      translations: {},
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
     toast({ title: 'Сохранено', description: 'Событие сохранено.' });
@@ -193,26 +194,42 @@ export default function Home() {
       id: Date.now().toString(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       description: savedEvent.description,
-      icon: savedEvent.icon,
     };
     setSchedule(prev => [...prev, newScheduleEvent].sort((a,b) => a.time.localeCompare(b.time)));
     
-    // Also update translations
     setTranslatedSchedules(prev => {
-        const currentLanguages = prev.map(t => t.lang);
+        const currentLanguages = new Set(prev.map(t => t.lang));
         const newTranslations = [...prev];
+        
+        Object.entries(savedEvent.translations).forEach(([lang, text]) => {
+            if (currentLanguages.has(lang)) {
+                // Find and update existing translation
+                const index = newTranslations.findIndex(t => t.lang === lang);
+                if (index !== -1) {
+                    const newEventTime = newScheduleEvent.time;
+                    newTranslations[index].text += `\n${newEventTime}: ${text}`;
+                    
+                    // Super basic sort, might need improvement
+                    const lines = newTranslations[index].text.split('\n');
+                    lines.sort((a, b) => (a.split(':')[0] || '').localeCompare(b.split(':')[0] || ''));
+                    newTranslations[index].text = lines.join('\n');
+                }
+            } else {
+                // This case is tricky. We'd need to translate the whole schedule to this new language.
+                // For now, let's just ignore translations for languages not already present.
+            }
+        });
 
-        // This part needs adjustment since we don't have translations in savedEvent anymore
-        // For simplicity, we will just re-translate the whole schedule
-        // or just add the new event untranslated.
-        // The current implementation of translateSchedule re-translates everything anyway.
-        // Let's rely on the user to re-translate if needed.
         return newTranslations;
     });
   };
 
   const handleDeleteSaved = (id: string) => {
     updateSavedEvents(savedEvents.filter(event => event.id !== id));
+  };
+
+  const handleUpdateSaved = (updatedEvent: SavedEvent) => {
+    updateSavedEvents(savedEvents.map(event => event.id === updatedEvent.id ? updatedEvent : event));
   };
   
   return (
@@ -259,6 +276,7 @@ export default function Home() {
                 savedEvents={savedEvents}
                 onAdd={handleAddFromSaved}
                 onDelete={handleDeleteSaved}
+                onUpdate={handleUpdateSaved}
             />
         </aside>
 
