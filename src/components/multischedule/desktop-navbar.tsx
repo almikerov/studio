@@ -196,6 +196,9 @@ export function DesktopNavbar({
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                            <DialogHeader className="p-6 pb-0">
+                               <DialogTitle>Мои события</DialogTitle>
+                            </DialogHeader>
                             <SavedEvents
                                 savedEvents={savedEvents}
                                 onAdd={handleAddFromSaved}

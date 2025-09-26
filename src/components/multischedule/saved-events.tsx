@@ -70,11 +70,8 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 border-b flex justify-between items-center">
-        <div>
-            <h2 className="text-2xl font-bold">Заготовки событий</h2>
-            <p className="text-muted-foreground mt-2">Управляйте вашими сохраненными событиями.</p>
-        </div>
+      <div className="p-6 pt-2 border-b flex justify-between items-center">
+        <p className="text-muted-foreground">Управляйте вашими сохраненными событиями.</p>
         <Button onClick={() => setIsCreating(true)} size="sm">
             <PlusCircle className="mr-2"/>
             Создать
