@@ -175,13 +175,12 @@ export function ScheduleView({
   const renderEditContent = (item: ScheduleItem) => (
     <div className="flex flex-col gap-4 p-1">
         <div className="flex items-center gap-2">
-            {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsIconPopoverOpen} />}
+            {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
              <Textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 className="flex-1 text-lg"
                 rows={editedType === 'comment' ? 3 : 1}
-                autoFocus={false}
             />
         </div>
 

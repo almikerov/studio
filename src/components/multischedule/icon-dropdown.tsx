@@ -17,12 +17,13 @@ import {
 interface IconDropdownProps {
   value?: IconName;
   onChange: (value: IconName | undefined) => void;
+  open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export function IconDropdown({ value, onChange, onOpenChange }: IconDropdownProps) {
+export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdownProps) {
   return (
-    <Popover onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
           {value ? (
