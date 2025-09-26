@@ -72,11 +72,7 @@ export default function Home() {
   const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
 
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
-    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)).sort((a, b) => {
-        if (a.isUntimed && !b.isUntimed) return 1;
-        if (!a.isUntimed && b.isUntimed) return -1;
-        return a.time.localeCompare(b.time);
-    }));
+    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)));
   };
   
 
@@ -87,7 +83,7 @@ export default function Home() {
       description: 'Новое событие',
       icon: undefined,
     };
-    setSchedule(prev => [...prev, newEvent].sort((a, b) => a.time.localeCompare(b.time)));
+    setSchedule(prev => [...prev, newEvent]);
   };
 
   const handleDeleteEvent = (id: string) => {
@@ -166,6 +162,11 @@ export default function Home() {
             });
             const imageUploaderTrigger = clonedDoc.getElementById('image-uploader-trigger');
             if(imageUploaderTrigger) imageUploaderTrigger.style.display = 'none';
+
+            if (!comment) {
+              const commentsContainer = clonedDoc.getElementById('comments-container');
+              if (commentsContainer) commentsContainer.style.display = 'none';
+            }
         }
       });
       
@@ -213,7 +214,7 @@ export default function Home() {
       description: savedEvent.description,
       icon: savedEvent.icon,
     };
-    setSchedule(prev => [...prev, newScheduleEvent].sort((a,b) => a.time.localeCompare(b.time)));
+    setSchedule(prev => [...prev, newScheduleEvent]);
   };
 
   const handleDeleteSaved = (id: string) => {

@@ -33,7 +33,7 @@ interface ScheduleViewProps {
   cardTitle: string;
   setCardTitle: (title: string) => void;
   selectedDate: Date;
-  setSelectedDate: (date: string) => void;
+  setSelectedDate: (date: Date) => void;
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
   onSaveEvent: (item: ScheduleItem) => void;
@@ -99,9 +99,6 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   const handleToggleUntimed = (id: string, isUntimed: boolean) => {
     onUpdateEvent(id, { isUntimed });
   }
-  
-  const timedItems = schedule.filter(item => !item.isUntimed);
-  const untimedItems = schedule.filter(item => item.isUntimed);
 
   const renderScheduleList = (items: ScheduleItem[], droppableId: string) => (
     <Droppable droppableId={droppableId}>
@@ -261,15 +258,18 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             <div className="flex items-center gap-2">
                 <ImageUploader onSetImageUrl={setImageUrl}>
                   {imageUrl ? (
-                    <div className="relative w-24 h-24 rounded-md overflow-hidden cursor-pointer">
+                    <div className="relative w-24 h-24 rounded-md overflow-hidden cursor-pointer group/image">
                        <Image
                           src={imageUrl}
                           alt="Schedule image"
                           fill
                           className="object-cover"
                       />
+                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity">
+                            <ImagePlus className="h-8 w-8 text-white" />
+                       </div>
                     </div>
-                  ) : <Button variant="ghost" size="icon"><ImagePlus className="h-5 w-5" /></Button>}
+                  ) : <Button variant="ghost" size="icon" id="image-uploader-trigger"><ImagePlus className="h-5 w-5" /></Button>}
                 </ImageUploader>
             </div>
         </div>
@@ -277,15 +277,8 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
       <CardContent>
         {schedule.length > 0 ? (
           <div className="space-y-4">
-            {timedItems.length > 0 && renderScheduleList(timedItems, 'timed-schedule')}
-            {untimedItems.length > 0 && (
-              <div>
-                {timedItems.length > 0 && <hr className="my-4"/>}
-                 <CardDescription className="px-2 pb-2 text-xs">Задачи без времени</CardDescription>
-                {renderScheduleList(untimedItems, 'untimed-schedule')}
-              </div>
-            )}
-             <div>
+            {renderScheduleList(schedule, 'schedule')}
+             <div id="comments-container">
                 <hr className="my-4"/>
                 <div className="px-2 pt-2">
                   <Label htmlFor="comments" className="text-xs text-muted-foreground flex items-center gap-2 mb-2">
@@ -318,5 +311,3 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     </Card>
   );
 }
-
-    
