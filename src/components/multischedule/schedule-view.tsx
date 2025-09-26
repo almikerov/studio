@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -104,6 +105,9 @@ export function ScheduleView({
     if (isMobile) {
       handleOpenEditModal(item);
     } else {
+      if (editingId) { // Save previous before editing new one
+        handleSave(editingId);
+      }
       setEditingId(item.id);
       setEditedTime(item.time);
       setEditedDescription(item.description);
@@ -459,23 +463,17 @@ export function ScheduleView({
                                   {item.description}
                                 </p>
                             ) : item.type === 'date' && item.date ? (
-                                <div className='flex items-center gap-2 font-semibold text-lg text-muted-foreground py-2 w-full'>
+                                <>
                                     <CalendarIcon className="h-5 w-5" />
-                                    <span>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
+                                    <span className='font-semibold text-lg text-muted-foreground'>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
                                     {item.description && <span className="text-base font-normal text-muted-foreground">- {item.description}</span>}
-                                </div>
+                                </>
                             ) : item.type === 'h1' ? (
-                                <div className="flex items-center w-full">
-                                    <h2 className='text-xl font-bold'>{item.description}</h2>
-                                </div>
+                                <h2 className='text-xl font-bold'>{item.description}</h2>
                             ) : item.type === 'h2' ? (
-                                <div className="flex items-center w-full">
-                                    <h3 className='text-lg font-semibold'>{item.description}</h3>
-                                </div>
+                                <h3 className='text-lg font-semibold'>{item.description}</h3>
                             ) : item.type === 'h3' ? (
-                                <div className="flex items-center w-full">
-                                    <h4 className='text-base font-medium'>{item.description}</h4>
-                                </div>
+                                <h4 className='text-base font-medium'>{item.description}</h4>
                             ) : (
                                 <>
                                     <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
@@ -578,3 +576,4 @@ export function ScheduleView({
     
 
     
+
