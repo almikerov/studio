@@ -6,7 +6,7 @@ import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, Clock, MessageSquare, SquareDashed, ImagePlus } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, ImagePlus } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -100,134 +100,6 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     onUpdateEvent(id, { isUntimed });
   }
 
-  const renderScheduleList = (items: ScheduleItem[], droppableId: string) => (
-    <Droppable droppableId={droppableId}>
-      {(provided) => (
-        <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
-          {items.map((item, index) => (
-            <Draggable key={item.id} draggableId={item.id} index={index}>
-              {(provided, snapshot) => (
-                <li
-                  ref={provided.innerRef}
-                  {...provided.draggableProps}
-                  className={cn(
-                    'group flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50',
-                    snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
-                    item.color && !snapshot.isDragging ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
-                  )}
-                >
-                   <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
-                     <GripVertical className="h-5 w-5 text-muted-foreground" />
-                   </div>
-
-                  {editingId === item.id ? (
-                    <div ref={editRowRef} className="flex items-center gap-2 flex-1">
-                      <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
-                      
-                      {!item.isUntimed && (
-                        <Input
-                          type="time"
-                          value={editedTime}
-                          onChange={(e) => setEditedTime(e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, item.id)}
-                          className="w-28"
-                        />
-                      )}
-                      <Input
-                        value={editedDescription}
-                        onChange={(e) => setEditedDescription(e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(e, item.id)}
-                        className="flex-1"
-                        autoFocus
-                      />
-
-                      <Popover onOpenChange={setIsPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-2">
-                          <div className="flex gap-1">
-                            <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
-                                <div className="h-4 w-4 rounded-full border" />
-                            </Button>
-                            {ITEM_COLORS.map(color => (
-                              <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
-                                <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
-                              </Button>
-                            ))}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-
-                      <Popover onOpenChange={setIsPopoverOpen}>
-                        <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon"><Clock className="h-4 w-4" /></Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-4">
-                           <div className="flex items-center space-x-2">
-                            <Switch id={`untimed-switch-${item.id}`} checked={item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
-                            <Label htmlFor={`untimed-switch-${item.id}`}>Событие без времени</Label>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-
-                      <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
-                          {item.icon ? (
-                              <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
-                          ) : (
-                              <div className="w-5 h-5" />
-                          )}
-                      </div>
-                      
-                      {!item.isUntimed ? (
-                          <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer">
-                              <p className="font-mono text-base font-semibold w-24 text-center">
-                                  {item.time}
-                              </p>
-                          </div>
-                       ) : (
-                          <div className="w-24 flex justify-center items-center">
-                             <SquareDashed className="w-5 h-5 text-muted-foreground/50" />
-                          </div>
-                       )}
-
-                      <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
-                        {item.description}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => onSaveEvent(item)}
-                        aria-label={`Save event: ${item.description}`}
-                      >
-                        <Bookmark className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => onDeleteEvent(item.id)}
-                        aria-label={`Delete event: ${item.description}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </li>
-              )}
-            </Draggable>
-          ))}
-          {provided.placeholder}
-        </ul>
-      )}
-    </Droppable>
-  )
-
   return (
     <Card className="shadow-lg overflow-hidden relative">
        {/* These are for tailwind to detect and generate dynamic classes */}
@@ -275,32 +147,146 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
         </div>
       </CardHeader>
       <CardContent>
-        {schedule.length > 0 ? (
-          <div className="space-y-4">
-            {renderScheduleList(schedule, 'schedule')}
-             <div id="comments-container">
-                <hr className="my-4"/>
-                <div className="px-2 pt-2">
-                  <Label htmlFor="comments" className="text-xs text-muted-foreground flex items-center gap-2 mb-2">
-                    <MessageSquare className="w-4 h-4" />
-                    Комментарии
-                  </Label>
-                  <Textarea 
-                    id="comments"
-                    placeholder="Добавьте заметки..."
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-            </div>
-          </div>
-        ) : (
+          <Droppable droppableId="schedule">
+            {(provided) => (
+              <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
+                {schedule.map((item, index) => (
+                  <Draggable key={item.id} draggableId={item.id} index={index}>
+                    {(provided, snapshot) => (
+                      <li
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={cn(
+                          'group flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50',
+                          snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
+                          item.color && !snapshot.isDragging ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
+                        )}
+                      >
+                         <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
+                           <GripVertical className="h-5 w-5 text-muted-foreground" />
+                         </div>
+
+                        {editingId === item.id ? (
+                          <div ref={editRowRef} className="flex items-center gap-2 flex-1">
+                            <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
+                            
+                            <div className="w-44">
+                              {!item.isUntimed && (
+                                <Input
+                                  type="time"
+                                  value={editedTime}
+                                  onChange={(e) => setEditedTime(e.target.value)}
+                                  onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                  className="w-full mb-1"
+                                />
+                              )}
+                              <div className="flex items-center space-x-2 pl-1">
+                                <Switch id={`untimed-switch-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
+                                <Label htmlFor={`untimed-switch-${item.id}`} className="text-xs font-normal">Без времени</Label>
+                              </div>
+                            </div>
+                            
+                            <Input
+                              value={editedDescription}
+                              onChange={(e) => setEditedDescription(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, item.id)}
+                              className="flex-1"
+                              autoFocus
+                            />
+
+                            <Popover onOpenChange={setIsPopoverOpen}>
+                              <PopoverTrigger asChild>
+                                <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-2">
+                                <div className="flex gap-1">
+                                  <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
+                                      <div className="h-4 w-4 rounded-full border" />
+                                  </Button>
+                                  {ITEM_COLORS.map(color => (
+                                    <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                      <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                                    </Button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+
+                            <Button onClick={() => handleSave(item.id)} size="sm">Сохранить</Button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
+                                {item.icon ? (
+                                    <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
+                                ) : (
+                                    <div className="w-5 h-5" />
+                                )}
+                            </div>
+                            
+                            <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer w-28 text-center">
+                              {!item.isUntimed && (
+                                <p className="font-mono text-base font-semibold">
+                                    {item.time}
+                                </p>
+                              )}
+                            </div>
+
+                            <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
+                              {item.description}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => onSaveEvent(item)}
+                              aria-label={`Save event: ${item.description}`}
+                            >
+                              <Bookmark className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => onDeleteEvent(item.id)}
+                              aria-label={`Delete event: ${item.description}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </li>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </ul>
+            )}
+          </Droppable>
+        
+        {schedule.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
             <p className="text-lg font-semibold">Ваше расписание пусто</p>
             <p>Добавьте события, чтобы начать планировать свой день.</p>
           </div>
         )}
+
+        <div id="comments-container">
+            <hr className="my-4"/>
+            <div className="px-2 pt-2">
+              <Label htmlFor="comments" className="text-xs text-muted-foreground flex items-center gap-2 mb-2">
+                <MessageSquare className="w-4 h-4" />
+                Комментарии
+              </Label>
+              <Textarea 
+                id="comments"
+                placeholder="Добавьте заметки..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+        </div>
       </CardContent>
       <CardFooter id="card-footer">
         <Button onClick={onAddNewEvent} className="w-full" variant="outline">
@@ -311,3 +297,4 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     </Card>
   );
 }
+
