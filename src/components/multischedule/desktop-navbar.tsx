@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Bug } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
@@ -49,6 +49,7 @@ interface DesktopNavbarProps {
   setIsSavedEventsOpen: (open: boolean) => void;
   setImageUrl: (url: string | null) => void;
   onClearAll: () => void;
+  onDebugModels: () => void;
 }
 
 export function DesktopNavbar({
@@ -73,6 +74,7 @@ export function DesktopNavbar({
   setIsSavedEventsOpen,
   setImageUrl,
   onClearAll,
+  onDebugModels,
 }: DesktopNavbarProps) {
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
@@ -202,8 +204,12 @@ export function DesktopNavbar({
                                     onChange={(e) => setApiKeyInput(e.target.value)}
                                 />
                             </div>
-                            <DialogFooter>
-                                <Button onClick={handleSaveApiKey}>Сохранить</Button>
+                            <DialogFooter className="sm:justify-between">
+                               <Button onClick={onDebugModels} variant="secondary" disabled={isLoading}>
+                                {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Bug className="mr-2" />}
+                                Отладка моделей
+                              </Button>
+                              <Button onClick={handleSaveApiKey}>Сохранить</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
