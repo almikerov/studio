@@ -7,8 +7,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Download, Languages, Loader2, Copy, Save } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 
 const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
@@ -26,14 +24,11 @@ interface TranslationControlsProps {
   onTranslate: (languages: string[]) => void;
   onDownload: () => void;
   onCopy: () => void;
-  onSaveTemplate: (name: string) => void;
 }
 
-export function TranslationControls({ isLoading, isDownloading, onTranslate, onDownload, onCopy, onSaveTemplate }: TranslationControlsProps) {
+export function TranslationControls({ isLoading, isDownloading, onTranslate, onDownload, onCopy }: TranslationControlsProps) {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
 
   const handleLanguageToggle = (code: string) => {
     setSelectedLanguages(prev =>
@@ -49,25 +44,16 @@ export function TranslationControls({ isLoading, isDownloading, onTranslate, onD
     }
   }
 
-  const handleSaveTemplateClick = () => {
-    if (templateName.trim()) {
-      onSaveTemplate(templateName.trim());
-      setTemplateName('');
-      setIsSaveDialogOpen(false);
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Управление</CardTitle>
-        <CardDescription>Переводите, экспортируйте и сохраняйте ваше расписание.</CardDescription>
+        <CardDescription>Переводите и экспортируйте ваше расписание.</CardDescription>
       </CardHeader>
       {showLanguageSelector && (
         <CardContent>
             <div className="space-y-2 mb-6">
-                <Label>Языки для перевода</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <Label>Языки для перевода</Label>                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {AVAILABLE_LANGUAGES.map(lang => (
                         <div key={lang.code} className="flex items-center space-x-2">
                             <Checkbox
@@ -105,35 +91,8 @@ export function TranslationControls({ isLoading, isDownloading, onTranslate, onD
             ) : (
               <Copy className="mr-2 h-4 w-4" />
             )}
-            {isDownloading ? 'Обработка...' : 'Копировать'}
+            {isDownloading ? 'Обработка...' : 'Копировать изображение'}
         </Button>
-        <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="w-full sm:w-auto" disabled={isDownloading || isLoading}>
-              <Save className="mr-2 h-4 w-4" />
-              Сохранить как шаблон
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Сохранить шаблон расписания</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <Label htmlFor="template-name">Название шаблона</Label>
-              <Input
-                id="template-name"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                placeholder="например, 'День матча'"
-              />
-            </div>
-            <DialogFooter>
-              <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>
-                Сохранить
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </CardFooter>
     </Card>
   );

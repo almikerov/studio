@@ -326,6 +326,7 @@ export default function Home() {
                 onSaveEvent={handleSaveEvent}
                 comment={comment}
                 setComment={setComment}
+                onSaveTemplate={handleSaveTemplate}
               />
               <TranslatedSchedulesView 
                 translatedSchedules={translatedSchedules}
@@ -341,7 +342,6 @@ export default function Home() {
             onTranslate={handleTranslate}
             onDownload={handleDownloadImage}
             onCopy={handleCopyImage}
-            onSaveTemplate={handleSaveTemplate}
           />
         </section>
 

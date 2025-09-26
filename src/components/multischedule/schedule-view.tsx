@@ -6,7 +6,7 @@ import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, ImagePlus } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, ImagePlus, Save } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 
 
 const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
@@ -39,13 +40,16 @@ interface ScheduleViewProps {
   onSaveEvent: (item: ScheduleItem) => void;
   comment: string;
   setComment: (comment: string) => void;
+  onSaveTemplate: (name: string) => void;
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, setComment }: ScheduleViewProps) {
+export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, comment, setComment, onSaveTemplate }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const editRowRef = useRef<HTMLDivElement>(null);
+  const [templateName, setTemplateName] = useState('');
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
@@ -99,6 +103,14 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   const handleToggleUntimed = (id: string, isUntimed: boolean) => {
     onUpdateEvent(id, { isUntimed });
   }
+
+  const handleSaveTemplateClick = () => {
+    if (templateName.trim()) {
+      onSaveTemplate(templateName.trim());
+      setTemplateName('');
+      setIsSaveDialogOpen(false);
+    }
+  };
 
   return (
     <Card className="shadow-lg overflow-hidden relative">
@@ -288,13 +300,42 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             </div>
         </div>
       </CardContent>
-      <CardFooter id="card-footer">
-        <Button onClick={onAddNewEvent} className="w-full" variant="outline">
+      <CardFooter id="card-footer" className="gap-2">
+        <Button onClick={onAddNewEvent} className="flex-1" variant="outline">
           <Plus className="mr-2 h-4 w-4" />
           Добавить новое событие
         </Button>
+        <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <Save className="mr-2 h-4 w-4" />
+                    Сохранить шаблон
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Сохранить шаблон расписания</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="template-name">Название шаблона</Label>
+                    <Input
+                        id="template-name"
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        placeholder="например, 'День матча'"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>
+                        Сохранить
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   );
 }
+
 
