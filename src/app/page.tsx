@@ -246,8 +246,7 @@ export default function Home() {
     if (!element) return null;
   
     setIsDownloading(true);
-    await new Promise(resolve => setTimeout(resolve, 50));
-  
+
     try {
       const canvas = await html2canvas(element, {
         backgroundColor: null,
