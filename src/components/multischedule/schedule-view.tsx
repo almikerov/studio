@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -6,7 +7,7 @@ import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, ImagePlus, Save } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon, Palette, MessageSquare, Save, ImagePlus } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -101,7 +102,8 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   }
 
   const handleToggleUntimed = (id: string, isUntimed: boolean) => {
-    onUpdateEvent(id, { isUntimed });
+    onUpdateEvent(id, { isUntimed, time: isUntimed ? '' : editedTime || '00:00' });
+    if(isUntimed) setEditedTime('');
   }
 
   const handleSaveTemplateClick = () => {
@@ -118,7 +120,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500"></div>
 
-      <CardHeader>
+      <CardHeader className="p-4 sm:p-6">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
                 <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
@@ -142,7 +144,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             <div className="flex items-center gap-2">
                 <ImageUploader onSetImageUrl={setImageUrl}>
                   {imageUrl ? (
-                    <div className="relative w-24 h-24 rounded-md overflow-hidden cursor-pointer group/image">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden cursor-pointer group/image">
                        <Image
                           src={imageUrl}
                           alt="Schedule image"
@@ -158,7 +160,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 sm:p-6 pt-0">
           <Droppable droppableId="schedule">
             {(provided) => (
               <ul className="space-y-2" {...provided.droppableProps} ref={provided.innerRef}>
@@ -182,16 +184,15 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
                             <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />
                             
-                            <div className="w-28">
-                              {!item.isUntimed && (
+                            <div className="w-24 sm:w-28">
                                 <Input
                                   type="time"
                                   value={editedTime}
                                   onChange={(e) => setEditedTime(e.target.value)}
                                   onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                  className="w-full mb-1"
+                                  className="w-full mb-1 disabled:opacity-50"
+                                  disabled={!!item.isUntimed}
                                 />
-                              )}
                               <div className="flex items-center space-x-2 pl-1">
                                 <Switch id={`untimed-switch-${item.id}`} checked={!!item.isUntimed} onCheckedChange={(checked) => handleToggleUntimed(item.id, checked)} />
                                 <Label htmlFor={`untimed-switch-${item.id}`} className="text-xs font-normal">Без времени</Label>
@@ -236,7 +237,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                                 )}
                             </div>
                             
-                            <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer w-28 text-center">
+                            <div onClick={() => handleEdit(item)} className="p-1 rounded-md cursor-pointer w-20 sm:w-28 text-center">
                               {!item.isUntimed && (
                                 <p className="font-mono text-base font-semibold">
                                     {item.time}
@@ -300,7 +301,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
             </div>
         </div>
       </CardContent>
-      <CardFooter id="card-footer" className="gap-2">
+      <CardFooter id="card-footer" className="gap-2 p-4 sm:p-6">
         <Button onClick={onAddNewEvent} className="flex-1" variant="outline">
           <Plus className="mr-2 h-4 w-4" />
           Добавить новое событие
@@ -337,5 +338,6 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     </Card>
   );
 }
+
 
 

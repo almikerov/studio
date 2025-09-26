@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, type ReactElement } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -43,14 +43,12 @@ export function ImageUploader({ children, onSetImageUrl }: ImageUploaderProps) {
     if (e.key === 'Enter') handleUrlSubmit();
   }
   
+  const Trigger = children ? Slot : Button;
+  
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
        <DialogTrigger asChild id="image-uploader-trigger">
-          {children || (
-            <Button variant="ghost" size="icon">
-              <ImagePlus className="h-5 w-5" />
-            </Button>
-          )}
+          <Trigger variant="ghost" size="icon">{children || <ImagePlus className="h-5 w-5" />}</Trigger>
        </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

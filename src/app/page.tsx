@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useMemo, useEffect } from 'react';
@@ -14,6 +15,10 @@ import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
+import { Sidebar, SidebarProvider, SidebarTrigger, SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { PanelRightOpen } from 'lucide-react';
+
 
 export type ScheduleItem = { 
   id: string; 
@@ -334,62 +339,83 @@ export default function Home() {
   };
   
   return (
-    <main className="container mx-auto p-4 sm:p-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto pt-12">
-        <section className="lg:col-span-2 space-y-8">
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div ref={printableAreaRef} className="space-y-8 bg-background p-0 sm:p-4 rounded-lg">
-              <ScheduleView
-                schedule={schedule}
-                onUpdateEvent={handleUpdateEvent}
-                onDeleteEvent={handleDeleteEvent}
-                onAddNewEvent={handleAddNewEvent}
-                cardTitle={cardTitle}
-                setCardTitle={setCardTitle}
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
-                imageUrl={imageUrl}
-                setImageUrl={setImageUrl}
-                onSaveEvent={handleSaveEvent}
-                comment={comment}
-                setComment={setComment}
-                onSaveTemplate={handleSaveTemplate}
+    <SidebarProvider>
+      <main className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex justify-end mb-4 lg:hidden">
+            <SidebarTrigger asChild>
+                <Button variant="outline"><PanelRightOpen className="mr-2" /> Инструменты</Button>
+            </SidebarTrigger>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <section className="lg:col-span-2 space-y-8">
+            <DragDropContext onDragEnd={onDragEnd}>
+              <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">
+                <ScheduleView
+                  schedule={schedule}
+                  onUpdateEvent={handleUpdateEvent}
+                  onDeleteEvent={handleDeleteEvent}
+                  onAddNewEvent={handleAddNewEvent}
+                  cardTitle={cardTitle}
+                  setCardTitle={setCardTitle}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  imageUrl={imageUrl}
+                  setImageUrl={setImageUrl}
+                  onSaveEvent={handleSaveEvent}
+                  comment={comment}
+                  setComment={setComment}
+                  onSaveTemplate={handleSaveTemplate}
+                />
+                <TranslatedSchedulesView 
+                  translatedSchedules={translatedSchedules}
+                  onDelete={handleDeleteTranslation}
+                  onUpdate={handleUpdateTranslation}
+                />
+              </div>
+            </DragDropContext>
+
+            <TranslationControls
+              isLoading={isLoading}
+              isDownloading={isDownloading}
+              onTranslate={handleTranslate}
+              onDownload={handleDownloadImage}
+              onCopy={handleCopyImage}
+            />
+          </section>
+
+          <aside className="hidden lg:block space-y-8">
+              <SavedTemplates 
+                templates={savedTemplates}
+                onLoad={handleLoadTemplate}
+                onDelete={handleDeleteTemplate}
               />
-              <TranslatedSchedulesView 
-                translatedSchedules={translatedSchedules}
-                onDelete={handleDeleteTranslation}
-                onUpdate={handleUpdateTranslation}
-               />
-            </div>
-          </DragDropContext>
+              <SavedEvents 
+                  savedEvents={savedEvents}
+                  onAdd={handleAddFromSaved}
+                  onDelete={handleDeleteSaved}
+                  onUpdate={handleUpdateSaved}
+              />
+              <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
+          </aside>
 
-          <TranslationControls
-            isLoading={isLoading}
-            isDownloading={isDownloading}
-            onTranslate={handleTranslate}
-            onDownload={handleDownloadImage}
-            onCopy={handleCopyImage}
-          />
-        </section>
-
-        <aside className="space-y-8">
-            <SavedTemplates 
-              templates={savedTemplates}
-              onLoad={handleLoadTemplate}
-              onDelete={handleDeleteTemplate}
-            />
-            <SavedEvents 
-                savedEvents={savedEvents}
-                onAdd={handleAddFromSaved}
-                onDelete={handleDeleteSaved}
-                onUpdate={handleUpdateSaved}
-            />
-            <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
-        </aside>
-
-      </div>
-    </main>
+        </div>
+      </main>
+      <Sidebar side="right">
+          <SidebarContent className="p-4 space-y-8">
+              <SavedTemplates 
+                templates={savedTemplates}
+                onLoad={handleLoadTemplate}
+                onDelete={handleDeleteTemplate}
+              />
+              <SavedEvents 
+                  savedEvents={savedEvents}
+                  onAdd={handleAddFromSaved}
+                  onDelete={handleDeleteSaved}
+                  onUpdate={handleUpdateSaved}
+              />
+              <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
+          </SidebarContent>
+      </Sidebar>
+    </SidebarProvider>
   );
 }
-
-    
