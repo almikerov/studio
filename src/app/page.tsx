@@ -33,7 +33,7 @@ export default function Home() {
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
   const [cardTitle, setCardTitle] = useState('Расписание на день');
-  const [cardDescription, setCardDescription] = useState('Ваш план на сегодня. Нажмите на событие, чтобы редактировать.');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
@@ -222,8 +222,8 @@ export default function Home() {
                 onAddNewEvent={handleAddNewEvent}
                 cardTitle={cardTitle}
                 setCardTitle={setCardTitle}
-                cardDescription={cardDescription}
-                setCardDescription={setCardDescription}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
                 imageUrl={imageUrl}
                 setImageUrl={setImageUrl}
                 onSaveEvent={handleSaveEvent}

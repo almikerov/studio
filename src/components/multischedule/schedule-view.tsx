@@ -4,16 +4,19 @@
 import { useState, type ReactNode, useRef, useEffect } from 'react';
 import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, CalendarIcon } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
 import Image from 'next/image';
 import { IconDropdown } from './icon-dropdown';
 import { IconName, ScheduleEventIcon } from './schedule-event-icons';
-
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
@@ -22,18 +25,17 @@ interface ScheduleViewProps {
   onAddNewEvent: () => void;
   cardTitle: string;
   setCardTitle: (title: string) => void;
-  cardDescription: string;
-  setCardDescription: (desc: string) => void;
+  selectedDate: Date;
+  setSelectedDate: (date: Date) => void;
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
   onSaveEvent: (item: ScheduleItem) => void;
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription, imageUrl, setImageUrl, onSaveEvent }: ScheduleViewProps) {
+export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
-  const [editedIcon, setEditedIcon] = useState<IconName | undefined>(undefined);
   const editRowRef = useRef<HTMLDivElement>(null);
 
 
@@ -51,18 +53,20 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [editingId, editedTime, editedDescription, editedIcon]);
+  }, [editingId, editedTime, editedDescription]);
 
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingId(item.id);
     setEditedTime(item.time);
     setEditedDescription(item.description);
-    setEditedIcon(item.icon);
   };
 
   const handleSave = (id: string) => {
-    onUpdateEvent(id, editedTime, editedDescription, editedIcon);
+    const item = schedule.find(i => i.id === id);
+    if (item) {
+        onUpdateEvent(id, editedTime, editedDescription, item.icon);
+    }
     setEditingId(null);
   };
 
@@ -92,7 +96,22 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
                 <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
-                <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground mt-1.5" />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" className="text-sm text-muted-foreground mt-1.5 px-2 py-1 h-auto justify-start font-normal">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      План на {format(selectedDate, 'PPP', { locale: ru })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
             </div>
             <div className="flex items-center gap-2">
               {imageUrl ? (
@@ -132,7 +151,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
 
                         {editingId === item.id ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
-                            <IconDropdown value={editedIcon} onChange={(icon) => handleIconChange(item.id, icon)} />
+                            <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
                             <Input
                               type="time"
                               value={editedTime}
