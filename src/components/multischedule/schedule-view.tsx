@@ -57,8 +57,8 @@ export function ScheduleView({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const editRowRef = useRef<HTMLDivElement>(null);
-  const [templateName, setTemplateName] = useState('');
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = useState(false);
   
@@ -74,14 +74,22 @@ export function ScheduleView({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [editingId, editedTime, editedDescription, isPopoverOpen, isMobile]);
+  }, [editingId, editedTime, editedDescription, editedType, isPopoverOpen, isMobile]);
 
   useEffect(() => {
     if (editingEvent) {
         setEditedTime(editingEvent.time);
         setEditedDescription(editingEvent.description);
+        setEditedType(editingEvent.type);
+    } else if (!isMobile && editingId) {
+        const item = schedule.find(i => i.id === editingId);
+        if(item) {
+            setEditedTime(item.time);
+            setEditedDescription(item.description);
+            setEditedType(item.type);
+        }
     }
-  }, [editingEvent]);
+  }, [editingEvent, editingId, isMobile, schedule]);
 
 
   const handleEdit = (item: ScheduleItem) => {
@@ -91,18 +99,24 @@ export function ScheduleView({
       setEditingId(item.id);
       setEditedTime(item.time);
       setEditedDescription(item.description);
+      setEditedType(item.type);
     }
   };
 
   const handleSave = (id: string) => {
-    const item = schedule.find(i => i.id === id);
-    if (item) {
-        if (item.type !== 'comment') {
-            onUpdateEvent(id, { time: editedTime, description: editedDescription });
-        } else {
-            onUpdateEvent(id, { description: editedDescription });
-        }
+    let newTime = editedTime;
+    if (editedType === 'timed' && !editedTime) {
+        newTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (editedType !== 'timed') {
+        newTime = '';
     }
+  
+    onUpdateEvent(id, { 
+      time: newTime, 
+      description: editedDescription,
+      type: editedType,
+    });
+    
     setEditingId(null);
     if (isMobile) {
       handleCloseEditModal();
@@ -132,28 +146,16 @@ export function ScheduleView({
   const handleColorChange = (id: string, color: string | undefined) => {
     onUpdateEvent(id, { color });
   }
-
+  
   const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
-    const currentItem = schedule.find(item => item.id === id);
-    if (!currentItem) return;
-
-    let newTime = currentItem.time;
-    if (type === 'timed' && !currentItem.time) {
+    setEditedType(type);
+    let newTime = editedTime;
+    if (type === 'timed' && !editedTime) {
       newTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (type !== 'timed') {
       newTime = '';
     }
-    
     setEditedTime(newTime);
-    onUpdateEvent(id, { type, time: newTime });
-  }
-
-  const handleSaveTemplateClick = () => {
-    if (templateName.trim()) {
-      onSaveTemplate(templateName.trim());
-      setTemplateName('');
-      setIsSaveTemplateDialogOpen(false);
-    }
   };
 
   const handleAddFromSavedClick = (event: SavedEvent) => {
@@ -169,19 +171,20 @@ export function ScheduleView({
   const renderEditContent = (item: ScheduleItem) => (
     <div className="flex flex-col gap-4 p-1">
         <div className="flex items-center gap-2">
-            {item.type !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />}
+            {editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />}
              <Textarea
                 value={editedDescription}
                 onChange={(e) => setEditedDescription(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, item.id)}
                 className="flex-1 text-lg"
-                rows={item.type === 'comment' ? 3 : 1}
+                rows={editedType === 'comment' ? 3 : 1}
+                autoFocus={!isMobile}
             />
         </div>
 
         <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
             <Label htmlFor={`type-select-${item.id}`} className="text-base font-normal">Тип события</Label>
-            <Select value={item.type} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+            <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
                 <SelectTrigger id={`type-select-${item.id}`} className="w-[180px]">
                     <SelectValue />
                 </SelectTrigger>
@@ -194,7 +197,7 @@ export function ScheduleView({
         </div>
 
         {
-            item.type === 'timed' && (
+            editedType === 'timed' && (
                 <Input
                 type="time"
                 value={editedTime}
@@ -205,7 +208,7 @@ export function ScheduleView({
             )
         }
       
-        { item.type !== 'comment' && (
+        { editedType !== 'comment' && (
             <div>
                 <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
                 <div className="flex gap-2 justify-around">
@@ -285,7 +288,8 @@ export function ScheduleView({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          'group/item flex items-center gap-2 p-2 rounded-md hover:bg-secondary/50',
+                          'group/item flex items-center gap-2 p-2 rounded-md',
+                          !isMobile && 'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color && !snapshot.isDragging && item.type !== 'comment' ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
@@ -297,9 +301,9 @@ export function ScheduleView({
 
                         {editingId === item.id && !isMobile ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                            { item.type !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />}
+                            { editedType !== 'comment' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} onOpenChange={setIsPopoverOpen} />}
                             
-                            <Select value={item.type} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+                            <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
                                 <SelectTrigger className="w-[150px]">
                                     <SelectValue />
                                 </SelectTrigger>
@@ -310,7 +314,7 @@ export function ScheduleView({
                                 </SelectContent>
                             </Select>
 
-                            {item.type === 'timed' &&
+                            {editedType === 'timed' &&
                                 <Input
                                 type="time"
                                 value={editedTime}
@@ -329,7 +333,7 @@ export function ScheduleView({
                               autoFocus
                             />
 
-                            {item.type !== 'comment' &&
+                            {editedType !== 'comment' &&
                                 <Popover onOpenChange={setIsPopoverOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
@@ -367,7 +371,7 @@ export function ScheduleView({
                             {item.type === 'comment' ? (
                                 <>
                                     <p 
-                                      className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full ml-12"
+                                      className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full ml-10"
                                       onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
                                     >
                                       {item.description}
@@ -486,5 +490,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-    
