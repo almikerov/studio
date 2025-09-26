@@ -19,7 +19,7 @@ const TranslateScheduleInputSchema = z.object({
 export type TranslateScheduleInput = z.infer<typeof TranslateScheduleInputSchema>;
 
 const TranslateScheduleOutputSchema = z.object({
-  translations: z.record(z.string(), z.string()).describe('A map of language code to translated schedule text. The keys should be the language codes provided in the input, and the values should be the translated schedule text.')
+  translations: z.any().describe('An object where keys are the language codes and values are the translated schedule text.')
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
