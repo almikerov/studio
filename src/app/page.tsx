@@ -246,9 +246,9 @@ export default function Home() {
     if (!element) return null;
   
     setIsDownloading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 50));
   
+    try {
       const canvas = await html2canvas(element, {
         backgroundColor: null,
         scale: 2,
@@ -257,11 +257,7 @@ export default function Home() {
         onclone: (clonedDoc) => {
           const printableArea = clonedDoc.querySelector<HTMLDivElement>('.printable-area-for-render');
           if (printableArea) {
-            if (isMobile) {
-              printableArea.style.width = 'auto';
-            } else {
-              printableArea.style.maxWidth = '500px';
-            }
+             printableArea.style.width = '768px';
           }
   
           const content = clonedDoc.querySelector<HTMLDivElement>('[data-schedule-content]');
@@ -290,7 +286,7 @@ export default function Home() {
           
           clonedDoc.querySelectorAll('[data-desktop-only-on-render]').forEach(el => {
             if (el instanceof HTMLElement) {
-              el.style.display = 'none';
+              el.style.display = 'flex';
             }
           });
         }
