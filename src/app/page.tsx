@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -244,46 +244,53 @@ export default function Home() {
   const generateCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const element = printableAreaRef.current;
     if (!element) return null;
-  
+
     setIsDownloading(true);
     try {
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
-      
-      // Temporarily modify the container to ensure it captures all content
-      const content = element.querySelector<HTMLDivElement>('[data-schedule-content]');
-      if (content) {
-        content.classList.add('h-auto', 'overflow-visible');
-      }
 
       await new Promise(resolve => setTimeout(resolve, 50));
-  
+
       const canvas = await html2canvas(element, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
         logging: false,
         onclone: (clonedDoc) => {
+          const content = clonedDoc.querySelector<HTMLDivElement>('[data-schedule-content]');
+          if (content) {
+            content.style.height = 'auto';
+            content.style.overflow = 'visible';
+          }
           const footer = clonedDoc.getElementById('card-footer');
           if (footer) footer.style.display = 'none';
-  
-          const dragHandles = clonedDoc.querySelectorAll('[data-drag-handle]');
-          dragHandles.forEach(handle => {
-            if (handle instanceof HTMLElement) handle.style.display = 'none';
-          });
+
           const imageUploaderTrigger = clonedDoc.getElementById('image-uploader-trigger');
           if (imageUploaderTrigger) imageUploaderTrigger.style.display = 'none';
           
           const mobileMenuTrigger = clonedDoc.getElementById('mobile-menu-trigger');
           if (mobileMenuTrigger) mobileMenuTrigger.style.display = 'none';
+          
+          if (isMobile) {
+            clonedDoc.querySelectorAll('[data-mobile-arrow]').forEach(arrow => arrow.remove());
+            
+            clonedDoc.querySelectorAll('[data-mobile-hidden-on-render="true"]').forEach(el => {
+              if (el instanceof HTMLElement) {
+                el.style.display = 'none';
+              }
+            });
+
+            clonedDoc.querySelectorAll('[data-desktop-only-on-render="true"]').forEach(el => {
+              if (el instanceof HTMLElement) {
+                el.style.display = 'flex';
+                el.style.opacity = '1';
+              }
+            });
+          }
         }
       });
-
-      // Restore original styles
-      if (content) {
-        content.classList.remove('h-auto', 'overflow-visible');
-      }
 
       return canvas;
     } catch (err) {

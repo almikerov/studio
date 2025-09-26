@@ -54,6 +54,7 @@ export function ScheduleView({
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen
 }: ScheduleViewProps) {
+  const editRowRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -70,7 +71,6 @@ export function ScheduleView({
         setEditedType(editingEvent.type);
     }
   }, [editingEvent]);
-
 
   const handleEdit = (item: ScheduleItem) => {
     if (isMobile) {
@@ -124,12 +124,11 @@ export function ScheduleView({
   }
   
   const handleTypeChange = (id: string, type: ScheduleItem['type']) => {
-    // Immediately update the type
     onUpdateEvent(id, {
         type,
-        time: type === 'timed' ? (editedTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
+        time: type === 'timed' ? (schedule.find(i => i.id === id)?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
     });
-    // Update local state for the editing UI
+
     if (editingId === id || (isMobile && editingEvent?.id === id)) {
         setEditedType(type);
     }
@@ -154,8 +153,6 @@ export function ScheduleView({
       type: 'timed',
     };
     
-    // Add the new event to the schedule first, then set it to be edited
-    // This requires the parent component to handle the state update
     onAddNewEvent({id: newId, description: 'Новое событие', type: 'timed'});
     setLastAdded(newId);
   }
@@ -318,23 +315,23 @@ export function ScheduleView({
                         )}
                         onClick={() => editingId !== item.id && handleEdit(item)}
                       >
-                         {!isMobile && <div {...provided.dragHandleProps} data-drag-handle className="cursor-grab active:cursor-grabbing p-2">
+                         <div {...provided.dragHandleProps} data-drag-handle data-desktop-only-on-render="true" className={cn("cursor-grab active:cursor-grabbing p-2", isMobile ? "hidden" : "flex")}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
-                         </div>}
+                         </div>
                          
                          {isMobile && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'up'); }}>
+                            <Button data-mobile-arrow variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'up'); }}>
                                 <ArrowUp className="h-5 w-5" />
                             </Button>
                          )}
 
                         {editingId === item.id && !isMobile ? (
-                          <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
+                          <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                                 {editedType !== 'comment' &&
                                   <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
                                 }
                             
-                                <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
+                                <Select value={editedType} onValueChange={(value) => setEditedType(value as ScheduleItem['type'])}>
                                     <SelectTrigger className="w-[150px]">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -419,32 +416,30 @@ export function ScheduleView({
                                 </>
                             )}
                             
-                            {!isMobile && (
-                                <div className={cn("flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100")}>
-                                    {item.type !== 'comment' && (
-                                        <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                        onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                                        aria-label={`Save event: ${item.description}`}
-                                        >
-                                        <Bookmark className="h-4 w-4" />
-                                        </Button>
-                                    )}
+                            <div data-desktop-only-on-render="true" className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                                {item.type !== 'comment' && (
                                     <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                    onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
-                                    aria-label={`Delete event: ${item.description}`}
+                                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                    onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                                    aria-label={`Save event: ${item.description}`}
                                     >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Bookmark className="h-4 w-4" />
                                     </Button>
-                                </div>
-                            )}
+                                )}
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
+                                aria-label={`Delete event: ${item.description}`}
+                                >
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
                             {isMobile && (
-                                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
+                                <Button data-mobile-arrow variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
                                     <ArrowDown className="h-5 w-5" />
                                 </Button>
                             )}
