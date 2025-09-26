@@ -9,7 +9,7 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import { VertexAI } from '@google-cloud/vertexai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
 
@@ -32,19 +32,13 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string, projectId: string): Promise<ParseScheduleTextOutput> {
+export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string): Promise<ParseScheduleTextOutput> {
   if (!apiKey) {
     throw new Error('API key is not provided');
   }
-   if (!projectId) {
-    throw new Error('Project ID is not provided');
-  }
 
-  const vertexAI = new VertexAI({ project: projectId, location: 'us-central1' });
-  const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: {
-    // @ts-ignore
-    apiKey,
-  }});
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
 
   const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
@@ -80,10 +74,12 @@ Output JSON:`;
   const text = response.text();
 
   try {
-    const parsedJson = JSON.parse(text);
+    // It's possible the model will wrap the JSON in markdown, so we'll clean it.
+    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsedJson = JSON.parse(cleanedText);
     return ParseScheduleTextOutputSchema.parse(parsedJson);
   } catch (error) {
-    console.error("Failed to parse AI response:", error);
+    console.error("Failed to parse AI response:", text, error);
     throw new Error("AI response was not valid JSON.");
   }
 }

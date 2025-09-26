@@ -9,7 +9,7 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import { VertexAI } from '@google-cloud/vertexai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
 
 const TranslateScheduleInputSchema = z.object({
@@ -23,19 +23,13 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput, apiKey: string, projectId: string): Promise<Record<string, string>> {
+export async function translateSchedule(input: TranslateScheduleInput, apiKey: string): Promise<Record<string, string>> {
   if (!apiKey) {
     throw new Error('API key is not provided');
   }
-  if (!projectId) {
-    throw new Error('Project ID is not provided');
-  }
 
-  const vertexAI = new VertexAI({ project: projectId, location: 'us-central1' });
-  const model = vertexAI.getGenerativeModel({ model: "gemini-1.5-flash-001", generationConfig: {
-    // @ts-ignore
-    apiKey,
-  }});
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
 
   const languages = input.targetLanguages.join(', ');
 
@@ -65,11 +59,12 @@ Output JSON:`;
   const text = response.text();
 
   try {
-    const parsedJson = JSON.parse(text);
+    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsedJson = JSON.parse(cleanedText);
     const validated = TranslateScheduleOutputSchema.parse(parsedJson);
     return validated.translations;
   } catch (error) {
-    console.error("Failed to parse AI response:", error);
+    console.error("Failed to parse AI response:", text, error);
     throw new Error("AI response was not valid JSON.");
   }
 }

@@ -81,16 +81,11 @@ export function DesktopNavbar({
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
     const [apiKeyInput, setApiKeyInput] = useState('');
-    const [projectIdInput, setProjectIdInput] = useState('');
 
      React.useEffect(() => {
-        const storedApiKey = localStorage.getItem('vertex-api-key');
+        const storedApiKey = localStorage.getItem('gemini-api-key');
         if (storedApiKey) {
             setApiKeyInput(storedApiKey);
-        }
-        const storedProjectId = localStorage.getItem('vertex-project-id');
-        if (storedProjectId) {
-            setProjectIdInput(storedProjectId);
         }
     }, []);
 
@@ -117,13 +112,12 @@ export function DesktopNavbar({
     
     const handleSaveApiConfig = () => {
         try {
-            localStorage.setItem('vertex-api-key', apiKeyInput);
-            localStorage.setItem('vertex-project-id', projectIdInput);
-            toast({ title: 'Конфигурация Vertex AI сохранена' });
+            localStorage.setItem('gemini-api-key', apiKeyInput);
+            toast({ title: 'API ключ сохранен' });
             setIsApiKeyDialogOpen(false);
         } catch (error) {
             console.error("Failed to save to localStorage", error);
-            toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить конфигурацию.', variant: 'destructive' });
+            toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить ключ.', variant: 'destructive' });
         }
     };
 
@@ -194,24 +188,15 @@ export function DesktopNavbar({
                      <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <KeyRound className="mr-2" /> Vertex AI Config
+                                <KeyRound className="mr-2" /> Gemini API Key
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Конфигурация Vertex AI</DialogTitle>
-                                <DialogDescription>Введите ваш API ключ и Project ID для доступа к Vertex AI.</DialogDescription>
+                                <DialogTitle>Конфигурация Gemini API</DialogTitle>
+                                <DialogDescription>Введите ваш API ключ для доступа к Gemini AI.</DialogDescription>
                             </DialogHeader>
                             <div className="py-4 space-y-4">
-                                <div>
-                                <Label htmlFor="project-id-desktop">Project ID</Label>
-                                <Input
-                                    id="project-id-desktop"
-                                    placeholder="Ваш Project ID"
-                                    value={projectIdInput}
-                                    onChange={(e) => setProjectIdInput(e.target.value)}
-                                />
-                                </div>
                                 <div>
                                 <Label htmlFor="api-key-desktop">API Key</Label>
                                 <Input
