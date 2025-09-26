@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Wand2, Loader2 } from 'lucide-react';
@@ -56,3 +56,5 @@ export function AiScheduleParser({ onParse, isLoading }: AiScheduleParserProps) 
     </Card>
   );
 }
+
+    

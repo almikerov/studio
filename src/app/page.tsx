@@ -14,9 +14,12 @@ import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
-import { Sidebar, SidebarProvider, SidebarTrigger, SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
+import { Sidebar, SidebarProvider, SidebarTrigger, SidebarContent } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { PanelRightOpen } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { DesktopLayout } from '@/components/multischedule/desktop-layout';
+import { MobileLayout } from '@/components/multischedule/mobile-layout';
 
 
 export type ScheduleItem = { 
@@ -64,6 +67,8 @@ export default function Home() {
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
   const [savedTemplates, setSavedTemplates] = useState<ScheduleTemplate[]>([]);
+
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     try {
@@ -336,85 +341,55 @@ export default function Home() {
       setIsLoading(false);
     }
   };
+
+  const commonProps = {
+    schedule,
+    translatedSchedules,
+    isLoading,
+    isDownloading,
+    printableAreaRef,
+    cardTitle,
+    selectedDate,
+    imageUrl,
+    comment,
+    savedEvents,
+    savedTemplates,
+    setCardTitle,
+    setSelectedDate,
+    setImageUrl,
+    setComment,
+    handleUpdateEvent,
+    handleDeleteEvent,
+    handleAddNewEvent,
+    onDragEnd,
+    handleTranslate,
+    handleDownloadImage,
+    handleCopyImage,
+    handleDeleteTranslation,
+    handleUpdateTranslation,
+    handleSaveEvent,
+    handleAddFromSaved,
+    handleDeleteSaved,
+    handleUpdateSaved,
+    handleSaveTemplate,
+    handleLoadTemplate,
+    handleDeleteTemplate,
+    handleAiParse,
+  };
+  
+  if (isMobile === undefined) {
+    return null; // or a loading skeleton
+  }
   
   return (
     <SidebarProvider>
-      <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-end mb-4 md:hidden">
-          <SidebarTrigger asChild>
-            <Button variant="outline"><PanelRightOpen className="mr-2" /> Инструменты</Button>
-          </SidebarTrigger>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          <section className="lg:col-span-2 space-y-8">
-            <DragDropContext onDragEnd={onDragEnd}>
-              <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">
-                <ScheduleView
-                  schedule={schedule}
-                  onUpdateEvent={handleUpdateEvent}
-                  onDeleteEvent={handleDeleteEvent}
-                  onAddNewEvent={handleAddNewEvent}
-                  cardTitle={cardTitle}
-                  setCardTitle={setCardTitle}
-                  selectedDate={selectedDate}
-                  setSelectedDate={setSelectedDate}
-                  imageUrl={imageUrl}
-                  setImageUrl={setImageUrl}
-                  onSaveEvent={handleSaveEvent}
-                  comment={comment}
-                  setComment={setComment}
-                  onSaveTemplate={handleSaveTemplate}
-                />
-                <TranslatedSchedulesView 
-                  translatedSchedules={translatedSchedules}
-                  onDelete={handleDeleteTranslation}
-                  onUpdate={handleUpdateTranslation}
-                />
-              </div>
-            </DragDropContext>
-
-            <TranslationControls
-              isLoading={isLoading}
-              isDownloading={isDownloading}
-              onTranslate={handleTranslate}
-              onDownload={handleDownloadImage}
-              onCopy={handleCopyImage}
-            />
-          </section>
-
-          <aside className="hidden md:block space-y-8">
-              <SavedTemplates 
-                templates={savedTemplates}
-                onLoad={handleLoadTemplate}
-                onDelete={handleDeleteTemplate}
-              />
-              <SavedEvents 
-                  savedEvents={savedEvents}
-                  onAdd={handleAddFromSaved}
-                  onDelete={handleDeleteSaved}
-                  onUpdate={handleUpdateSaved}
-              />
-              <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
-          </aside>
-
-        </div>
-      </main>
-      <Sidebar side="right">
-          <SidebarContent className="p-4 space-y-8">
-              <SavedTemplates 
-                templates={savedTemplates}
-                onLoad={handleLoadTemplate}
-                onDelete={handleDeleteTemplate}
-              />
-              <SavedEvents 
-                  savedEvents={savedEvents}
-                  onAdd={handleAddFromSaved}
-                  onDelete={handleDeleteSaved}
-                  onUpdate={handleUpdateSaved}
-              />
-              <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
-          </SidebarContent>
-      </Sidebar>
+      {isMobile ? (
+        <MobileLayout {...commonProps} />
+      ) : (
+        <DesktopLayout {...commonProps} />
+      )}
     </SidebarProvider>
   );
 }
+
+    
