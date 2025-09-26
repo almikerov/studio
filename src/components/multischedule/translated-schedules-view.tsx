@@ -14,13 +14,13 @@ interface TranslatedSchedulesViewProps {
 }
 
 const languageNames: Record<string, string> = {
-  en: 'Английский',
-  es: 'Испанский',
-  fr: 'Французский',
-  de: 'Немецкий',
+  en: 'English',
+  es: 'Español',
+  fr: 'Français',
+  de: 'Deutsch',
   ru: 'Русский',
-  ja: 'Японский',
-  zh: 'Китайский',
+  ja: '日本語',
+  zh: '中文',
 };
 
 export function TranslatedSchedulesView({ translatedSchedules, onDelete, onUpdate }: TranslatedSchedulesViewProps) {
@@ -59,7 +59,7 @@ export function TranslatedSchedulesView({ translatedSchedules, onDelete, onUpdat
       {translatedSchedules.map(({ lang, text }) => (
         <Card key={lang} className="shadow-lg group">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Расписание на {languageNames[lang] || lang}</CardTitle>
+            <CardTitle>{languageNames[lang] || lang}</CardTitle>
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               {editingLang === lang ? (
                 <>

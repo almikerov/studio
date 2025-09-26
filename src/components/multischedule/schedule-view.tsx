@@ -8,32 +8,38 @@ import { Input } from '@/components/ui/input';
 import { Trash2, Plus, GripVertical } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
+import { ImageUploader } from './image-uploader';
+import { IconDropdown } from './icon-dropdown';
+import { IconName, ScheduleEventIcon } from './schedule-event-icons';
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
-  onUpdateEvent: (id: string, time: string, description: string) => void;
+  onUpdateEvent: (id: string, time: string, description: string, icon: IconName) => void;
   onDeleteEvent: (id: string) => void;
   onAddNewEvent: () => void;
   cardTitle: string;
   setCardTitle: (title: string) => void;
   cardDescription: string;
   setCardDescription: (desc: string) => void;
-  children?: ReactNode;
+  imageUrl: string | null;
+  setImageUrl: (url: string | null) => void;
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription, children }: ScheduleViewProps) {
+export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription, imageUrl, setImageUrl }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [editedIcon, setEditedIcon] = useState<IconName>('star');
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingId(item.id);
     setEditedTime(item.time);
     setEditedDescription(item.description);
+    setEditedIcon(item.icon);
   };
 
   const handleSave = (id: string) => {
-    onUpdateEvent(id, editedTime, editedDescription);
+    onUpdateEvent(id, editedTime, editedDescription, editedIcon);
     setEditingId(null);
   };
 
@@ -50,11 +56,15 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   }
 
   return (
-    <Card className="shadow-lg overflow-hidden">
-      {children}
+    <Card className="shadow-lg overflow-hidden relative">
       <CardHeader>
-        <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
-        <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground" />
+        <div className="flex justify-between items-start">
+            <div className="flex-1 mr-4">
+                <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
+                <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground mt-1.5" />
+            </div>
+            <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
+        </div>
       </CardHeader>
       <CardContent>
         {schedule.length > 0 ? (
@@ -75,6 +85,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
 
                         {editingId === item.id ? (
                           <>
+                            <IconDropdown selectedIcon={editedIcon} onIconChange={setEditedIcon} />
                             <Input
                               type="time"
                               value={editedTime}
@@ -94,6 +105,9 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                           </>
                         ) : (
                           <>
+                            <div className="w-8 h-8 flex items-center justify-center">
+                                <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
+                            </div>
                             <div className="font-mono text-base font-semibold text-primary-foreground bg-primary rounded-md px-3 py-1 w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.time}
                             </div>

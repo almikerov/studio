@@ -8,18 +8,18 @@ import { ScheduleView } from '@/components/multischedule/schedule-view';
 import { TranslationControls } from '@/components/multischedule/translation-controls';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { EditableTitle } from '@/components/multischedule/editable-title';
+import { IconName } from '@/components/multischedule/schedule-event-icons';
 
-export type ScheduleItem = { id: string; time: string; description: string };
+export type ScheduleItem = { id: string; time: string; description: string; icon: IconName };
 export type TranslatedSchedule = { lang: string; text: string };
 
 export default function Home() {
   const { toast } = useToast();
   const [schedule, setSchedule] = useState<ScheduleItem[]>([
-    { id: '1', time: '09:00', description: 'Утренняя встреча' },
-    { id: '2', time: '12:30', description: 'Обед' },
-    { id: '3', time: '18:00', description: 'Завершение рабочего дня' },
+    { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera' },
+    { id: '2', time: '12:30', description: 'Обед', icon: 'utensils' },
+    { id: '3', time: '18:00', description: 'Завершение рабочего дня', icon: 'bed' },
   ]);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,8 +32,8 @@ export default function Home() {
 
   const languageMap = useMemo(() => new Map(translatedSchedules.map(t => [t.lang, t.text])), [translatedSchedules]);
 
-  const handleUpdateEvent = (id: string, time: string, description: string) => {
-    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description } : item)).sort((a,b) => a.time.localeCompare(b.time)));
+  const handleUpdateEvent = (id: string, time: string, description: string, icon: IconName) => {
+    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description, icon } : item)).sort((a,b) => a.time.localeCompare(b.time)));
   };
 
   const handleAddNewEvent = () => {
@@ -41,6 +41,7 @@ export default function Home() {
       id: Date.now().toString(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       description: 'Новое событие',
+      icon: 'star'
     };
     setSchedule(prev => [...prev, newEvent].sort((a, b) => a.time.localeCompare(b.time)));
   };
@@ -143,9 +144,9 @@ export default function Home() {
                 setCardTitle={setCardTitle}
                 cardDescription={cardDescription}
                 setCardDescription={setCardDescription}
-              >
-                <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
-              </ScheduleView>
+                imageUrl={imageUrl}
+                setImageUrl={setImageUrl}
+              />
               <TranslatedSchedulesView 
                 translatedSchedules={translatedSchedules}
                 onDelete={handleDeleteTranslation}

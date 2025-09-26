@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, Link, ImagePlus, X } from 'lucide-react';
+import { Upload, Link, ImagePlus, X, Edit } from 'lucide-react';
 import Image from 'next/image';
 
 interface ImageUploaderProps {
@@ -46,35 +46,37 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
     setImageUrl(null);
   }
 
-  if (imageUrl) {
-    return (
-      <div className="relative group w-full aspect-video rounded-t-lg overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt="Uploaded schedule image"
-          fill
-          className="object-cover"
-          crossOrigin="anonymous"
-        />
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <Button variant="destructive" size="icon" onClick={handleRemoveImage}>
-              <X className="h-4 w-4" />
-            </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogTrigger asChild>
-        <div className="w-full aspect-video rounded-t-lg bg-muted/50 flex items-center justify-center cursor-pointer hover:bg-muted transition-colors group border-2 border-dashed border-border">
-          <div className="text-center text-muted-foreground">
-            <ImagePlus className="h-12 w-12 mx-auto" />
-            <p>Добавить изображение</p>
-          </div>
+        <div className="w-24 h-16 bg-muted rounded-md flex items-center justify-center relative group overflow-hidden">
+            {imageUrl ? (
+                <>
+                    <Image
+                        src={imageUrl}
+                        alt="Uploaded schedule image"
+                        fill
+                        className="object-cover"
+                        crossOrigin="anonymous"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-white hover:bg-white/20 hover:text-white">
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <Button variant="ghost" size="icon" onClick={handleRemoveImage} className="h-7 w-7 text-white hover:bg-destructive/80 hover:text-white">
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </>
+            ) : (
+                <DialogTrigger asChild>
+                    <Button variant="ghost" className="w-full h-full">
+                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                    </Button>
+                </DialogTrigger>
+            )}
         </div>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Добавить изображение</DialogTitle>
