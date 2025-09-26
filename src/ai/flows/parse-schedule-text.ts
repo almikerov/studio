@@ -38,7 +38,7 @@ export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKe
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
   const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
