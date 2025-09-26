@@ -46,7 +46,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [editingId, editRowRef, editedTime, editedDescription, editedIcon]);
+  }, [editingId, editedTime, editedDescription, editedIcon]);
 
 
   const handleEdit = (item: ScheduleItem) => {
@@ -82,20 +82,20 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                 <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground mt-1.5" />
             </div>
             <div className="flex items-center gap-2">
-              {imageUrl && (
-                  <div className="relative h-16 w-16 rounded-md overflow-hidden">
-                      <Image
-                          src={imageUrl}
-                          alt="Schedule background"
-                          fill
-                          className="object-cover"
-                          crossOrigin="anonymous"
-                      />
-                  </div>
-              )}
               <ImageUploader imageUrl={imageUrl} setImageUrl={setImageUrl} />
             </div>
         </div>
+        {imageUrl && (
+            <div className="relative h-48 w-full rounded-md overflow-hidden mt-4">
+                <Image
+                    src={imageUrl}
+                    alt="Schedule background"
+                    fill
+                    className="object-cover"
+                    crossOrigin="anonymous"
+                />
+            </div>
+        )}
       </CardHeader>
       <CardContent>
         {schedule.length > 0 ? (
@@ -139,7 +139,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
                             <div className="w-8 h-8 flex items-center justify-center cursor-pointer" onClick={() => handleEdit(item)}>
                                 {item.icon ? <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="h-5 w-5" />}
                             </div>
-                            <div className="font-mono text-base font-semibold text-primary-foreground bg-primary rounded-md px-3 py-1 w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
+                            <div className="font-mono text-base font-semibold w-24 text-center cursor-pointer" onClick={() => handleEdit(item)}>
                               {item.time}
                             </div>
                             <p className="flex-1 text-card-foreground cursor-pointer" onClick={() => handleEdit(item)}>
