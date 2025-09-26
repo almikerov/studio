@@ -7,15 +7,31 @@ import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
-import { TranslationControls } from '@/components/multischedule/translation-controls';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { SavedEvents } from '@/components/multischedule/saved-events';
-import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
-import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DesktopControls } from '@/components/multischedule/desktop-controls';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Download, Languages, Loader2, Copy, Save, BookOpen, Wand2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { SavedTemplates } from '@/components/multischedule/saved-templates';
+import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
+
+
+const AVAILABLE_LANGUAGES = [
+  { code: 'ru', name: 'Русский' },
+  { code: 'en', name: 'Английский' },
+  { code: 'es', name: 'Испанский' },
+  { code: 'fr', name: 'Французский' },
+  { code: 'de', name: 'Немецкий' },
+  { code: 'ja', name: 'Японский' },
+  { code: 'zh', name: 'Китайский' },
+];
 
 
 export type ScheduleItem = { 
@@ -67,6 +83,11 @@ export default function Home() {
   const [editingEvent, setEditingEvent] = useState<ScheduleItem | null>(null);
 
   const isMobile = useIsMobile();
+
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
+  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [isAiParserOpen, setIsAiParserOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -281,7 +302,6 @@ export default function Home() {
   const handleSaveEvent = async (scheduleItem: ScheduleItem) => {
     const { description, icon } = scheduleItem;
 
-    // Check for duplicates
     if (savedEvents.some(e => e.description === description)) {
       toast({ title: 'Уже сохранено', description: 'Событие с таким описанием уже есть в ваших заготовках.', variant: 'default' });
       return;
@@ -294,24 +314,6 @@ export default function Home() {
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
     toast({ title: 'Сохранено', description: 'Событие добавлено в заготовки.' });
-  };
-
-  const handleAddFromSaved = (savedEvent: SavedEvent) => {
-    const newScheduleEvent: ScheduleItem = {
-      id: Date.now().toString(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      description: savedEvent.description,
-      icon: savedEvent.icon,
-    };
-    setSchedule(prev => [...prev, newScheduleEvent]);
-  };
-
-  const handleDeleteSaved = (id: string) => {
-    updateSavedEvents(savedEvents.filter(event => event.id !== id));
-  };
-
-  const handleUpdateSaved = (updatedEvent: SavedEvent) => {
-    updateSavedEvents(savedEvents.map(event => event.id === updatedEvent.id ? updatedEvent : event));
   };
 
   const handleSaveTemplate = (name: string) => {
@@ -365,9 +367,52 @@ export default function Home() {
     }
   };
 
+
+  const handleLanguageToggle = (code: string) => {
+    setSelectedLanguages(prev =>
+      prev.includes(code) ? prev.filter(lang => lang !== code) : [...prev, code]
+    );
+  };
+
+  const onTranslate = (languages: string[]) => {
+    handleTranslate(languages);
+    setShowLanguageSelector(false);
+  }
+
+  const handleTranslateClick = () => {
+    if (!showLanguageSelector) {
+      setShowLanguageSelector(true);
+    } else {
+      onTranslate(selectedLanguages);
+    }
+  };
+
+  const commonControlProps = {
+    isLoading,
+    isDownloading,
+    onTranslate: () => onTranslate(selectedLanguages),
+    onDownload: handleDownloadImage,
+    onCopy: handleCopyImage,
+    templates: savedTemplates,
+    onLoadTemplate: handleLoadTemplate,
+    onDeleteTemplate: handleDeleteTemplate,
+    onAiParse: handleAiParse,
+    showLanguageSelector,
+    setShowLanguageSelector,
+    selectedLanguages,
+    onLanguageToggle: handleLanguageToggle,
+    isTemplatesOpen,
+    setIsTemplatesOpen,
+    isAiParserOpen,
+    setIsAiParserOpen,
+  };
+
+
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
+        {!isMobile && <DesktopControls {...commonControlProps} />}
+
         <DragDropContext onDragEnd={onDragEnd}>
           <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">
             <ScheduleView
@@ -399,22 +444,84 @@ export default function Home() {
           </div>
         </DragDropContext>
 
-        <TranslationControls
-          isLoading={isLoading}
-          isDownloading={isDownloading}
-          onTranslate={handleTranslate}
-          onDownload={handleDownloadImage}
-          onCopy={handleCopyImage}
-          templates={savedTemplates}
-          onLoadTemplate={handleLoadTemplate}
-          onDeleteTemplate={handleDeleteTemplate}
-          onAiParse={handleAiParse}
-        />
+        {isMobile && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Управление</CardTitle>
+              <CardDescription>Переводите, экспортируйте, используйте шаблоны и ИИ.</CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              {showLanguageSelector && (
+                <div className="space-y-2 mb-6">
+                  <Label>Языки для перевода</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {AVAILABLE_LANGUAGES.map(lang => (
+                      <div key={lang.code} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`lang-${lang.code}`}
+                          checked={selectedLanguages.includes(lang.code)}
+                          onCheckedChange={() => handleLanguageToggle(lang.code)}
+                        />
+                        <Label htmlFor={`lang-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-4">
+                  <Button onClick={handleTranslateClick} disabled={isLoading || isDownloading} className="flex-1 min-w-[150px]">
+                      {isLoading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Languages className="mr-2 h-4 w-4" /> )}
+                      {isLoading ? 'Переводим...' : (showLanguageSelector ? 'Подтвердить' : 'Перевести')}
+                  </Button>
+                  <Button onClick={handleDownloadImage} variant="outline" className="flex-1 min-w-[150px]" disabled={isDownloading || isLoading}>
+                      {isDownloading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Download className="mr-2 h-4 w-4" /> )}
+                      {isDownloading ? 'Загрузка...' : 'Скачать'}
+                  </Button>
+                  <Button onClick={handleCopyImage} variant="outline" className="flex-1 min-w-[150px]" disabled={isDownloading || isLoading}>
+                      {isDownloading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Copy className="mr-2 h-4 w-4" /> )}
+                      {isDownloading ? 'Обработка...' : 'Копировать'}
+                  </Button>
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex flex-wrap gap-4">
+              <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="secondary" className="flex-1 min-w-[150px]">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Шаблоны
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                  <SavedTemplates 
+                    templates={savedTemplates}
+                    onLoad={handleLoadTemplate}
+                    onDelete={handleDeleteTemplate}
+                    onClose={() => setIsTemplatesOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+              
+              <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
+                <DialogTrigger asChild>
+                   <Button variant="secondary" className="flex-1 min-w-[150px]">
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    ИИ-редактор
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                  <AiScheduleParser 
+                    onParse={handleAiParse} 
+                    isLoading={isLoading} 
+                    onClose={() => setIsAiParserOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            </CardFooter>
+          </Card>
+        )}
       </div>
     </main>
   );
 }
-
-    
-
-    
