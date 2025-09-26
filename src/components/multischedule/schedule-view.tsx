@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,9 +18,10 @@ interface ScheduleViewProps {
   setCardTitle: (title: string) => void;
   cardDescription: string;
   setCardDescription: (desc: string) => void;
+  children?: ReactNode;
 }
 
-export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription }: ScheduleViewProps) {
+export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, cardDescription, setCardDescription, children }: ScheduleViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -49,7 +50,8 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg overflow-hidden">
+      {children}
       <CardHeader>
         <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
         <EditableField as="p" value={cardDescription} setValue={setCardDescription} className="text-sm text-muted-foreground" />

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Upload, Link } from 'lucide-react';
+import { Upload, Link, ImagePlus, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface ImageUploaderProps {
@@ -41,22 +41,38 @@ export function ImageUploader({ imageUrl, setImageUrl }: ImageUploaderProps) {
     if (e.key === 'Enter') handleUrlSubmit();
   }
 
+  const handleRemoveImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setImageUrl(null);
+  }
+
+  if (imageUrl) {
+    return (
+      <div className="relative group w-full aspect-video rounded-t-lg overflow-hidden">
+        <Image
+          src={imageUrl}
+          alt="Uploaded schedule image"
+          fill
+          className="object-cover"
+          crossOrigin="anonymous"
+        />
+        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Button variant="destructive" size="icon" onClick={handleRemoveImage}>
+              <X className="h-4 w-4" />
+            </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <div className="absolute top-0 left-0 -mt-2 -ml-2 h-24 w-24 rounded-full bg-secondary/50 flex items-center justify-center cursor-pointer hover:bg-secondary transition-colors group">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt="Uploaded schedule image"
-              width={96}
-              height={96}
-              className="rounded-full object-cover h-full w-full"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <Upload className="h-8 w-8 text-muted-foreground group-hover:text-foreground" />
-          )}
+        <div className="w-full aspect-video rounded-t-lg bg-muted/50 flex items-center justify-center cursor-pointer hover:bg-muted transition-colors group border-2 border-dashed border-border">
+          <div className="text-center text-muted-foreground">
+            <ImagePlus className="h-12 w-12 mx-auto" />
+            <p>Добавить изображение</p>
+          </div>
         </div>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
