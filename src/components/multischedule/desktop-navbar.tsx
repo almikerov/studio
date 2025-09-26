@@ -69,8 +69,6 @@ export function DesktopNavbar({
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
-    const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
-
 
     const handleSaveTemplateClick = () => {
         if (templateName.trim()) {
@@ -88,25 +86,15 @@ export function DesktopNavbar({
         })
     }
 
-    const handleDownloadAndClose = () => {
-        onDownload();
-        setIsFileMenuOpen(false);
-    }
-    
-    const handleCopyAndClose = () => {
-        onCopy();
-        setIsFileMenuOpen(false);
-    }
-
   return (
     <Menubar className="rounded-lg border bg-card p-0 h-auto">
-        <MenubarMenu open={isFileMenuOpen} onOpenChange={setIsFileMenuOpen}>
+        <MenubarMenu>
             <MenubarTrigger>Файл</MenubarTrigger>
             <MenubarContent>
-                <MenubarItem onClick={handleDownloadAndClose} disabled={isDownloading || isLoading}>
+                <MenubarItem onClick={onDownload} disabled={isDownloading || isLoading}>
                     <Download className="mr-2" /> Сохранить изображение
                 </MenubarItem>
-                <MenubarItem onClick={handleCopyAndClose} disabled={isDownloading || isLoading}>
+                <MenubarItem onClick={onCopy} disabled={isDownloading || isLoading}>
                     <Copy className="mr-2" /> Копировать изображение
                 </MenubarItem>
             </MenubarContent>
@@ -115,13 +103,13 @@ export function DesktopNavbar({
         <MenubarMenu>
             <MenubarTrigger>Инструменты</MenubarTrigger>
             <MenubarContent>
-                <Popover>
+                 <Popover>
                     <PopoverTrigger asChild>
-                        <MenubarItem onSelect={(e) => e.preventDefault()} className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                            <Languages className="mr-2 h-4 w-4" /> Перевести
-                        </MenubarItem>
+                        <Button variant="ghost" className="w-full justify-start h-auto px-2 py-1.5 text-sm font-normal relative flex cursor-default select-none items-center rounded-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                             <Languages className="mr-2 h-4 w-4" /> Перевести
+                        </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-56">
+                    <PopoverContent className="w-56" align="start">
                         <div className="grid gap-4">
                             <div className="space-y-2">
                                 <h4 className="font-medium leading-none">Перевод</h4>
