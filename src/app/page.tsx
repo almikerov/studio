@@ -12,12 +12,12 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { DesktopControls } from '@/components/multischedule/desktop-controls';
+import { DesktopNavbar } from '@/components/multischedule/desktop-navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, Save, BookOpen, Wand2 } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -188,6 +188,7 @@ export default function Home() {
     }
 
     setIsLoading(true);
+    setShowLanguageSelector(false);
 
     const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
@@ -344,6 +345,7 @@ export default function Home() {
 
   const handleAiParse = async (text: string) => {
     setIsLoading(true);
+    setIsAiParserOpen(false);
     try {
       const result = await parseScheduleFromText({ text });
       const newScheduleItems = result.schedule.map(item => ({
@@ -374,33 +376,32 @@ export default function Home() {
     );
   };
 
-  const onTranslate = (languages: string[]) => {
-    handleTranslate(languages);
-    setShowLanguageSelector(false);
-  }
-
-  const handleTranslateClick = () => {
+  const onTranslateClick = () => {
     if (!showLanguageSelector) {
       setShowLanguageSelector(true);
     } else {
-      onTranslate(selectedLanguages);
+      handleTranslate(selectedLanguages);
     }
   };
 
   const commonControlProps = {
     isLoading,
     isDownloading,
-    onTranslate: () => onTranslate(selectedLanguages),
     onDownload: handleDownloadImage,
     onCopy: handleCopyImage,
-    templates: savedTemplates,
+    savedTemplates,
     onLoadTemplate: handleLoadTemplate,
     onDeleteTemplate: handleDeleteTemplate,
+    onSaveTemplate: handleSaveTemplate,
+    savedEvents,
+    onAddEventFromSaved: handleAddNewEvent,
+    updateSavedEvents,
     onAiParse: handleAiParse,
     showLanguageSelector,
     setShowLanguageSelector,
     selectedLanguages,
     onLanguageToggle: handleLanguageToggle,
+    onTranslate: () => handleTranslate(selectedLanguages),
     isTemplatesOpen,
     setIsTemplatesOpen,
     isAiParserOpen,
@@ -410,8 +411,8 @@ export default function Home() {
 
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {!isMobile && <DesktopControls {...commonControlProps} />}
+      <div className="max-w-4xl mx-auto space-y-4">
+        {!isMobile && <DesktopNavbar {...commonControlProps} />}
 
         <DragDropContext onDragEnd={onDragEnd}>
           <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg">
@@ -470,7 +471,7 @@ export default function Home() {
                 </div>
               )}
               <div className="flex flex-wrap gap-4">
-                  <Button onClick={handleTranslateClick} disabled={isLoading || isDownloading} className="flex-1 min-w-[150px]">
+                  <Button onClick={onTranslateClick} disabled={isLoading || isDownloading} className="flex-1 min-w-[150px]">
                       {isLoading ? ( <Loader2 className="mr-2 h-4 w-4 animate-spin" /> ) : ( <Languages className="mr-2 h-4 w-4" /> )}
                       {isLoading ? 'Переводим...' : (showLanguageSelector ? 'Подтвердить' : 'Перевести')}
                   </Button>
