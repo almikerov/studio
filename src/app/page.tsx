@@ -8,7 +8,6 @@ import { ScheduleView } from '@/components/multischedule/schedule-view';
 import { TranslationControls } from '@/components/multischedule/translation-controls';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { EditableTitle } from '@/components/multischedule/editable-title';
 import { SavedEvents } from '@/components/multischedule/saved-events';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 
@@ -19,7 +18,6 @@ export type SavedEvent = {
   id: string;
   description: string;
   icon?: IconName;
-  translations: Record<string, string>;
 };
 
 export default function Home() {
@@ -34,7 +32,6 @@ export default function Home() {
   const [isDownloading, setIsDownloading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
-  const [mainTitle, setMainTitle] = useState('Название');
   const [cardTitle, setCardTitle] = useState('Расписание на день');
   const [cardDescription, setCardDescription] = useState('Ваш план на сегодня. Нажмите на событие, чтобы редактировать.');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -187,7 +184,6 @@ export default function Home() {
       id: Date.now().toString(),
       description,
       icon,
-      translations: {},
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
     toast({ title: 'Сохранено', description: 'Событие сохранено.' });
@@ -201,32 +197,6 @@ export default function Home() {
       icon: savedEvent.icon,
     };
     setSchedule(prev => [...prev, newScheduleEvent].sort((a,b) => a.time.localeCompare(b.time)));
-    
-    setTranslatedSchedules(prev => {
-        const currentLanguages = new Set(prev.map(t => t.lang));
-        const newTranslations = [...prev];
-        
-        Object.entries(savedEvent.translations).forEach(([lang, text]) => {
-            if (currentLanguages.has(lang)) {
-                // Find and update existing translation
-                const index = newTranslations.findIndex(t => t.lang === lang);
-                if (index !== -1) {
-                    const newEventTime = newScheduleEvent.time;
-                    newTranslations[index].text += `\n${newEventTime}: ${text}`;
-                    
-                    // Super basic sort, might need improvement
-                    const lines = newTranslations[index].text.split('\n');
-                    lines.sort((a, b) => (a.split(':')[0] || '').localeCompare(b.split(':')[0] || ''));
-                    newTranslations[index].text = lines.join('\n');
-                }
-            } else {
-                // This case is tricky. We'd need to translate the whole schedule to this new language.
-                // For now, let's just ignore translations for languages not already present.
-            }
-        });
-
-        return newTranslations;
-    });
   };
 
   const handleDeleteSaved = (id: string) => {
@@ -239,11 +209,7 @@ export default function Home() {
   
   return (
     <main className="container mx-auto p-4 sm:p-8">
-      <header className="text-center mb-12">
-        <EditableTitle value={mainTitle} setValue={setMainTitle} className="font-headline text-4xl sm:text-5xl font-bold tracking-tight" />
-      </header>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto pt-12">
         <section className="lg:col-span-2 space-y-8">
           <DragDropContext onDragEnd={onDragEnd}>
             <div ref={printableAreaRef} className="space-y-8 bg-background p-0 sm:p-4 rounded-lg">
