@@ -1,3 +1,4 @@
+
 // src/ai/flows/translate-schedule.ts
 'use server';
 
@@ -32,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'translateSchedulePrompt',
   input: {schema: TranslateScheduleInputSchema},
   output: {schema: TranslateScheduleOutputSchema},
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash',
   prompt: `Твоя задача — перевести присланное расписание тренировок.
 
 **Ключевые инструкции по переводу:**

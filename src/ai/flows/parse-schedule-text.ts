@@ -39,7 +39,7 @@ const prompt = ai.definePrompt({
   name: 'parseSchedulePrompt',
   input: {schema: ParseScheduleTextInputSchema},
   output: {schema: ParseScheduleTextOutputSchema},
-  model: 'gemini-1.5-flash',
+  model: 'googleai/gemini-1.5-flash',
   prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
 
