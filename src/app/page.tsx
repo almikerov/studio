@@ -28,7 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { Input } from '@/components/ui/input';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const AVAILABLE_LANGUAGES = [
