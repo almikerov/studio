@@ -33,14 +33,18 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
-  const [editedIcon, setEditedIcon] = useState<IconName>();
+  const [editedIcon, setEditedIcon] = useState<IconName | undefined>(undefined);
   const editRowRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (editingId && editRowRef.current && !editRowRef.current.contains(event.target as Node)) {
-        handleSave(editingId);
+        // Check if the click is outside the popover as well
+        const popover = document.querySelector('[data-radix-popover-content-wrapper]');
+        if (!popover || !popover.contains(event.target as Node)) {
+           handleSave(editingId);
+        }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -71,6 +75,14 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
       handleSave(id);
     } else if (e.key === 'Escape') {
       handleCancel();
+    }
+  }
+
+  const handleIconChange = (id: string, icon: IconName | undefined) => {
+    const item = schedule.find(i => i.id === id);
+    if(item) {
+        onUpdateEvent(id, item.time, item.description, icon);
+        setEditingId(null); // Exit edit mode
     }
   }
 
@@ -120,7 +132,7 @@ export function ScheduleView({ schedule, onUpdateEvent, onDeleteEvent, onAddNewE
 
                         {editingId === item.id ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1">
-                            <IconDropdown value={editedIcon} onChange={setEditedIcon} />
+                            <IconDropdown value={editedIcon} onChange={(icon) => handleIconChange(item.id, icon)} />
                             <Input
                               type="time"
                               value={editedTime}

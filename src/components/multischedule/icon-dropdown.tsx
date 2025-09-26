@@ -30,7 +30,7 @@ export function IconDropdown({ value, onChange }: IconDropdownProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2">
+      <PopoverContent className="w-auto p-2" data-radix-popover-content-wrapper>
         <div className="grid grid-cols-5 gap-2">
           <Button
             variant={!value ? 'secondary' : 'ghost'}
