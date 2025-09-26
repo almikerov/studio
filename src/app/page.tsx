@@ -4,14 +4,11 @@ import { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
-import { EventForm } from '@/components/multischedule/event-form';
-import { SavedEvents } from '@/components/multischedule/saved-events';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import { TranslationControls } from '@/components/multischedule/translation-controls';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 
 export type ScheduleItem = { id: number; time: string; description: string };
-export type SavedEvent = { description: string };
 export type TranslatedSchedules = Record<string, string>;
 
 export default function Home() {
@@ -21,42 +18,39 @@ export default function Home() {
     { id: 2, time: '12:30', description: 'Обед' },
     { id: 3, time: '18:00', description: 'Завершение рабочего дня' },
   ]);
-  const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([
-    { description: 'Кофе-брейк' },
-    { description: 'Проверка почты' },
-  ]);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedules | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
-  const handleAddEvent = (time: string, description: string, save: boolean) => {
-    if (!time || !description) {
-      toast({
-        title: 'Ошибка',
-        description: 'Пожалуйста, укажите время и описание события.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    const newEvent: ScheduleItem = { id: Date.now(), time, description };
-    setSchedule([...schedule].sort((a, b) => a.time.localeCompare(b.time)));
-    
+  const handleUpdateEvent = (id: number, time: string, description: string) => {
+    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, time, description } : item)).sort((a,b) => a.time.localeCompare(b.time)));
+  };
+
+  const handleAddNewEvent = () => {
+    const newEvent: ScheduleItem = {
+      id: Date.now(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      description: 'Новое событие',
+    };
     setSchedule(prev => [...prev, newEvent].sort((a, b) => a.time.localeCompare(b.time)));
-
-
-    if (save && !savedEvents.some(e => e.description === description)) {
-      setSavedEvents(prev => [...prev, { description }]);
-    }
   };
 
   const handleDeleteEvent = (id: number) => {
     setSchedule(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleAddSavedEvent = (description: string) => {
-    const defaultTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newEvent: ScheduleItem = { id: Date.now(), time: defaultTime, description };
-    setSchedule(prev => [...prev, newEvent].sort((a, b) => a.time.localeCompare(b.time)));
+  const handleMoveEvent = (id: number, direction: 'up' | 'down') => {
+    setSchedule(prev => {
+      const scheduleCopy = [...prev];
+      const index = scheduleCopy.findIndex(item => item.id === id);
+      if (index === -1) return prev;
+
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= scheduleCopy.length) return prev;
+
+      [scheduleCopy[index], scheduleCopy[newIndex]] = [scheduleCopy[newIndex], scheduleCopy[index]];
+      return scheduleCopy;
+    });
   };
 
   const handleTranslate = async (languages: string[]) => {
@@ -111,15 +105,16 @@ export default function Home() {
         <p className="text-muted-foreground mt-2 text-lg">Создавайте, переводите и делитесь своим расписанием</p>
       </header>
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <aside className="lg:col-span-4 xl:col-span-3 space-y-8">
-          <EventForm onAddEvent={handleAddEvent} />
-          <SavedEvents savedEvents={savedEvents} onAddSavedEvent={handleAddSavedEvent} />
-        </aside>
-
-        <section className="lg:col-span-8 xl:col-span-9 space-y-8">
-          <div ref={printableAreaRef} className="space-y-8 bg-background p-0 -m-4 sm:p-0 rounded-lg">
-            <ScheduleView schedule={schedule} onDeleteEvent={handleDeleteEvent} />
+      <div className="max-w-4xl mx-auto">
+        <section className="space-y-8">
+          <div ref={printableAreaRef} className="space-y-8 bg-background p-0 sm:p-4 rounded-lg">
+            <ScheduleView
+              schedule={schedule}
+              onUpdateEvent={handleUpdateEvent}
+              onDeleteEvent={handleDeleteEvent}
+              onMoveEvent={handleMoveEvent}
+              onAddNewEvent={handleAddNewEvent}
+            />
             <TranslatedSchedulesView translatedSchedules={translatedSchedules} />
           </div>
 
