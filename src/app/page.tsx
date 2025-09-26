@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Bug } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -29,7 +29,6 @@ import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { Input } from '@/components/ui/input';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { debugModels } from '@/ai/flows/debug-models';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -274,11 +273,11 @@ export default function Home() {
           return updated;
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Translation failed:', error);
       toast({
         title: 'Ошибка перевода',
-        description: 'Не удалось перевести расписание. Проверьте API ключ и попробуйте еще раз.',
+        description: error.message || 'Не удалось перевести расписание. Проверьте API ключ и попробуйте еще раз.',
         variant: 'destructive',
       });
     } finally {
@@ -553,11 +552,11 @@ export default function Home() {
       setCardTitle(result.cardTitle);
       setTranslatedSchedules([]);
       toast({ title: 'Расписание сгенерировано', description: 'ИИ проанализировал ваш текст и создал расписание.' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI parsing failed:', error);
       toast({
         title: 'Ошибка генерации',
-        description: 'Не удалось создать расписание из текста. Проверьте API ключ и попробуйте еще раз.',
+        description: error.message || 'Не удалось создать расписание из текста. Проверьте API ключ и попробуйте еще раз.',
         variant: 'destructive',
       });
     } finally {
@@ -648,55 +647,6 @@ export default function Home() {
     setIsMobileMenuOpen(false);
   }
 
-  const handleDebugModels = async () => {
-    const apiKey = localStorage.getItem('gemini-api-key');
-    if (!apiKey) {
-      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
-      return;
-    }
-    
-    toast({ title: 'Отладка запущена', description: 'Проверяем доступность моделей...' });
-    setIsLoading(true);
-
-    try {
-      const results = await debugModels({apiKey});
-      
-      if (results.successful.length > 0) {
-        toast({
-          title: 'Успешно!',
-          description: `Работающие модели: ${results.successful.join(', ')}`,
-        });
-      } else {
-        toast({
-          title: 'Нет рабочих моделей',
-          description: 'Ни одна из тестовых моделей не доступна с вашим ключом.',
-          variant: 'destructive',
-        });
-      }
-
-      results.failed.forEach(failure => {
-        console.error(`Model ${failure.model} failed:`, failure.error);
-         toast({
-          title: `Ошибка модели: ${failure.model}`,
-          description: 'Подробности в консоли разработчика.',
-          variant: 'destructive',
-        });
-      });
-
-    } catch (error) {
-      console.error("Model debugging failed:", error);
-      toast({
-        title: 'Ошибка отладки',
-        description: 'Не удалось выполнить проверку моделей.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
-      setIsMobileMenuOpen(false);
-    }
-  };
-
-
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto space-y-4">
@@ -725,7 +675,6 @@ export default function Home() {
             setIsAiParserOpen={setIsAiParserOpen}
             setImageUrl={setImageUrl}
             onClearAll={handleClearAll}
-            onDebugModels={handleDebugModels}
         />}
 
         
@@ -884,10 +833,6 @@ export default function Home() {
                                </div>
                             </div>
                             <DialogFooter>
-                               <Button onClick={handleDebugModels} variant="secondary" disabled={isLoading}>
-                                {isLoading ? <Loader2 className="mr-2 animate-spin" /> : <Bug className="mr-2" />}
-                                Отладка
-                              </Button>
                               <Button onClick={handleSaveApiConfig}>Сохранить</Button>
                             </DialogFooter>
                           </DialogContent>
