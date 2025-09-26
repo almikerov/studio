@@ -31,11 +31,9 @@ interface ScheduleViewProps {
   schedule: ScheduleItem[];
   onUpdateEvent: (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => void;
   onDeleteEvent: (id: string) => void;
-  onAddNewEvent: (fromSaved?: Partial<SavedEvent>) => void;
+  onAddNewEvent: (fromSaved?: Partial<ScheduleItem>) => void;
   cardTitle: string;
   setCardTitle: (title: string) => void;
-  selectedDate: Date;
-  setSelectedDate: (date: Date) => void;
   imageUrl: string | null;
   setImageUrl: (url: string | null) => void;
   onSaveEvent: (item: Partial<ScheduleItem>) => void;
@@ -52,7 +50,7 @@ interface ScheduleViewProps {
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
-  selectedDate, setSelectedDate, imageUrl, setImageUrl, onSaveEvent, 
+  imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen
 }: ScheduleViewProps) {
@@ -61,6 +59,7 @@ export function ScheduleView({
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
+  const [editedDate, setEditedDate] = useState<Date | undefined>(new Date());
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState<string | null>(null);
 
@@ -70,6 +69,9 @@ export function ScheduleView({
         setEditedTime(editingEvent.time);
         setEditedDescription(editingEvent.description);
         setEditedType(editingEvent.type);
+        if (editingEvent.type === 'date') {
+            setEditedDate(editingEvent.description ? new Date(editingEvent.description) : new Date());
+        }
     }
   }, [editingEvent]);
 
@@ -81,13 +83,17 @@ export function ScheduleView({
       setEditedTime(item.time);
       setEditedDescription(item.description);
       setEditedType(item.type);
+      if (item.type === 'date') {
+        setEditedDate(item.description ? new Date(item.description) : new Date());
+      }
     }
   };
 
   const handleSave = (id: string) => {
+    const description = editedType === 'date' && editedDate ? editedDate.toISOString() : editedDescription;
     onUpdateEvent(id, { 
       time: editedType === 'timed' ? editedTime : '', 
-      description: editedDescription,
+      description,
       type: editedType,
     });
     
@@ -137,14 +143,7 @@ export function ScheduleView({
 
   const handleAddNewEventAndEdit = () => {
     const newId = Date.now().toString() + Math.random(); // ensure unique id
-    const newEvent: ScheduleItem = {
-      id: newId,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      description: 'Новое событие',
-      type: 'timed',
-    };
-    
-    onAddNewEvent({id: newId, description: 'Новое событие', type: 'timed'});
+    onAddNewEvent({id: newId, type: 'timed'});
     setLastAdded(newId);
   }
 
@@ -183,7 +182,7 @@ export function ScheduleView({
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="flex-1 text-lg"
                     rows={editedType === 'comment' ? 3 : 1}
-                    autoFocus={false}
+                    autoFocus={!['date', 'h1', 'h2', 'h3'].includes(item.type)}
                 />
             </div>
 
@@ -199,23 +198,39 @@ export function ScheduleView({
                         <option value="timed">Со временем</option>
                         <option value="untimed">Без времени</option>
                         <option value="comment">Комментарий</option>
+                        <option value="date">Дата</option>
+                        <option value="h1">Заголовок H1</option>
+                        <option value="h2">Заголовок H2</option>
+                        <option value="h3">Заголовок H3</option>
                     </select>
                     <ChevronDown className="h-4 w-4 opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
             </div>
-
-            {
-                editedType === 'timed' && (
-                    <Input
-                    type="time"
-                    value={editedTime}
-                    onChange={(e) => setEditedTime(e.target.value)}
-                    className="w-full text-lg h-12"
+            
+            {editedType === 'date' && (
+                <Calendar
+                    mode="single"
+                    selected={editedDate}
+                    onSelect={(date) => {
+                        setEditedDate(date);
+                        if (date) {
+                            onUpdateEvent(item.id, { description: date.toISOString() });
+                        }
+                    }}
+                    className="rounded-md border"
                     />
-                )
-            }
+            )}
+
+            { editedType === 'timed' && (
+                <Input
+                type="time"
+                value={editedTime}
+                onChange={(e) => setEditedTime(e.target.value)}
+                className="w-full text-lg h-12"
+                />
+            )}
         
-            { editedType !== 'comment' && (
+            { !['comment', 'date', 'h1', 'h2', 'h3'].includes(editedType) && (
                 <div>
                     <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
                     <div className="flex gap-2 justify-around">
@@ -251,23 +266,7 @@ export function ScheduleView({
       <CardHeader className="p-4 sm:p-6">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
-                <EditableField as="h2" value={cardTitle} setValue={setCardTitle} className="text-2xl font-semibold leading-none tracking-tight" />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" className="text-sm text-muted-foreground mt-1.5 px-2 py-1 h-auto justify-start font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      План на {format(selectedDate, 'PPP', { locale: ru })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => date && setSelectedDate(date)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
             <div data-id="schedule-image-wrapper" className="flex items-center gap-2">
                 {isMobile && (
@@ -302,7 +301,7 @@ export function ScheduleView({
                           'group/item flex items-center gap-2 p-2 rounded-md',
                           !isMobile && 'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
-                           item.color && !snapshot.isDragging && item.type !== 'comment' ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
+                           item.color && !snapshot.isDragging && !['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
                         onClick={() => editingId !== item.id && handleEdit(item)}
                       >
@@ -318,7 +317,7 @@ export function ScheduleView({
 
                         {editingId === item.id && !isMobile ? (
                           <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                                {editedType !== 'comment' &&
+                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(editedType) &&
                                   <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
                                 }
                             
@@ -330,6 +329,10 @@ export function ScheduleView({
                                         <SelectItem value="timed">Со временем</SelectItem>
                                         <SelectItem value="untimed">Без времени</SelectItem>
                                         <SelectItem value="comment">Комментарий</SelectItem>
+                                        <SelectItem value="date">Дата</SelectItem>
+                                        <SelectItem value="h1">Заголовок H1</SelectItem>
+                                        <SelectItem value="h2">Заголовок H2</SelectItem>
+                                        <SelectItem value="h3">Заголовок H3</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -342,17 +345,38 @@ export function ScheduleView({
                                     className="w-24 disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 }
-                            
-                                <Textarea
-                                value={editedDescription}
-                                onChange={(e) => setEditedDescription(e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                className="flex-1"
-                                rows={1}
-                                autoFocus
-                                />
 
-                                {editedType !== 'comment' &&
+                                {editedType === 'date' && editedDate &&
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="outline">
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {format(editedDate, 'PPP', { locale: ru })}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={editedDate}
+                                                onSelect={(date) => date && setEditedDate(date)}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                }
+                            
+                                {['timed', 'untimed', 'h1', 'h2', 'h3', 'comment'].includes(editedType) &&
+                                    <Textarea
+                                        value={editedDescription}
+                                        onChange={(e) => setEditedDescription(e.target.value)}
+                                        onKeyDown={(e) => handleKeyDown(e, item.id)}
+                                        className="flex-1"
+                                        rows={1}
+                                        autoFocus
+                                    />
+                                }
+
+                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(editedType) &&
                                     <Popover>
                                     <PopoverTrigger asChild>
                                         <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
@@ -383,6 +407,17 @@ export function ScheduleView({
                                 >
                                   {item.description}
                                 </p>
+                            ) : item.type === 'date' ? (
+                                <div className='flex items-center gap-2 font-semibold text-lg text-muted-foreground py-2 w-full'>
+                                    <CalendarIcon className="h-5 w-5" />
+                                    <span>{format(new Date(item.description), 'PPP', { locale: ru })}</span>
+                                </div>
+                            ) : item.type === 'h1' ? (
+                                <h2 className='text-xl font-bold w-full'>{item.description}</h2>
+                            ) : item.type === 'h2' ? (
+                                <h3 className='text-lg font-semibold w-full'>{item.description}</h3>
+                            ) : item.type === 'h3' ? (
+                                <h4 className='text-base font-medium w-full'>{item.description}</h4>
                             ) : (
                                 <>
                                     <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
@@ -410,7 +445,7 @@ export function ScheduleView({
                             )}
                             
                             <div data-desktop-only-on-render="true" data-no-print="true" className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
-                                {item.type !== 'comment' && (
+                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
                                     <Button
                                     variant="ghost"
                                     size="icon"
@@ -481,5 +516,6 @@ export function ScheduleView({
     </Card>
   );
 }
+
 
 

@@ -47,7 +47,8 @@ export type ScheduleItem = {
   description: string; 
   icon?: IconName; 
   color?: string;
-  type: 'timed' | 'untimed' | 'comment';
+  type: 'timed' | 'untimed' | 'comment' | 'date' | 'h1' | 'h2' | 'h3';
+  date?: string;
 };
 export type TranslatedSchedule = { lang: string; text: string };
 
@@ -68,22 +69,24 @@ export type ScheduleTemplate = {
   imageUrl: string | null;
 };
 
-export default function Home() {
-  const { toast } = useToast();
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([
+const defaultSchedule: ScheduleItem[] = [
+    { id: '0', time: '', description: new Date().toISOString(), icon: undefined, type: 'date' },
     { id: '1', time: '09:00', description: 'Утренняя встреча', icon: 'camera', color: 'blue', type: 'timed' },
     { id: '2', time: '12:30', description: 'Обед', icon: 'utensils', type: 'timed' },
     { id: '3', time: '', description: 'Купить билеты', icon: 'passport', type: 'untimed' },
     { id: '4', time: '', description: 'Не забыть проанализировать тактику соперника перед матчем.', type: 'comment' },
     { id: '5', time: '18:00', description: 'Завершение рабочего дня', icon: 'bed', type: 'timed' },
-  ]);
+];
+
+export default function Home() {
+  const { toast } = useToast();
+  const [schedule, setSchedule] = useState<ScheduleItem[]>(defaultSchedule);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
   const [cardTitle, setCardTitle] = useState('Расписание на день');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
@@ -109,6 +112,14 @@ export default function Home() {
 
   useEffect(() => {
     try {
+      const storedState = localStorage.getItem('multiScheduleState');
+      if (storedState) {
+        const { schedule, cardTitle, imageUrl } = JSON.parse(storedState);
+        if (schedule) setSchedule(schedule);
+        if (cardTitle) setCardTitle(cardTitle);
+        if (imageUrl) setImageUrl(imageUrl);
+      }
+
       const storedEvents = localStorage.getItem('savedEvents');
       if (storedEvents) {
         setSavedEvents(JSON.parse(storedEvents));
@@ -125,6 +136,15 @@ export default function Home() {
       console.error("Failed to load from localStorage", error);
     }
   }, []);
+
+  useEffect(() => {
+    try {
+        const stateToSave = { schedule, cardTitle, imageUrl };
+        localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
+    } catch (error) {
+        console.error("Failed to save state to localStorage", error);
+    }
+  }, [schedule, cardTitle, imageUrl]);
   
   const updateSavedEvents = (newSavedEvents: SavedEvent[]) => {
     setSavedEvents(newSavedEvents);
@@ -161,16 +181,21 @@ export default function Home() {
     setEditingEvent(null);
   };
   
-
-  const handleAddNewEvent = (fromSaved?: Partial<SavedEvent>) => {
+  const handleAddNewEvent = (newEventConfig?: Partial<ScheduleItem>) => {
     const newEvent: ScheduleItem = {
       id: Date.now().toString(),
-      time: fromSaved?.type === 'timed' ? (fromSaved?.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '',
-      description: fromSaved?.description || 'Новое событие',
-      icon: fromSaved?.icon,
-      color: fromSaved?.color,
-      type: fromSaved?.type || 'timed',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      description: 'Новое событие',
+      type: 'timed',
+      ...newEventConfig,
     };
+    if (newEvent.type === 'date') {
+        newEvent.time = '';
+        newEvent.description = newEvent.description || new Date().toISOString();
+    }
+    if (['h1', 'h2', 'h3', 'untimed', 'comment'].includes(newEvent.type)) {
+        newEvent.time = '';
+    }
     setSchedule(prev => [...prev, newEvent]);
     if (isMobile) {
       setEditingEvent(newEvent);
@@ -270,7 +295,9 @@ export default function Home() {
     clone.style.height = 'auto';
 
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
-    clone.querySelector('#card-footer')?.remove();
+    
+    const footer = clone.querySelector('#card-footer');
+    if (footer) footer.remove();
 
     clone.querySelectorAll('.truncate').forEach(el => {
       el.classList.remove('truncate');
@@ -437,8 +464,8 @@ export default function Home() {
   const handleSaveEvent = async (eventData: Partial<ScheduleItem>) => {
     const { description, icon, time, type, color } = eventData;
 
-    if (!description || type === 'comment') {
-        toast({ title: 'Нельзя сохранить', description: 'Комментарии или пустые события нельзя сохранять.', variant: 'default' });
+    if (!description || !type || ['comment', 'date', 'h1', 'h2', 'h3'].includes(type)) {
+        toast({ title: 'Нельзя сохранить', description: 'Этот тип события нельзя сохранить как заготовку.', variant: 'default' });
         return;
     }
 
@@ -452,7 +479,7 @@ export default function Home() {
       description,
       icon,
       time: type === 'timed' ? time : undefined,
-      type: type || 'untimed',
+      type: type,
       color,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
@@ -557,12 +584,25 @@ export default function Home() {
   };
   
   const handleAddFromSavedClick = (event: SavedEvent) => {
-    handleAddNewEvent(event);
+    handleAddNewEvent({
+        description: event.description,
+        icon: event.icon,
+        time: event.time,
+        type: event.type,
+        color: event.color,
+    });
     setIsAddEventDialogOpen(false);
   }
 
   const handleAddNewBlankEvent = () => {
-    handleAddNewEvent();
+    setIsAddEventDialogOpen(false);
+    setTimeout(() => {
+        setIsAddEventDialogOpen(true); // Re-open with different content
+    }, 100);
+  }
+
+  const addNewTypedEvent = (type: ScheduleItem['type']) => {
+    handleAddNewEvent({ type });
     setIsAddEventDialogOpen(false);
   }
 
@@ -606,8 +646,6 @@ export default function Home() {
                 onAddNewEvent={handleAddNewEvent}
                 cardTitle={cardTitle}
                 setCardTitle={setCardTitle}
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
                 imageUrl={imageUrl}
                 setImageUrl={setImageUrl}
                 onSaveEvent={handleSaveEvent}
@@ -832,15 +870,19 @@ export default function Home() {
               <DialogHeader>
                 <DialogTitle>Добавить событие</DialogTitle>
               </DialogHeader>
-              <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                <Button variant="outline" className="w-full justify-start text-base py-6" onClick={handleAddNewBlankEvent}>
-                    <Plus className="mr-4" /> Новое событие
-                </Button>
+              <div className="py-4 space-y-2 max-h-[60vh] overflow-y-auto">
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('timed')}>Событие со временем</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('untimed')}>Событие без времени</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('date')}>Разделитель-дата</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('h1')}>Заголовок H1</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('h2')}>Заголовок H2</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('h3')}>Заголовок H3</Button>
+                 <Button variant="outline" className="w-full justify-start" onClick={() => addNewTypedEvent('comment')}>Комментарий</Button>
                 
-                {savedEvents.length > 0 && <Separator />}
+                {savedEvents.length > 0 && <Separator className="my-4"/>}
 
                 {savedEvents.map(event => (
-                  <Button key={event.id} variant="ghost" className="w-full justify-start text-base py-6" onClick={() => handleAddFromSavedClick(event)}>
+                  <Button key={event.id} variant="ghost" className="w-full justify-start" onClick={() => handleAddFromSavedClick(event)}>
                       {event.icon ? <ScheduleEventIcon icon={event.icon} className="h-5 w-5 mr-4 text-muted-foreground" /> : <div className="w-5 h-5 mr-4"/>}
                       {event.description}
                   </Button>
