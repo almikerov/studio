@@ -5,12 +5,11 @@ import type { ScheduleTemplate, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, PlusCircle, Trash2, Edit } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
@@ -70,6 +69,8 @@ export function DesktopNavbar({
     const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
     const [templateName, setTemplateName] = useState('');
     const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
+    const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
+
 
     const handleSaveTemplateClick = () => {
         if (templateName.trim()) {
@@ -87,15 +88,25 @@ export function DesktopNavbar({
         })
     }
 
+    const handleDownloadAndClose = () => {
+        onDownload();
+        setIsFileMenuOpen(false);
+    }
+    
+    const handleCopyAndClose = () => {
+        onCopy();
+        setIsFileMenuOpen(false);
+    }
+
   return (
     <Menubar className="rounded-lg border bg-card p-0 h-auto">
-        <MenubarMenu>
+        <MenubarMenu open={isFileMenuOpen} onOpenChange={setIsFileMenuOpen}>
             <MenubarTrigger>Файл</MenubarTrigger>
             <MenubarContent>
-                <MenubarItem onClick={onDownload} disabled={isDownloading || isLoading}>
+                <MenubarItem onClick={handleDownloadAndClose} disabled={isDownloading || isLoading}>
                     <Download className="mr-2" /> Сохранить изображение
                 </MenubarItem>
-                <MenubarItem onClick={onCopy} disabled={isDownloading || isLoading}>
+                <MenubarItem onClick={handleCopyAndClose} disabled={isDownloading || isLoading}>
                     <Copy className="mr-2" /> Копировать изображение
                 </MenubarItem>
             </MenubarContent>
@@ -106,8 +117,8 @@ export function DesktopNavbar({
             <MenubarContent>
                 <Popover>
                     <PopoverTrigger asChild>
-                        <MenubarItem onSelect={(e) => e.preventDefault()}>
-                            <Languages className="mr-2" /> Перевести
+                        <MenubarItem onSelect={(e) => e.preventDefault()} className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
+                            <Languages className="mr-2 h-4 w-4" /> Перевести
                         </MenubarItem>
                     </PopoverTrigger>
                     <PopoverContent className="w-56">
