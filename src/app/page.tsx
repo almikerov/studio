@@ -261,7 +261,7 @@ export default function Home() {
         onclone: (clonedDoc) => {
           const printableArea = clonedDoc.querySelector<HTMLDivElement>('.printable-area-for-render');
           if (printableArea) {
-            printableArea.style.width = '768px';
+            printableArea.style.width = 'auto'; // Make it narrower
           }
   
           const content = clonedDoc.querySelector<HTMLDivElement>('[data-schedule-content]');
@@ -288,16 +288,9 @@ export default function Home() {
               if (arrow instanceof HTMLElement) arrow.style.display = 'none';
           });
           
-          clonedDoc.querySelectorAll('[data-mobile-hidden-on-render="true"]').forEach(el => {
+          clonedDoc.querySelectorAll('[data-desktop-only-on-render]').forEach(el => {
             if (el instanceof HTMLElement) {
               el.style.display = 'none';
-            }
-          });
-  
-          clonedDoc.querySelectorAll('[data-desktop-only-on-render="true"]').forEach(el => {
-            if (el instanceof HTMLElement) {
-              el.style.display = 'flex';
-              el.style.opacity = '1';
             }
           });
         }
@@ -687,5 +680,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
