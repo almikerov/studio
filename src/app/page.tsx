@@ -12,6 +12,8 @@ import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { SavedEvents } from '@/components/multischedule/saved-events';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
+import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
+import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
 
 export type ScheduleItem = { 
   id: string; 
@@ -305,6 +307,30 @@ export default function Home() {
   const handleDeleteTemplate = (id: string) => {
     updateSavedTemplates(savedTemplates.filter(template => template.id !== id));
   };
+
+  const handleAiParse = async (text: string) => {
+    setIsLoading(true);
+    try {
+      const result = await parseScheduleFromText({ text });
+      const newScheduleItems = result.schedule.map(item => ({
+        ...item,
+        id: Date.now().toString() + Math.random(),
+        isUntimed: !item.time,
+      }));
+      setSchedule(newScheduleItems);
+      setTranslatedSchedules([]);
+      toast({ title: 'Расписание сгенерировано', description: 'ИИ проанализировал ваш текст и создал расписание.' });
+    } catch (error) {
+      console.error('AI parsing failed:', error);
+      toast({
+        title: 'Ошибка генерации',
+        description: 'Не удалось создать расписание из текста. Попробуйте перефразировать запрос.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   return (
     <main className="container mx-auto p-4 sm:p-8">
@@ -346,6 +372,7 @@ export default function Home() {
         </section>
 
         <aside className="space-y-8">
+            <AiScheduleParser onParse={handleAiParse} isLoading={isLoading} />
             <SavedTemplates 
               templates={savedTemplates}
               onLoad={handleLoadTemplate}
