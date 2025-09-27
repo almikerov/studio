@@ -307,7 +307,7 @@ export function ScheduleView({
                     ) : (
                         <ImageUploader onSetImageUrl={setImageUrl}>
                             <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" data-id="image-placeholder">
+                                <Button variant="ghost" size="icon" data-id="image-placeholder" data-no-print="true">
                                     <ImagePlus className="h-6 w-6 text-muted-foreground" />
                                 </Button>
                             </DialogTrigger>
