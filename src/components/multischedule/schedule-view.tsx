@@ -249,26 +249,28 @@ export function ScheduleView({
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
             <div className="flex items-center gap-2">
-                 <ImageUploader onSetImageUrl={setImageUrl}>
-                    <DialogTrigger asChild>
-                        {imageUrl ? (
-                           <div data-id="schedule-image-wrapper">
-                             <Image
-                                 src={imageUrl}
-                                 alt="Schedule image"
-                                 width={isMobile ? 80 : 96}
-                                 height={isMobile ? 80 : 96}
-                                 className="object-cover rounded-md aspect-square cursor-pointer"
-                                 crossOrigin="anonymous"
-                             />
+                 <div data-id="schedule-image-wrapper">
+                    <ImageUploader onSetImageUrl={setImageUrl}>
+                        <DialogTrigger asChild>
+                           <div className="cursor-pointer">
+                             {imageUrl ? (
+                                <Image
+                                    src={imageUrl}
+                                    alt="Schedule image"
+                                    width={isMobile ? 80 : 96}
+                                    height={isMobile ? 80 : 96}
+                                    className="object-cover rounded-md aspect-square"
+                                    crossOrigin="anonymous"
+                                />
+                             ) : (
+                              <div data-id="image-placeholder" className="p-2" data-no-print="true">
+                                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                            )}
                            </div>
-                        ) : (
-                          <div data-id="image-placeholder" className="p-2 cursor-pointer" data-no-print="true">
-                              <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                    </DialogTrigger>
-                </ImageUploader>
+                        </DialogTrigger>
+                    </ImageUploader>
+                 </div>
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -291,7 +293,7 @@ export function ScheduleView({
                           'group/item flex items-center gap-2 p-2 rounded-md',
                           !isMobile && 'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
-                           item.color && !snapshot.isDragging && !['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
+                           item.color && !['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
                         onClick={() => handleEdit(item)}
                       >
@@ -305,13 +307,21 @@ export function ScheduleView({
                             </Button>
                          )}
 
+                        <div className="w-8 h-8 flex items-center justify-center" {...(!item.icon && {'data-no-icon-placeholder': true})}>
+                            {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
+                                <IconDropdown
+                                    value={item.icon}
+                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                />
+                            )}
+                        </div>
                         
-                          <>
+                        <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
                                 <EditableField
                                     value={item.description}
                                     setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                    className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
+                                    className="text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
                                     isTextarea={true}
                                 />
                             ) : item.type === 'date' && item.date ? (
@@ -351,18 +361,7 @@ export function ScheduleView({
                                   <EditableField as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : (
-                                <>
-                                    <div className="w-8 h-8 flex items-center justify-center">
-                                     {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? (
-                                          <IconDropdown
-                                            value={item.icon}
-                                            onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                          />
-                                      ) : (
-                                        <div data-no-icon-placeholder className="w-8"></div>
-                                      )}
-                                    </div>
-                                    
+                                <div className="flex items-center gap-2">
                                     <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                       {item.type === 'timed' ? (
                                         <EditableField
@@ -381,74 +380,72 @@ export function ScheduleView({
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                         className="flex-1 text-card-foreground cursor-pointer truncate"
                                     />
-                                </>
+                                </div>
                             )}
-                            
-                            <div data-no-print={isMobile ? "true" : undefined} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
-                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Wrench className="h-4 w-4" /></Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-2">
-                                            <div className="flex flex-col gap-1">
-                                                <Button variant={item.type === 'timed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'timed')}>Со временем</Button>
-                                                <Button variant={item.type === 'untimed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'untimed')}>Без времени</Button>
-                                                <Button variant={item.type === 'date' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'date')}>Дата</Button>
-                                                <Button variant={item.type === 'h1' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h1')}>H1</Button>
-                                                <Button variant={item.type === 'h2' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h2')}>H2</Button>
-                                                <Button variant={item.type === 'h3' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h3')}>H3</Button>
-                                                <Button variant={item.type === 'comment' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'comment')}>Комментарий</Button>
-                                            </div>
-                                        </PopoverContent>
-                                    </Popover>
-                                )}
-                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-2">
-                                      <div className="flex gap-1">
-                                        <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
-                                          <div className="h-4 w-4 rounded-full border" />
-                                        </Button>
-                                        {ITEM_COLORS.map(color => (
-                                          <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
-                                            <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
-                                          </Button>
-                                        ))}
-                                      </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                )}
-                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
-                                    <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                    onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                                    aria-label={`Save event: ${item.description}`}
-                                    >
-                                    <Bookmark className="h-4 w-4" />
+                        </div>
+                        
+                        <div data-no-print={isMobile ? "true" : undefined} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Wrench className="h-4 w-4" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2">
+                                    <div className="flex flex-col gap-1">
+                                        <Button variant={item.type === 'timed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'timed')}>Со временем</Button>
+                                        <Button variant={item.type === 'untimed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'untimed')}>Без времени</Button>
+                                        <Button variant={item.type === 'date' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'date')}>Дата</Button>
+                                        <Button variant={item.type === 'h1' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h1')}>H1</Button>
+                                        <Button variant={item.type === 'h2' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h2')}>H2</Button>
+                                        <Button variant={item.type === 'h3' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h3')}>H3</Button>
+                                        <Button variant={item.type === 'comment' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'comment')}>Комментарий</Button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-2">
+                                  <div className="flex gap-1">
+                                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
+                                      <div className="h-4 w-4 rounded-full border" />
                                     </Button>
-                                )}
+                                    {ITEM_COLORS.map(color => (
+                                      <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                        <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                            {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
                                 <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
-                                aria-label={`Delete event: ${item.description}`}
+                                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                                aria-label={`Save event: ${item.description}`}
                                 >
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            {isMobile && (
-                                <Button data-mobile-arrow data-no-print="true" variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
-                                    <ArrowDown className="h-5 w-5" />
+                                <Bookmark className="h-4 w-4" />
                                 </Button>
                             )}
-                          </>
+                            <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                            onClick={(e) => { e.stopPropagation(); onDeleteEvent(item.id); }}
+                            aria-label={`Delete event: ${item.description}`}
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        {isMobile && (
+                            <Button data-mobile-arrow data-no-print="true" variant="ghost" size="icon" className="h-8 w-8" disabled={index === schedule.length - 1} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'down'); }}>
+                                <ArrowDown className="h-5 w-5" />
+                            </Button>
+                        )}
                         
                       </div>
                     )}
