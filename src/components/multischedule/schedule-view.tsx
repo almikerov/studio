@@ -295,8 +295,8 @@ export function ScheduleView({
                                     <Image
                                         src={imageUrl}
                                         alt="Schedule image"
-                                        width={isMobile ? 80 : 96}
-                                        height={isMobile ? 80 : 96}
+                                        width={isMobile ? 40 : 96}
+                                        height={isMobile ? 40 : 96}
                                         className="object-cover rounded-md aspect-square"
                                         crossOrigin="anonymous"
                                     />
@@ -306,7 +306,7 @@ export function ScheduleView({
                     ) : (
                         <ImageUploader onSetImageUrl={setImageUrl}>
                             <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
+                                <Button variant="ghost" size="icon" data-id="image-placeholder">
                                     <ImagePlus className="h-6 w-6 text-muted-foreground" />
                                 </Button>
                             </DialogTrigger>
@@ -351,16 +351,13 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        <div data-no-icon={!item.icon} className="w-8 h-8 flex items-center justify-center shrink-0">
+                        <div data-id="icon-container" data-has-icon={String(!!item.icon)} className="w-8 h-8 flex items-center justify-center shrink-0">
                            {['timed', 'untimed'].includes(item.type) ? (
                                 <IconDropdown
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
-                           ) : (
-                               <div data-no-icon-placeholder/>
-                           )
-                           }
+                           ) : <div /> }
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">

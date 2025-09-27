@@ -292,10 +292,15 @@ export default function Home() {
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-id="placeholder-icon"]').forEach(el => el.remove());
-    clone.querySelectorAll('[data-no-icon="true"]').forEach(el => el.remove());
-    clone.querySelectorAll('[data-no-icon-placeholder]').forEach(el => el.remove());
 
-    
+    clone.querySelectorAll('[data-id="icon-container"]').forEach(el => {
+        const container = el as HTMLElement;
+        if (container.dataset.hasIcon === 'false') {
+            container.innerHTML = '';
+            container.style.backgroundColor = 'transparent';
+        }
+    });
+
     const footer = clone.querySelector('#card-footer');
     if (footer) footer.remove();
 
