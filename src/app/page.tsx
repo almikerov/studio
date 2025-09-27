@@ -574,7 +574,7 @@ export default function Home() {
   };
   
   const renderTextTranslation = (lang: string, scheduleToRender: ScheduleItem[]) => {
-    return scheduleToRender.map(item => {
+    const content = scheduleToRender.map(item => {
         const translatedDescription = item.translations?.[lang] ?? item.description;
 
         switch (item.type) {
@@ -600,6 +600,7 @@ export default function Home() {
                 return '';
         }
     }).join('\n');
+    return content.trim();
 };
 
 const updateTextBlockTranslations = (currentSchedule: ScheduleItem[]) => {
@@ -629,6 +630,15 @@ const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: 
             [field]: value
         }
     }));
+};
+
+const handleRemoveLanguageFromTextBlock = (lang: string) => {
+    setSelectedLanguages(prev => prev.filter(l => l !== lang));
+    setTextBlockTranslations(prev => {
+        const newBlocks = { ...prev };
+        delete newBlocks[lang];
+        return newBlocks;
+    });
 };
 
 
@@ -672,7 +682,7 @@ const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: 
         />}
 
         
-          <div ref={printableAreaRef} className="bg-background">
+          <div ref={printableAreaRef} className="bg-background space-y-4">
             <DragDropContext onDragEnd={onDragEnd}>
               <ScheduleView
                 schedule={schedule}
@@ -698,26 +708,28 @@ const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: 
                 itemColors={ITEM_COLORS}
               />
             </DragDropContext>
-          </div>
           
            {translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule.length > 0 && (
                 <div className="space-y-4">
                     {selectedLanguages.map(lang => (
                             <Card key={lang}>
-                                <CardHeader className="p-4">
+                                <CardHeader className="p-4 flex-row items-center justify-between">
                                     <EditableField
                                         as="h2"
-                                        className="text-lg font-semibold leading-none tracking-tight"
+                                        className="text-lg font-semibold leading-none tracking-tight flex-1"
                                         value={textBlockTranslations[lang]?.title || ''}
                                         setValue={(value) => handleTextBlockChange(lang, 'title', value)}
                                         isMobile={isMobile}
                                     />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveLanguageFromTextBlock(lang)}>
+                                        <Trash className="h-4 w-4" />
+                                    </Button>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
                                     <Textarea
                                         value={textBlockTranslations[lang]?.content || ''}
                                         onChange={(e) => handleTextBlockChange(lang, 'content', e.target.value)}
-                                        className="text-sm font-sans whitespace-pre-wrap p-0 border-none focus-visible:ring-0 shadow-none h-auto min-h-[100px]"
+                                        className="text-sm font-sans whitespace-pre-wrap p-0 border-none focus-visible:ring-0 shadow-none h-auto min-h-[100px] resize-none"
                                         rows={Math.max(5, (textBlockTranslations[lang]?.content || '').split('\n').length)}
                                     />
                                 </CardContent>
@@ -726,6 +738,7 @@ const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: 
                     )}
                 </div>
            )}
+         </div>
 
         
         {/* Render Options Dialog */}

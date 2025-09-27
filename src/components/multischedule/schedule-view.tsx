@@ -109,9 +109,7 @@ export function ScheduleView({
   
   const handleIconChange = (id: string, icon: IconName | undefined) => {
     onUpdateEvent(id, { icon });
-    if(isMobile) {
-      setIsIconPopoverOpen(false);
-    }
+    setIsIconPopoverOpen(false);
   }
 
   const handleColorChange = (id: string, color: string | undefined) => {
@@ -368,7 +366,7 @@ export function ScheduleView({
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
                                 <div className="flex-1 flex flex-col">
-                                    <div className='flex items-center gap-2'>
+                                    <div className='flex items-center gap-2 w-full'>
                                         <EditableField
                                             isMobile={isMobile}
                                             value={item.description}
@@ -427,7 +425,7 @@ export function ScheduleView({
                                                 />
                                             </PopoverContent>
                                         </Popover>
-                                        <div className="flex-1 flex flex-col">
+                                        <div className="flex-1 flex flex-col w-full">
                                             <div className="flex items-center gap-2">
                                                 <EditableField
                                                     isMobile={isMobile}
@@ -533,17 +531,17 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1 w-full", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
                                         }}>
-                                        <div className='flex items-center gap-2'>
+                                        <div className='flex items-center gap-2 w-full'>
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description}
                                                 setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
-                                                className="inline"
+                                                className="inline w-full"
                                                 as="span"
                                                 data-id="description"
                                                 isTextarea={true}
@@ -573,7 +571,7 @@ export function ScheduleView({
                                                             isMobile={isMobile}
                                                             value={text}
                                                             setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                            className="block"
+                                                            className="block w-full"
                                                             as="div"
                                                             isTextarea={true}
                                                         />
