@@ -50,6 +50,7 @@ interface DesktopNavbarProps {
   setIsSavedEventsOpen: (open: boolean) => void;
   setImageUrl: (url: string | null) => void;
   onClearAll: () => void;
+  onSaveEvent: (event: Partial<SavedEvent>) => void;
 }
 
 export function DesktopNavbar({
@@ -74,6 +75,7 @@ export function DesktopNavbar({
   setIsSavedEventsOpen,
   setImageUrl,
   onClearAll,
+  onSaveEvent,
 }: DesktopNavbarProps) {
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
@@ -258,6 +260,7 @@ export function DesktopNavbar({
                                 onDelete={(id) => {
                                     updateSavedEvents(savedEvents.filter(e => e.id !== id));
                                 }}
+                                onSaveNew={onSaveEvent}
                                 onClose={() => setIsSavedEventsOpen(false)}
                             />
                         </DialogContent>
@@ -273,3 +276,4 @@ export function DesktopNavbar({
     
 
     
+

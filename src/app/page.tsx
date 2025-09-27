@@ -619,6 +619,7 @@ export default function Home() {
             setIsAiParserOpen={setIsAiParserOpen}
             setImageUrl={setImageUrl}
             onClearAll={handleClearAll}
+            onSaveEvent={handleSaveEvent}
         />}
 
         
@@ -628,7 +629,7 @@ export default function Home() {
                 schedule={schedule}
                 onUpdateEvent={handleUpdateEvent}
                 onDeleteEvent={handleDeleteEvent}
-                onAddNewEvent={handleAddNewEvent}
+                onAddNewEvent={() => setIsAddEventDialogOpen(true)}
                 cardTitle={cardTitle}
                 setCardTitle={setCardTitle}
                 imageUrl={imageUrl}
