@@ -31,7 +31,7 @@ interface ScheduleViewProps {
   schedule: ScheduleItem[];
   onUpdateEvent: (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => void;
   onDeleteEvent: (id: string) => void;
-  onAddNewEvent: (fromSaved?: Partial<ScheduleItem>) => void;
+  onAddNewEvent: (config?: Partial<ScheduleItem>) => void;
   cardTitle: string;
   setCardTitle: (title: string) => void;
   imageUrl: string | null;

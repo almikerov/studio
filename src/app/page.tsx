@@ -108,7 +108,7 @@ export default function Home() {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
         const { schedule, cardTitle, imageUrl } = JSON.parse(storedState);
-        setSchedule(schedule || defaultSchedule);
+        setSchedule(schedule || []);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
       } else {
@@ -182,23 +182,28 @@ export default function Home() {
   
   const handleAddNewEvent = (newEventConfig?: Partial<ScheduleItem>) => {
     const newEvent: ScheduleItem = {
-      id: `${Date.now()}-${Math.random()}`,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      description: 'Новое событие',
-      type: 'timed',
-      ...newEventConfig,
+        id: `${Date.now()}-${Math.random()}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        description: 'Новое событие',
+        type: 'timed',
+        ...newEventConfig,
     };
 
-    if (newEvent.type === 'date') {
-        newEvent.time = '';
-        newEvent.description = newEvent.description || '';
-        newEvent.date = newEvent.date || new Date().toISOString();
+    if (newEventConfig) { // If it's from a saved event or a typed button
+        if (newEventConfig.type === 'date') {
+            newEvent.time = '';
+            newEvent.description = newEventConfig.description || '';
+            newEvent.date = newEventConfig.date || new Date().toISOString();
+        }
+        if (['h1', 'h2', 'h3', 'untimed', 'comment'].includes(newEvent.type)) {
+            newEvent.time = '';
+        }
+        setSchedule(prev => [...prev, newEvent]);
+        setIsAddEventDialogOpen(false); // Close dialog if it was open
+    } else {
+        // This is the default "add new blank event" from desktop
+        setSchedule(prev => [...prev, newEvent]);
     }
-    if (['h1', 'h2', 'h3', 'untimed', 'comment'].includes(newEvent.type)) {
-        newEvent.time = '';
-    }
-
-    setSchedule(prev => [...prev, newEvent]);
   };
 
   const handleDeleteEvent = (id: string) => {
@@ -572,14 +577,6 @@ export default function Home() {
         type: event.type,
         color: event.color,
     });
-    setIsAddEventDialogOpen(false);
-  }
-
-  const handleAddNewBlankEvent = () => {
-    setIsAddEventDialogOpen(false);
-    setTimeout(() => {
-        setIsAddEventDialogOpen(true); // Re-open with different content
-    }, 100);
   }
 
   const addNewTypedEvent = (type: ScheduleItem['type']) => {
@@ -588,7 +585,6 @@ export default function Home() {
       config.date = new Date().toISOString();
     }
     handleAddNewEvent(config);
-    setIsAddEventDialogOpen(false);
   }
 
   const handleClearAll = () => {
@@ -612,7 +608,7 @@ export default function Home() {
             onDeleteTemplate={handleDeleteTemplate}
             onSaveTemplate={handleSaveTemplate}
             savedEvents={savedEvents}
-            onAddEventFromSaved={handleAddNewEvent}
+            onAddEventFromSaved={handleAddFromSavedClick}
             updateSavedEvents={updateSavedEvents}
             isSavedEventsOpen={isSavedEventsOpen}
             setIsSavedEventsOpen={setIsSavedEventsOpen}
@@ -634,7 +630,7 @@ export default function Home() {
                 schedule={schedule}
                 onUpdateEvent={handleUpdateEvent}
                 onDeleteEvent={handleDeleteEvent}
-                onAddNewEvent={() => setIsAddEventDialogOpen(true)}
+                onAddNewEvent={handleAddNewEvent}
                 cardTitle={cardTitle}
                 setCardTitle={setCardTitle}
                 imageUrl={imageUrl}
@@ -832,10 +828,7 @@ export default function Home() {
                             <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
                                <SavedEvents
                                   savedEvents={savedEvents}
-                                  onAdd={(event) => {
-                                    handleAddNewEvent(event);
-                                    setIsSavedEventsOpen(false);
-                                  }}
+                                  onAdd={handleAddFromSavedClick}
                                   onUpdate={handleUpdateSavedEvent}
                                   onDelete={(id) => {
                                       updateSavedEvents(savedEvents.filter(e => e.id !== id));
@@ -870,7 +863,7 @@ export default function Home() {
                 {savedEvents.length > 0 && <Separator className="my-4"/>}
 
                 {savedEvents.map(event => (
-                  <Button key={event.id} variant="ghost" className="w-full justify-start" onClick={() => handleAddFromSavedClick(event)}>
+                  <Button key={event.id} variant="ghost" className="w-full justify-start" onClick={() => { handleAddFromSavedClick(event); setIsAddEventDialogOpen(false); }}>
                       {event.icon ? <ScheduleEventIcon icon={event.icon} className="h-5 w-5 mr-4 text-muted-foreground" /> : <div className="w-5 h-5 mr-4"/>}
                       {event.description}
                   </Button>
