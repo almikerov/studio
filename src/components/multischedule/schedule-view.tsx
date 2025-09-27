@@ -369,7 +369,7 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div className='flex-1 render-align-fix'>
+                                <div className='flex-1'>
                                     <div className="flex items-baseline gap-2">
                                         <EditableField
                                             isMobile={isMobile}
@@ -412,7 +412,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : item.type === 'date' && item.date ? (
-                                <div className="flex items-center gap-2 flex-1 render-align-fix">
+                                <div className="flex items-center gap-2 flex-1">
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button variant="ghost" className="h-auto p-0 font-semibold text-lg text-muted-foreground hover:bg-transparent" disabled={isMobile}>
@@ -438,7 +438,7 @@ export function ScheduleView({
                                     />
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full flex-1 render-align-fix">
+                                <div className="w-full flex-1">
                                     <div className='flex items-baseline gap-2'>
                                       <EditableField 
                                         isMobile={isMobile}
@@ -487,7 +487,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex w-full items-start">
+                                <div className="flex w-full items-center">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
