@@ -373,7 +373,7 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div className='flex items-baseline gap-2'>
+                                <div className='flex items-center gap-2'>
                                     <EditableField
                                         isMobile={isMobile}
                                         value={item.description}
@@ -414,7 +414,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : item.type === 'date' && item.date ? (
-                                <div className="flex items-baseline gap-2 flex-1">
+                                <div className="flex items-center gap-2 flex-1">
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
@@ -440,7 +440,7 @@ export function ScheduleView({
                                     />
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full flex items-baseline gap-2">
+                                <div className="w-full flex items-center gap-2">
                                   <EditableField 
                                     isMobile={isMobile}
                                     as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
@@ -487,7 +487,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex w-full items-baseline">
+                                <div className="flex w-full items-center">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -504,7 +504,7 @@ export function ScheduleView({
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
                                         }}>
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-center gap-2">
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description}
@@ -655,6 +655,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
