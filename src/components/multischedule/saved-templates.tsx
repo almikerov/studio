@@ -37,14 +37,14 @@ export function SavedTemplates({ templates, onLoad, onDelete, onClose, onSaveTem
 
   return (
     <div className="flex flex-col h-full">
-       <DialogHeader className="p-6 border-b flex-row justify-between items-center">
-        <div>
+       <DialogHeader className="p-6 border-b block sm:flex sm:flex-row justify-between items-center">
+        <div className="mb-4 sm:mb-0">
             <DialogTitle className="text-2xl font-bold">Мои расписания</DialogTitle>
-            <DialogDescription className="mt-2">Загрузите или сохраните шаблон, чтобы быстро начать работу.</DialogDescription>
+            <DialogDescription className="mt-2 text-sm sm:text-base">Загрузите или сохраните шаблон.</DialogDescription>
         </div>
         <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
             <DialogTrigger asChild>
-                <Button><Save className="mr-2" />Сохранить текущее</Button>
+                <Button className="w-full sm:w-auto"><Save className="mr-2" />Сохранить текущее</Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -65,13 +65,10 @@ export function SavedTemplates({ templates, onLoad, onDelete, onClose, onSaveTem
         {templates.length > 0 ? (
           <ul className="space-y-4">
             {templates.map(template => (
-              <li key={template.id} className="group flex items-center justify-between gap-2 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+              <li key={template.id} className="group flex items-center justify-between gap-2 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => handleLoad(template)}>
                 <p className="font-semibold flex-1 truncate">{template.name}</p>
                 <div className="flex items-center">
-                  <Button variant="ghost" size="icon" onClick={() => handleLoad(template)}>
-                    <Download className="h-5 w-5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(template.id)}>
+                  <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}>
                     <Trash2 className="h-5 w-5" />
                   </Button>
                 </div>
