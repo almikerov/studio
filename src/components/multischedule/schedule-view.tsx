@@ -178,7 +178,7 @@ export function ScheduleView({
                                 value={editedTranslations[lang] || ''}
                                 onChange={(e) => setEditedTranslations(prev => ({...prev, [lang]: e.target.value}))}
                                 className="text-base h-10"
-                                placeholder={`Перевод (${lang})`}
+                                placeholder={`Перевод`}
                             />
                         </div>
                     ))}
@@ -362,7 +362,7 @@ export function ScheduleView({
 
                         <div
                             data-id="icon-container"
-                            className={cn("w-8 h-8 flex items-center justify-center shrink-0")}
+                            className="w-8 h-8 flex items-center justify-center shrink-0"
                             {...(!['timed', 'untimed'].includes(item.type) && { 'data-make-invisible': true })}
                         >
                             {['timed', 'untimed'].includes(item.type) && (
@@ -387,7 +387,7 @@ export function ScheduleView({
                                         />
                                         {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                             <div className="flex items-center text-muted-foreground text-sm italic">
-                                                ({Object.entries(item.translations).map(([lang, text], idx) => (
+                                                ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text], idx) => (
                                                   <EditableField
                                                       key={lang}
                                                       isMobile={isMobile}
@@ -403,7 +403,7 @@ export function ScheduleView({
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm italic text-muted-foreground mt-1 flex flex-col">
-                                            {Object.entries(item.translations).map(([lang, text]) => (
+                                            {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
                                                   isMobile={isMobile}
@@ -446,7 +446,7 @@ export function ScheduleView({
                                                 />
                                                 {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                     <span className="text-muted-foreground text-base font-normal">
-                                                        ({Object.entries(item.translations).map(([lang, text]) => (
+                                                        ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                             <EditableField
                                                                 key={lang}
                                                                 isMobile={isMobile}
@@ -462,7 +462,7 @@ export function ScheduleView({
                                             </div>
                                              {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <div className="text-sm text-muted-foreground mt-1 flex flex-col">
-                                                    {Object.entries(item.translations).map(([lang, text]) => (
+                                                    {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                       <EditableField
                                                           key={lang}
                                                           isMobile={isMobile}
@@ -498,7 +498,7 @@ export function ScheduleView({
                                     />
                                     {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="flex items-center text-muted-foreground font-normal">
-                                            ({Object.entries(item.translations).map(([lang, text]) => (
+                                            ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
                                                     isMobile={isMobile}
@@ -514,7 +514,7 @@ export function ScheduleView({
                                   </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm text-muted-foreground mt-1 flex flex-col">
-                                            {Object.entries(item.translations).map(([lang, text]) => (
+                                            {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
                                                   isMobile={isMobile}
@@ -558,7 +558,7 @@ export function ScheduleView({
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <span className="text-muted-foreground">
-                                                    ({Object.entries(item.translations).map(([lang, text]) => (
+                                                    ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                         <EditableField
                                                             key={lang}
                                                             isMobile={isMobile}
@@ -575,7 +575,7 @@ export function ScheduleView({
 
                                         {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                             <div className="text-sm text-muted-foreground mt-1">
-                                                {Object.entries(item.translations).map(([lang, text]) => (
+                                                {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                     <div key={lang} className="flex items-center">
                                                         <EditableField
                                                             isMobile={isMobile}
