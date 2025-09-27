@@ -351,7 +351,7 @@ export function ScheduleView({
                         onClick={() => handleEdit(item)}
                       >
                         {!isMobile && (
-                           <div {...provided.dragHandleProps} data-drag-handle="true" className="flex items-center cursor-grab active:cursor-grabbing p-2">
+                          <div {...provided.dragHandleProps} data-drag-handle="true" className="flex items-center self-stretch cursor-grab active:cursor-grabbing p-2">
                              <GripVertical className="h-5 w-5 text-muted-foreground" />
                           </div>
                         )}
@@ -373,7 +373,7 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div className='flex-1'>
+                                <div className='flex-1 items-center'>
                                     <div className="flex items-center gap-2">
                                         <EditableField
                                             isMobile={isMobile}
@@ -442,7 +442,7 @@ export function ScheduleView({
                                     />
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full flex-1">
+                                <div className="w-full flex-1 items-center">
                                     <div className='flex items-center gap-2'>
                                       <EditableField 
                                         isMobile={isMobile}
@@ -659,6 +659,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
