@@ -255,7 +255,7 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-    const itemsToTranslate = schedule.filter(item => item.description && ['timed', 'untimed', 'comment', 'h1', 'h2', 'h3'].includes(item.type));
+    const itemsToTranslate = schedule.filter(item => item.description && ['timed', 'untimed', 'comment', 'h1', 'h2', 'h3', 'date'].includes(item.type));
     if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
 
     setIsLoading(true);
@@ -894,6 +894,7 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     
 
     
+
 
 
 

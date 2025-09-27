@@ -149,7 +149,7 @@ export function ScheduleView({
     };
 
     const isRegularEvent = ['timed', 'untimed'].includes(editedType);
-    const isTranslatable = ['timed', 'untimed', 'h1', 'h2', 'h3', 'comment'].includes(editedType);
+    const isTranslatable = ['timed', 'untimed', 'h1', 'h2', 'h3', 'comment', 'date'].includes(editedType);
 
 
     return (
@@ -435,14 +435,49 @@ export function ScheduleView({
                                             />
                                         </PopoverContent>
                                     </Popover>
-                                    <EditableField
-                                        isMobile={isMobile}
-                                        value={item.description || ''}
-                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                        className="text-base font-normal text-muted-foreground"
-                                        placeholder=""
-                                        isTextarea={true}
-                                    />
+                                    <div>
+                                        <div className="flex items-baseline gap-2">
+                                            <EditableField
+                                                isMobile={isMobile}
+                                                value={item.description || ''}
+                                                setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                                className="text-base font-normal text-muted-foreground"
+                                                placeholder=""
+                                                isTextarea={true}
+                                            />
+                                            {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                                <span className="text-muted-foreground text-base font-normal">
+                                                    ({Object.entries(item.translations).map(([lang, text]) => (
+                                                        <EditableField
+                                                            key={lang}
+                                                            isMobile={isMobile}
+                                                            value={text}
+                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                            className="inline"
+                                                            as="span"
+                                                            isTextarea={true}
+                                                        />
+                                                    )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                                </span>
+                                            )}
+                                        </div>
+                                         {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                            <div className="text-sm text-muted-foreground mt-1">
+                                                {Object.entries(item.translations).map(([lang, text]) => (
+                                                    <div key={lang} className="flex items-center">
+                                                        <EditableField
+                                                            isMobile={isMobile}
+                                                            value={text}
+                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                            className="block"
+                                                            as="div"
+                                                            isTextarea={true}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
                                 <div className="w-full">
