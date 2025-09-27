@@ -318,8 +318,9 @@ export default function Home() {
         }
 
         // Hide elements that should not be part of the final image
-        const elementsToHide = clone.querySelectorAll('[data-no-print="true"]');
-        elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
+        clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
+        // Make elements invisible but keep their space
+        clone.querySelectorAll('[data-make-invisible="true"]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
         
         document.body.appendChild(clone);
         
@@ -893,6 +894,7 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     
 
     
+
 
 
 

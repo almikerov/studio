@@ -367,7 +367,7 @@ export function ScheduleView({
                             <IconDropdown
                                 value={item.icon}
                                 onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                data-no-print={!item.icon ? "true" : undefined}
+                                data-make-invisible={!item.icon ? "true" : undefined}
                            />
                            )}
                         </div>
@@ -669,6 +669,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
