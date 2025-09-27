@@ -47,12 +47,14 @@ Your task is to identify the schedule title, events, their times, types, and oth
 
 - The user can provide schedule items of different types: timed events, untimed tasks, dates, comments, and headers (h1, h2, h3).
 - Extract or generate a main title for the schedule and put it in 'cardTitle'.
+- If the text contains a specific date, you can either include it in the 'cardTitle' or create a separate 'date' item for it, but avoid doing both to prevent redundancy.
 - For each item, determine its 'type'.
 - 'timed': An event with a specific time. The 'time' field should be in HH:mm format.
 - 'untimed': A task or event without a specific time. The 'time' field should be an empty string.
 - 'date': A specific date marker. The 'description' can be an optional annotation (like 'Day 1'). The 'date' field must be a valid ISO date string. The 'time' field must be empty.
 - 'h1', 'h2', 'h3': Header text. Use for section titles like "Morning", "Game Day". The 'time' field must be empty.
 - 'comment': A note or italicized text. The 'time' field must be empty.
+- Ensure the 'description' for each schedule item starts with a capital letter.
 - If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'. Assign icons only to 'timed' and 'untimed' types.
 - For "Теория" (theory) or "Установка" (instructions), assign the 'camera' icon.
 - If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors only to 'timed' and 'untimed' types.
@@ -66,14 +68,13 @@ Example:
 Input text: "My Match Day. Dec 25, 2024. Morning session. 10am meeting in red room. 13:00 lunch. // Don't be late. Then buy tickets for the trip."
 Output JSON:
 {
-  "cardTitle": "My Match Day",
+  "cardTitle": "My Match Day - Dec 25, 2024",
   "schedule": [
-    { "type": "date", "date": "2024-12-25T00:00:00.000Z", "description": "", "time": "" },
     { "type": "h1", "description": "Morning session", "time": "" },
-    { "type": "timed", "time": "10:00", "description": "meeting", "color": "red" },
-    { "type": "timed", "time": "13:00", "description": "lunch", "icon": "utensils" },
+    { "type": "timed", "time": "10:00", "description": "Meeting", "color": "red" },
+    { "type": "timed", "time": "13:00", "description": "Lunch", "icon": "utensils" },
     { "type": "comment", "description": "Don't be late", "time": "" },
-    { "type": "untimed", "time": "", "description": "buy tickets for the trip", "icon": "passport" }
+    { "type": "untimed", "time": "", "description": "Buy tickets for the trip", "icon": "passport" }
   ]
 }
 
