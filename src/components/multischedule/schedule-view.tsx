@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Wrench } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -249,26 +249,26 @@ export function ScheduleView({
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
             <div className="flex items-center gap-2">
-                <div data-id="schedule-image-wrapper">
-                    <ImageUploader onSetImageUrl={setImageUrl}>
-                      <DialogTrigger asChild>
-                          {imageUrl ? (
-                            <Image
-                                src={imageUrl}
-                                alt="Schedule image"
-                                width={isMobile ? 80 : 96}
-                                height={isMobile ? 80 : 96}
-                                className="object-cover rounded-md aspect-square cursor-pointer"
-                                crossOrigin="anonymous"
-                            />
-                          ) : (
+                 <ImageUploader onSetImageUrl={setImageUrl}>
+                    <DialogTrigger asChild>
+                        {imageUrl ? (
+                           <div data-id="schedule-image-wrapper">
+                             <Image
+                                 src={imageUrl}
+                                 alt="Schedule image"
+                                 width={isMobile ? 80 : 96}
+                                 height={isMobile ? 80 : 96}
+                                 className="object-cover rounded-md aspect-square cursor-pointer"
+                                 crossOrigin="anonymous"
+                             />
+                           </div>
+                        ) : (
                           <div data-id="image-placeholder" className="p-2 cursor-pointer" data-no-print="true">
                               <ImagePlus className="h-6 w-6 text-muted-foreground" />
                           </div>
-                          )}
-                      </DialogTrigger>
-                    </ImageUploader>
-                </div>
+                        )}
+                    </DialogTrigger>
+                </ImageUploader>
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -352,16 +352,16 @@ export function ScheduleView({
                                 </div>
                             ) : (
                                 <>
-                                    {item.icon ? (
-                                      <div className="w-8 h-8 flex items-center justify-center">
-                                        <IconDropdown
-                                          value={item.icon}
-                                          onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                        />
-                                      </div>
-                                    ) : (
-                                      !isMobile && <div className="w-8"></div>
-                                    )}
+                                    <div className="w-8 h-8 flex items-center justify-center">
+                                     {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? (
+                                          <IconDropdown
+                                            value={item.icon}
+                                            onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                          />
+                                      ) : (
+                                        <div data-no-icon-placeholder className="w-8"></div>
+                                      )}
+                                    </div>
                                     
                                     <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                       {item.type === 'timed' ? (
@@ -385,6 +385,24 @@ export function ScheduleView({
                             )}
                             
                             <div data-no-print={isMobile ? "true" : undefined} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Wrench className="h-4 w-4" /></Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-2">
+                                            <div className="flex flex-col gap-1">
+                                                <Button variant={item.type === 'timed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'timed')}>Со временем</Button>
+                                                <Button variant={item.type === 'untimed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'untimed')}>Без времени</Button>
+                                                <Button variant={item.type === 'date' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'date')}>Дата</Button>
+                                                <Button variant={item.type === 'h1' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h1')}>H1</Button>
+                                                <Button variant={item.type === 'h2' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h2')}>H2</Button>
+                                                <Button variant={item.type === 'h3' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h3')}>H3</Button>
+                                                <Button variant={item.type === 'comment' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'comment')}>Комментарий</Button>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
                                 {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
                                   <Popover>
                                     <PopoverTrigger asChild>
