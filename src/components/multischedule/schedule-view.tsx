@@ -322,22 +322,25 @@ export function ScheduleView({
                         <Menu />
                     </Button>
                 )}
-                <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? () => {} : undefined}>
+                <div className="relative">
+                    <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? (open) => { if (!open) setIsMobileMenuOpen(false) } : undefined} >
+                        <div className="absolute inset-0 cursor-pointer" data-no-print="true" />
+                    </ImageUploader>
                     {imageUrl ? (
                         <Image
                             src={imageUrl}
                             alt="Schedule image"
                             width={isMobile ? 80 : 96}
                             height={isMobile ? 80 : 96}
-                            className="object-cover rounded-md aspect-square cursor-pointer"
+                            className="object-cover rounded-md aspect-square"
                             crossOrigin="anonymous"
                         />
                     ) : (
-                        <div className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square cursor-pointer", isMobile ? "w-20 h-20" : "w-24 h-24")}>
+                        <div className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square", isMobile ? "w-20 h-20" : "w-24 h-24")}>
                            <ImagePlus className="h-8 w-8 text-muted-foreground" />
                         </div>
                     )}
-                </ImageUploader>
+                </div>
             </div>
         </div>
       </CardHeader>
@@ -590,6 +593,7 @@ export function ScheduleView({
     
 
     
+
 
 
 
