@@ -36,13 +36,13 @@ import { EditableField } from '@/components/multischedule/editable-field';
 
 
 export const AVAILABLE_LANGUAGES = [
-  { code: 'ru', name: 'Русский' },
-  { code: 'en', name: 'Английский' },
-  { code: 'es', name: 'Испанский' },
-  { code: 'fr', name: 'Французский' },
-  { code: 'de', name: 'Немецкий' },
-  { code: 'ja', name: 'Японский' },
-  { code: 'zh', name: 'Китайский' },
+  { code: 'ru', name: 'Русский', nativeName: 'Русский' },
+  { code: 'en', name: 'Английский', nativeName: 'English' },
+  { code: 'es', name: 'Испанский', nativeName: 'Español' },
+  { code: 'fr', name: 'Французский', nativeName: 'Français' },
+  { code: 'de', name: 'Немецкий', nativeName: 'Deutsch' },
+  { code: 'ja', name: 'Японский', nativeName: '日本語' },
+  { code: 'zh', name: 'Китайский', nativeName: '中文' },
 ];
 
 export const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
@@ -605,7 +605,8 @@ export default function Home() {
 const updateTextBlockTranslations = (currentSchedule: ScheduleItem[]) => {
     const newTextBlocks: Record<string, TextBlockTranslation> = {};
     selectedLanguages.forEach(lang => {
-        const langName = AVAILABLE_LANGUAGES.find(l => l.code === lang)?.name || lang;
+        const langInfo = AVAILABLE_LANGUAGES.find(l => l.code === lang);
+        const langName = langInfo?.nativeName || langInfo?.name || lang;
         newTextBlocks[lang] = {
             title: textBlockTranslations[lang]?.title || langName,
             content: renderTextTranslation(lang, currentSchedule),
@@ -618,7 +619,7 @@ useEffect(() => {
     if (translationDisplayMode === 'text-block' && selectedLanguages.length > 0) {
         updateTextBlockTranslations(schedule);
     }
-}, [translationDisplayMode, selectedLanguages]);
+}, [translationDisplayMode, selectedLanguages, schedule]);
 
 const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: string) => {
     setTextBlockTranslations(prev => ({
@@ -703,7 +704,7 @@ const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: 
                 <div className="space-y-4">
                     {selectedLanguages.map(lang => (
                             <Card key={lang}>
-                                <CardHeader>
+                                <CardHeader className="p-4">
                                     <EditableField
                                         as="h2"
                                         className="text-lg font-semibold leading-none tracking-tight"
@@ -712,7 +713,7 @@ const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: 
                                         isMobile={isMobile}
                                     />
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-4 pt-0">
                                     <Textarea
                                         value={textBlockTranslations[lang]?.content || ''}
                                         onChange={(e) => handleTextBlockChange(lang, 'content', e.target.value)}
@@ -1075,5 +1076,7 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
 
     
