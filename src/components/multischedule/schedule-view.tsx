@@ -351,7 +351,7 @@ export function ScheduleView({
                         onClick={() => handleEdit(item)}
                       >
                         {!isMobile && (
-                          <div {...provided.dragHandleProps} data-drag-handle="true" className="flex items-center self-stretch cursor-grab active:cursor-grabbing p-2">
+                          <div {...provided.dragHandleProps} data-no-print="true" data-drag-handle="true" className="flex items-center self-stretch cursor-grab active:cursor-grabbing p-2">
                              <GripVertical className="h-5 w-5 text-muted-foreground" />
                           </div>
                         )}
@@ -367,13 +367,14 @@ export function ScheduleView({
                             <IconDropdown
                                 value={item.icon}
                                 onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                data-no-print={!item.icon ? "true" : undefined}
                            />
                            )}
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div className='flex items-center gap-2'>
+                                <div className='flex items-baseline gap-2'>
                                     <div className="flex items-center">
                                       <EditableField
                                           isMobile={isMobile}
@@ -385,7 +386,7 @@ export function ScheduleView({
                                       />
                                     </div>
                                     {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="flex items-center text-muted-foreground text-sm italic">
+                                        <div className="flex items-baseline text-muted-foreground text-sm italic">
                                             ({Object.entries(item.translations).map(([lang, text], idx) => (
                                               <EditableField
                                                   key={lang}
@@ -447,7 +448,7 @@ export function ScheduleView({
                                     </div>
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full flex items-center gap-2">
+                                <div className="w-full flex items-baseline gap-2">
                                   <div className="flex items-center">
                                     <EditableField 
                                       isMobile={isMobile}
@@ -465,7 +466,7 @@ export function ScheduleView({
                                     />
                                   </div>
                                   {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                      <div className="flex items-center text-muted-foreground font-normal">
+                                      <div className="flex items-baseline text-muted-foreground font-normal">
                                           ({Object.entries(item.translations).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
@@ -515,7 +516,7 @@ export function ScheduleView({
                                             descEl?.click();
                                         }}>
                                         <div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-baseline gap-2">
                                                 <EditableField
                                                     isMobile={isMobile}
                                                     value={item.description}
@@ -668,6 +669,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
