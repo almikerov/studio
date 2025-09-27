@@ -364,11 +364,12 @@ export function ScheduleView({
 
                         <div data-id="icon-container" data-has-icon={String(!!item.icon)} className={cn("w-8 h-8 flex items-center justify-center shrink-0")}>
                            {['timed', 'untimed'].includes(item.type) && (
-                            <IconDropdown
-                                value={item.icon}
-                                onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                data-make-invisible={!item.icon ? "true" : undefined}
-                           />
+                            <div data-make-invisible={!item.icon ? 'true' : undefined}>
+                              <IconDropdown
+                                  value={item.icon}
+                                  onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                              />
+                            </div>
                            )}
                         </div>
                         
@@ -669,6 +670,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
