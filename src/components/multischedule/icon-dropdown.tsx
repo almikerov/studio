@@ -41,7 +41,7 @@ export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdo
           {value ? (
             <ScheduleEventIcon icon={value} className="h-4 w-4" />
           ) : (
-            <SmilePlus className="h-4 w-4" data-id="placeholder-icon" />
+            <SmilePlus className="h-4 w-4" data-id="placeholder-icon" data-make-invisible />
           )}
         </Button>
       </PopoverTrigger>

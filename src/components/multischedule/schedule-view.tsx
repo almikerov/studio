@@ -352,14 +352,18 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        {['timed', 'untimed'].includes(item.type) && (
-                            <div data-id="icon-container" className={cn("w-8 h-8 flex items-center justify-center shrink-0")}>
+                        <div
+                            data-id="icon-container"
+                            className={cn("w-8 h-8 flex items-center justify-center shrink-0")}
+                            {...(!['timed', 'untimed'].includes(item.type) && { 'data-make-invisible': true })}
+                        >
+                            {['timed', 'untimed'].includes(item.type) && (
                                 <IconDropdown
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
-                            </div>
-                        )}
+                            )}
+                        </div>
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
