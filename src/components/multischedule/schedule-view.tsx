@@ -231,7 +231,7 @@ export function ScheduleView({
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="text-base"
-                    placeholder="Описание"
+                    placeholder=""
                 />
               </div>
             )}
@@ -286,31 +286,33 @@ export function ScheduleView({
             <div className="flex-1">
                 <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
-             <div className="flex items-center gap-2" data-id="schedule-image-wrapper">
-                 {imageUrl ? (
-                    <ImageUploader onSetImageUrl={setImageUrl}>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" className="p-0 h-auto w-auto cursor-pointer">
-                                <Image
-                                    src={imageUrl}
-                                    alt="Schedule image"
-                                    width={isMobile ? 80 : 96}
-                                    height={isMobile ? 80 : 96}
-                                    className="object-cover rounded-md aspect-square"
-                                    crossOrigin="anonymous"
-                                />
-                            </Button>
-                        </DialogTrigger>
-                    </ImageUploader>
-                 ) : (
-                    <ImageUploader onSetImageUrl={setImageUrl}>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                            </Button>
-                        </DialogTrigger>
-                    </ImageUploader>
-                 )}
+             <div className="flex items-center gap-2">
+                 <div data-id="schedule-image-wrapper">
+                    {imageUrl ? (
+                        <ImageUploader onSetImageUrl={setImageUrl}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" className="p-0 h-auto w-auto cursor-pointer">
+                                    <Image
+                                        src={imageUrl}
+                                        alt="Schedule image"
+                                        width={isMobile ? 80 : 96}
+                                        height={isMobile ? 80 : 96}
+                                        className="object-cover rounded-md aspect-square"
+                                        crossOrigin="anonymous"
+                                    />
+                                </Button>
+                            </DialogTrigger>
+                        </ImageUploader>
+                    ) : (
+                        <ImageUploader onSetImageUrl={setImageUrl}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                                </Button>
+                            </DialogTrigger>
+                        </ImageUploader>
+                    )}
+                 </div>
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -349,14 +351,14 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                        <div data-no-icon={!item.icon} className="w-8 h-8 flex items-center justify-center shrink-0">
                            {['timed', 'untimed'].includes(item.type) ? (
                                 <IconDropdown
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
                            ) : (
-                               <div data-no-icon-placeholder={!item.icon}/>
+                               <div data-no-icon-placeholder/>
                            )
                            }
                         </div>

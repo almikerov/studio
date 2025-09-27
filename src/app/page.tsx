@@ -292,6 +292,7 @@ export default function Home() {
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-id="placeholder-icon"]').forEach(el => el.remove());
+    clone.querySelectorAll('[data-no-icon="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-no-icon-placeholder]').forEach(el => el.remove());
 
     
