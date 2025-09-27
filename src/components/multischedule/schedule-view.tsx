@@ -375,7 +375,7 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div>
+                                <div className="flex-1 flex flex-col">
                                     <div className='flex items-center gap-2'>
                                         <EditableField
                                             isMobile={isMobile}
@@ -435,14 +435,14 @@ export function ScheduleView({
                                             />
                                         </PopoverContent>
                                     </Popover>
-                                    <div>
+                                    <div className="flex-1 flex flex-col">
                                         <div className="flex items-center gap-2">
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description || ''}
                                                 setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                                 className="text-base font-normal text-muted-foreground"
-                                                placeholder=""
+                                                placeholder="Описание (необязательно)"
                                                 isTextarea={true}
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
@@ -480,7 +480,7 @@ export function ScheduleView({
                                     </div>
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div>
+                                <div className="flex-1 flex flex-col">
                                   <div className="flex items-center gap-2">
                                     <EditableField 
                                       isMobile={isMobile}
@@ -718,4 +718,5 @@ export function ScheduleView({
 
 
     
+
 
