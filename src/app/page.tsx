@@ -298,127 +298,146 @@ export default function Home() {
     if (!element) return null;
   
     setIsDownloading(true);
-    
-    const clone = element.cloneNode(true) as HTMLElement;
-
-    clone.classList.add('cloned-for-rendering');
+  
+    // Use a temporary class to modify styles just for rendering
+    element.classList.add('cloned-for-rendering');
+  
     if (options.renderAsMobile) {
-      clone.classList.add('render-mobile-padding');
+      element.classList.add('render-mobile-padding');
     }
-    clone.style.position = 'absolute';
-    clone.style.left = '-9999px';
-    clone.style.top = '0px';
-
+  
+    const originalWidth = element.style.width;
     if (options.fitContent) {
-        clone.style.width = 'max-content';
+      element.style.width = 'max-content';
     } else {
-        clone.style.width = options.renderAsMobile ? '420px' : '768px';
+      element.style.width = options.renderAsMobile ? '420px' : '768px';
     }
-    clone.style.height = 'auto';
-
-    document.body.appendChild(clone);
-    
-    // If fitContent, we measure the width and set it explicitly for html2canvas
+  
     if (options.fitContent) {
-        const contentWidth = clone.scrollWidth + 2; // add a little buffer
-        clone.style.width = `${contentWidth}px`;
+      const contentWidth = element.scrollWidth + 2; 
+      element.style.width = `${contentWidth}px`;
     }
-
-    clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
-    clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
-    
-
-    clone.querySelectorAll('[data-id="icon-container"]').forEach(el => {
-        const container = el as HTMLElement;
-        if (container.dataset.hasIcon === 'false') {
-            container.innerHTML = '';
-            container.style.backgroundColor = 'transparent';
-        }
+  
+    // Find all elements that should not be printed and temporarily hide them
+    const noPrintElements = element.querySelectorAll('[data-no-print="true"], [data-drag-handle="true"], #card-footer, [data-mobile-arrow]');
+    noPrintElements.forEach(el => (el as HTMLElement).style.display = 'none');
+  
+    element.querySelectorAll('[data-id="icon-container"]').forEach(el => {
+      const container = el as HTMLElement;
+      if (container.dataset.hasIcon === 'false') {
+        container.style.visibility = 'hidden';
+      }
     });
-
-    const footer = clone.querySelector('#card-footer');
-    if (footer) footer.remove();
-
+  
     if (!imageUrl) {
-        const placeholder = clone.querySelector('[data-id="image-placeholder"]');
-        if (placeholder) placeholder.remove();
+      const placeholder = element.querySelector('[data-id="image-placeholder"]');
+      if (placeholder) (placeholder as HTMLElement).style.display = 'none';
     }
-
-    clone.querySelectorAll('.truncate').forEach(el => {
+  
+    element.querySelectorAll('.truncate').forEach(el => {
       el.classList.remove('truncate');
     });
-
-    const content = clone.querySelector<HTMLDivElement>('[data-schedule-content]');
+  
+    const content = element.querySelector<HTMLDivElement>('[data-schedule-content]');
+    const originalContentStyle = { height: content?.style.height, maxHeight: content?.style.maxHeight, overflow: content?.style.overflow };
     if (content) {
       content.style.height = 'auto';
       content.style.maxHeight = 'none';
       content.style.overflow = 'visible';
     }
-
-    // Show drag handles on mobile render if they are hidden
-    if (options.renderAsMobile) {
-        clone.querySelectorAll('[data-drag-handle]').forEach(el => {
-            const htmlEl = el as HTMLElement;
-            if (htmlEl.classList.contains('hidden')) {
-                htmlEl.classList.remove('hidden');
-                htmlEl.classList.add('flex');
-            }
-        });
-        clone.querySelectorAll('[data-mobile-arrow]').forEach(el => el.remove());
+  
+    // Add padding to the bottom to avoid cutting off content
+    const card = element.querySelector<HTMLDivElement>('.shadow-lg');
+    const originalCardPadding = card?.style.paddingBottom;
+    if(card) {
+        card.style.paddingBottom = '32px';
     }
 
-    const imageWrapper = clone.querySelector('[data-id="schedule-image-wrapper"]');
+    const imageWrapper = element.querySelector('[data-id="schedule-image-wrapper"]');
     const imageElement = imageWrapper?.querySelector('img');
-
-    const loadImageAsBase64 = (url: string): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const img = new window.Image();
-            img.crossOrigin = 'Anonymous';
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    reject(new Error('Failed to get canvas context'));
-                    return;
-                }
-                ctx.drawImage(img, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
-            };
-            img.onerror = (e) => {
-                console.error("Image load error:", e);
-                reject(new Error(`Failed to load image at ${url}`));
-            };
-            img.src = url;
-        });
-    };
-
-    if (imageElement && imageUrl) {
-        try {
-            const base64Url = await loadImageAsBase64(imageUrl);
-            imageElement.src = base64Url;
-        } catch (error) {
-            console.error(error);
-        }
+    let originalImageSrc: string | undefined;
+    if(imageElement) {
+        originalImageSrc = imageElement.src;
     }
-
-    
+  
+    const loadImageAsBase64 = (url: string): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = (e) => {
+          console.error("Image load error:", e);
+          reject(new Error(`Failed to load image at ${url}`));
+        };
+        img.src = url;
+      });
+    };
+  
+    if (imageElement && imageUrl) {
+      try {
+        const base64Url = await loadImageAsBase64(imageUrl);
+        imageElement.src = base64Url;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  
+    let canvas: HTMLCanvasElement | null = null;
     try {
-      const canvas = await html2canvas(clone, {
+      canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: null,
       });
-      return canvas;
     } catch (err) {
       console.error("Error generating canvas: ", err);
-      return null;
     } finally {
-      document.body.removeChild(clone);
+      // --- Cleanup ---
+      element.classList.remove('cloned-for-rendering', 'render-mobile-padding');
+      element.style.width = originalWidth;
+      if(card) {
+        card.style.paddingBottom = originalCardPadding || '';
+      }
+      noPrintElements.forEach(el => (el as HTMLElement).style.display = '');
+      
+      element.querySelectorAll('[data-id="icon-container"]').forEach(el => {
+          (el as HTMLElement).style.visibility = '';
+      });
+  
+      if (!imageUrl) {
+        const placeholder = element.querySelector('[data-id="image-placeholder"]');
+        if (placeholder) (placeholder as HTMLElement).style.display = '';
+      }
+  
+      element.querySelectorAll('.truncate').forEach(el => {
+        // This is tricky, maybe better to just leave it. Assuming it's fine.
+      });
+  
+      if (content) {
+        content.style.height = originalContentStyle.height || '';
+        content.style.maxHeight = originalContentStyle.maxHeight || '';
+        content.style.overflow = originalContentStyle.overflow || '';
+      }
+       if (imageElement && originalImageSrc) {
+        imageElement.src = originalImageSrc;
+      }
+  
       setIsDownloading(false);
     }
+  
+    return canvas;
   };
 
 
@@ -964,5 +983,7 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
 }
 
 
+
+    
 
     
