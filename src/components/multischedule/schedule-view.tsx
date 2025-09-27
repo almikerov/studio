@@ -361,16 +361,16 @@ export function ScheduleView({
                          )}
 
                         <div
-                            data-id="icon-container"
-                            className="w-8 h-8 flex items-center justify-center shrink-0"
-                            {...(!['timed', 'untimed'].includes(item.type) && { 'data-make-invisible': true })}
+                          data-id="icon-container"
+                          className="w-8 h-8 flex items-center justify-center shrink-0"
+                          {...(!['timed', 'untimed'].includes(item.type) && { 'data-make-invisible': true })}
                         >
-                            {['timed', 'untimed'].includes(item.type) && (
-                                <IconDropdown
-                                    value={item.icon}
-                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                />
-                            )}
+                          {['timed', 'untimed'].includes(item.type) && (
+                            <IconDropdown
+                              value={item.icon}
+                              onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                            />
+                          )}
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
@@ -381,7 +381,7 @@ export function ScheduleView({
                                             isMobile={isMobile}
                                             value={item.description}
                                             setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                            className="w-full text-card-foreground text-sm italic text-muted-foreground"
+                                            className={cn("text-card-foreground text-sm italic text-muted-foreground", !item.description && "w-full")}
                                             isTextarea={true}
                                             data-id="description"
                                         />
@@ -441,7 +441,7 @@ export function ScheduleView({
                                                     isMobile={isMobile}
                                                     value={item.description || ''}
                                                     setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                                    className="w-full text-base font-normal text-muted-foreground"
+                                                    className={cn("text-base font-normal text-muted-foreground", !item.description && "w-full")}
                                                     isTextarea={true}
                                                 />
                                                 {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
@@ -486,7 +486,8 @@ export function ScheduleView({
                                       isMobile={isMobile}
                                       as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
                                       className={cn(
-                                          'w-full font-bold',
+                                          'font-bold',
+                                          !item.description && 'w-full',
                                           item.type === 'h1' && 'text-xl',
                                           item.type === 'h2' && 'text-lg',
                                           item.type === 'h3' && 'text-base'
