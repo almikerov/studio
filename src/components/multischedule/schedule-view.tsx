@@ -489,7 +489,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex w-full">
+                                <div className="flex w-full items-center">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -501,7 +501,7 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer flex flex-col justify-center", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
