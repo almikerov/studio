@@ -686,14 +686,6 @@ export default function Home() {
                     <div className="py-4 flex flex-col gap-4 px-3">
                       <div>
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
-                        <Button onClick={() => openRenderOptions(handleDownloadImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
-                          {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
-                          Скачать PNG
-                        </Button>
-                         <Button onClick={() => openRenderOptions(handleCopyImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
-                          {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
-                          Копировать
-                        </Button>
                         <Button onClick={() => openRenderOptions(handleShareImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                           {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
                           Поделиться...
@@ -847,7 +839,7 @@ export default function Home() {
                                       updateSavedEvents(savedEvents.filter(e => e.id !== id));
                                   }}
                                   onClose={() => setIsSavedEventsOpen(false)}
-                              />
+                               />
                             </DialogContent>
                           </Dialog>
                       </div>
