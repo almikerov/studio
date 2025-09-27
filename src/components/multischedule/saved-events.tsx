@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { SavedEvent } from '@/app/page';
+import type { SavedEvent, ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit, Save, PlusCircle, Check, ChevronDown } from 'lucide-react';
@@ -63,7 +63,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew,
     <div className="flex flex-col h-full">
       <DialogHeader className="p-6 border-b">
         <DialogTitle className="text-2xl font-bold">Мои заготовки</DialogTitle>
-        <DialogDescription className="mt-2 text-sm sm:text-base">Добавьте событие в расписание или создайте новое.</DialogDescription>
+        <DialogDescription className="mt-2 text-sm sm:text-base">Добавьте элемент в расписание или создайте новую заготовку.</DialogDescription>
       </DialogHeader>
       
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
@@ -116,10 +116,11 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState<IconName | undefined>(undefined);
     const [time, setTime] = useState('');
-    const [type, setType] = useState<'timed' | 'untimed'>('timed');
+    const [type, setType] = useState<ScheduleItem['type']>('timed');
     const [color, setColor] = useState<string | undefined>(undefined);
 
     const isCreating = event?.id === 'new';
+    const isRegularEvent = ['timed', 'untimed'].includes(type);
 
     useEffect(() => {
         if (event) {
@@ -136,7 +137,7 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
             onSave({
                 ...event,
                 description,
-                icon,
+                icon: isRegularEvent ? icon : undefined,
                 time: type === 'timed' ? time : undefined,
                 type,
                 color,
@@ -154,26 +155,31 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
             <div className="flex flex-col gap-4 p-1">
                 
                 <div className="flex items-center gap-2">
-                    <IconDropdown value={icon} onChange={setIcon} />
+                    {isRegularEvent && <IconDropdown value={icon} onChange={setIcon} />}
                     <Input
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         className="flex-1 text-base h-10"
-                        placeholder="Описание события"
+                        placeholder="Описание"
                     />
                 </div>
 
                 <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
-                    <Label htmlFor="type-select-saved" className="text-base font-normal">Тип события</Label>
+                    <Label htmlFor="type-select-saved" className="text-base font-normal">Тип элемента</Label>
                     <div className="relative">
                         <select
                             id="type-select-saved"
                             value={type}
-                            onChange={(e) => setType(e.target.value as 'timed' | 'untimed')}
+                            onChange={(e) => setType(e.target.value as ScheduleItem['type'])}
                             className="appearance-none w-full bg-transparent pr-8 text-right font-medium"
                         >
-                            <option value="timed">Со временем</option>
-                            <option value="untimed">Без времени</option>
+                           <option value="timed">Со временем</option>
+                           <option value="untimed">Без времени</option>
+                           <option value="date">Дата</option>
+                           <option value="h1">Заголовок H1</option>
+                           <option value="h2">Заголовок H2</option>
+                           <option value="h3">Заголовок H3</option>
+                           <option value="comment">Комментарий</option>
                         </select>
                         <ChevronDown className="h-4 w-4 opacity-50 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
@@ -210,5 +216,3 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
         </DialogContent>
     );
 }
-
-    

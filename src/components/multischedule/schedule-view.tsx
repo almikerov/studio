@@ -147,8 +147,7 @@ export function ScheduleView({
         handleCloseEditModal();
     };
 
-    const isCommentLike = ['comment', 'h1', 'h2', 'h3'].includes(editedType);
-    const isRegularEvent = !isCommentLike && editedType !== 'date';
+    const isRegularEvent = ['timed', 'untimed'].includes(editedType);
     const isTranslatable = ['timed', 'untimed', 'h1', 'h2', 'h3', 'comment'].includes(editedType);
 
 
@@ -165,7 +164,7 @@ export function ScheduleView({
                           value={editedDescription}
                           onChange={(e) => setEditedDescription(e.target.value)}
                           className="flex-1 text-base h-10"
-                          placeholder={isCommentLike ? "Комментарий или заголовок" : "Описание события"}
+                          placeholder="Описание"
                           rows={1}
                       />
                   )}
@@ -183,7 +182,7 @@ export function ScheduleView({
 
             {/* Type selector */}
             <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
-                <Label htmlFor={`type-select-native-${item.id}`} className="text-base font-normal">Тип события</Label>
+                <Label htmlFor={`type-select-native-${item.id}`} className="text-base font-normal">Тип элемента</Label>
                 <div className="relative">
                     <select
                         id={`type-select-native-${item.id}`}
@@ -240,7 +239,7 @@ export function ScheduleView({
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="text-base"
-                    placeholder=""
+                    placeholder="Описание (необязательно)"
                 />
               </div>
             )}
@@ -256,27 +255,25 @@ export function ScheduleView({
             )}
         
             {/* Color palette for regular events */}
-             { isRegularEvent && (
-                <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground ml-1">Цвет</Label>
-                    <div className="grid grid-cols-4 gap-2">
-                      <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
-                          <div className="h-6 w-6 rounded-full border" />
-                      </Button>
-                      {ITEM_COLORS.map(color => (
-                          <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
-                          <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
-                          </Button>
-                      ))}
-                    </div>
+             <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground ml-1">Цвет</Label>
+                <div className="grid grid-cols-4 gap-2">
+                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
+                        <div className="h-6 w-6 rounded-full border" />
+                    </Button>
+                    {ITEM_COLORS.map(color => (
+                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
+                        <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
+                        </Button>
+                    ))}
                 </div>
-            )}
+            </div>
 
             {/* Action buttons */}
             <div className="flex flex-col gap-2 mt-4">
                <div className="flex gap-2">
-                 {isRegularEvent && <Button onClick={handleSaveToPreset} variant="outline" className="flex-1" size="lg"><Bookmark /></Button> }
-                  <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="flex-1" size="lg"><Trash2 /></Button>
+                 <Button onClick={handleSaveToPreset} variant="outline" className="flex-1" size="lg"><Bookmark /></Button>
+                 <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="flex-1" size="lg"><Trash2 /></Button>
                </div>
                 <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
             </div>
@@ -346,7 +343,7 @@ export function ScheduleView({
                           'group/item flex items-center gap-2 p-2 rounded-md',
                           !isMobile && 'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
-                           item.color && !['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
+                           item.color ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
                         onClick={() => handleEdit(item)}
                       >
@@ -400,7 +397,7 @@ export function ScheduleView({
                                         )}
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm italic text-muted-foreground mt-1 pl-1">
+                                        <div className="text-sm italic text-muted-foreground mt-1 pl-0">
                                             {Object.entries(item.translations).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
@@ -438,6 +435,7 @@ export function ScheduleView({
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                         className="text-base font-normal text-muted-foreground"
                                         placeholder=""
+                                        isTextarea={true}
                                     />
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
@@ -455,6 +453,7 @@ export function ScheduleView({
                                         value={item.description} 
                                         setValue={(val) => onUpdateEvent(item.id, {description: val})} 
                                         data-id="description"
+                                        isTextarea={true}
                                       />
                                       {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                           <span className="text-muted-foreground font-normal">
@@ -570,36 +569,32 @@ export function ScheduleView({
                                     </div>
                                 </PopoverContent>
                             </Popover>
-                            {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
-                              <Popover>
+                            <Popover>
                                 <PopoverTrigger asChild>
-                                  <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2">
-                                  <div className="flex gap-1">
+                                    <div className="flex gap-1">
                                     <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
-                                      <div className="h-4 w-4 rounded-full border" />
+                                        <div className="h-4 w-4 rounded-full border" />
                                     </Button>
                                     {ITEM_COLORS.map(color => (
-                                      <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
                                         <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
-                                      </Button>
+                                        </Button>
                                     ))}
-                                  </div>
+                                    </div>
                                 </PopoverContent>
-                              </Popover>
-                            )}
-                            {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
-                                aria-label={`Save event: ${item.description}`}
-                                >
-                                <Bookmark className="h-4 w-4" />
-                                </Button>
-                            )}
+                            </Popover>
+                            <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            onClick={(e) => { e.stopPropagation(); onSaveEvent(item); }}
+                            aria-label={`Save event: ${item.description}`}
+                            >
+                            <Bookmark className="h-4 w-4" />
+                            </Button>
                             <Button
                             variant="ghost"
                             size="icon"
@@ -689,7 +684,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-    
-
-    

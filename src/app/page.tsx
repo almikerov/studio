@@ -59,8 +59,9 @@ export type SavedEvent = {
   description: string;
   icon?: IconName;
   time?: string;
-  type: 'timed' | 'untimed';
+  type: ScheduleItem['type'];
   color?: string;
+  date?: string;
 };
 
 export type ScheduleTemplate = {
@@ -475,9 +476,9 @@ export default function Home() {
   };
 
   const handleSaveEvent = (eventData: Partial<ScheduleItem>) => {
-    const { description, icon, time, type, color } = eventData;
+    const { description, type } = eventData;
   
-    if (!description || !type || ['comment', 'date', 'h1', 'h2', 'h3'].includes(type)) {
+    if (!description) {
       return;
     }
   
@@ -487,11 +488,12 @@ export default function Home() {
   
     const newSavedEvent: SavedEvent = {
       id: `${Date.now()}-${Math.random()}`,
-      description,
-      icon,
-      time: type === 'timed' ? time : undefined,
-      type: type as 'timed' | 'untimed',
-      color,
+      description: eventData.description!,
+      icon: eventData.icon,
+      time: eventData.time,
+      type: eventData.type!,
+      color: eventData.color,
+      date: eventData.date,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
   };
@@ -575,6 +577,7 @@ export default function Home() {
         time: event.time,
         type: event.type,
         color: event.color,
+        date: event.date,
     });
   }
 
