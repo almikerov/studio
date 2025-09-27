@@ -247,7 +247,7 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-    const itemsToTranslate = schedule.filter(item => item.description && !['date', 'comment'].includes(item.type));
+    const itemsToTranslate = schedule.filter(item => item.description && item.type !== 'date');
     if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
 
     setIsLoading(true);
@@ -278,6 +278,10 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleClearTranslations = () => {
+    setSchedule(prev => prev.map(item => ({...item, translations: {}})));
   };
 
   const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
@@ -610,6 +614,7 @@ export default function Home() {
             selectedLanguages={selectedLanguages}
             onLanguageChange={setSelectedLanguages}
             onTranslate={handleTranslate}
+            onClearTranslations={handleClearTranslations}
             isAiParserOpen={isAiParserOpen}
             setIsAiParserOpen={setIsAiParserOpen}
             setImageUrl={setImageUrl}
@@ -748,7 +753,8 @@ export default function Home() {
                                         </RadioGroup>
                                   </div>
                                </div>
-                              <DialogFooter>
+                              <DialogFooter className='gap-2 sm:gap-0'>
+                                <Button variant="destructive" onClick={handleClearTranslations}>Очистить переводы</Button>
                                 <DialogClose asChild>
                                   <Button onClick={handleTranslate} disabled={isLoading}>
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

@@ -36,6 +36,7 @@ interface DesktopNavbarProps {
   selectedLanguages: string[];
   onLanguageChange: (codes: string[]) => void;
   onTranslate: () => void;
+  onClearTranslations: () => void;
   isAiParserOpen: boolean;
   setIsAiParserOpen: (open: boolean) => void;
   isSavedEventsOpen: boolean;
@@ -63,6 +64,7 @@ export function DesktopNavbar({
   selectedLanguages,
   onLanguageChange,
   onTranslate,
+  onClearTranslations,
   isAiParserOpen,
   setIsAiParserOpen,
   isSavedEventsOpen,
@@ -94,6 +96,11 @@ export function DesktopNavbar({
         setIsTranslateDialogOpen(false);
     }
     
+    const handleClearTranslationsClick = () => {
+        onClearTranslations();
+        setIsTranslateDialogOpen(false);
+    }
+
     const handleSaveApiConfig = () => {
         try {
             localStorage.setItem('gemini-api-key', apiKeyInput);
@@ -177,6 +184,7 @@ export function DesktopNavbar({
                              </div>
 
                             <DialogFooter>
+                                <Button variant="destructive" onClick={handleClearTranslationsClick}>Очистить переводы</Button>
                                 <Button onClick={handleTranslateClick} disabled={isLoading}>
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Перевести
@@ -297,6 +305,7 @@ export function DesktopNavbar({
     
 
     
+
 
 
 
