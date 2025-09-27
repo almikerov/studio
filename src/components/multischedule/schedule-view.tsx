@@ -302,13 +302,11 @@ export function ScheduleView({
                              </Button>
                         </ImageUploader>
                     ) : (
-                        <div data-id="image-placeholder" className="p-2" data-no-print="true">
-                            <ImageUploader onSetImageUrl={setImageUrl}>
-                                 <Button variant="ghost" size="icon">
-                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                                </Button>
-                            </ImageUploader>
-                        </div>
+                        <ImageUploader onSetImageUrl={setImageUrl}>
+                             <Button variant="ghost" size="icon">
+                                <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                            </Button>
+                        </ImageUploader>
                     )}
                 </div>
                  {isMobile && (
@@ -349,14 +347,14 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        <div className="w-8 h-8 flex items-center justify-center">
+                        <div className="w-8 h-8 flex items-center justify-center shrink-0">
                             {item.icon ? (
                                 <IconDropdown
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
                             ) : (
-                                <div data-no-icon-placeholder/>
+                                <div data-no-icon-placeholder={!item.icon}/>
                             )
                             }
                         </div>
