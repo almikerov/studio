@@ -833,6 +833,7 @@ export default function Home() {
                                   savedEvents={savedEvents}
                                   onAdd={(event) => {
                                     handleAddNewEvent(event);
+                                    setIsSavedEventsOpen(false);
                                   }}
                                   onUpdate={handleUpdateSavedEvent}
                                   onDelete={(id) => {
@@ -879,7 +880,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
-
-    
