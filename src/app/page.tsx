@@ -29,6 +29,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
 import * as htmlToImage from 'html-to-image';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -557,6 +559,36 @@ export default function Home() {
     setIsColorizeOpen(false);
     setIsMobileMenuOpen(false);
   };
+  
+  const renderTextTranslation = (lang: string) => {
+      return schedule.map(item => {
+          const translatedDescription = item.translations?.[lang] ?? item.description;
+
+          switch (item.type) {
+              case 'timed':
+                  return `${item.time} ${translatedDescription}`;
+              case 'untimed':
+                  return `- ${translatedDescription}`;
+              case 'comment':
+                  return `// ${translatedDescription}`;
+              case 'date':
+                  if (item.date) {
+                      const dateString = format(new Date(item.date), 'dd.MM.yyyy', { locale: ru });
+                      return `\n== ${dateString}${translatedDescription ? ` (${translatedDescription})` : ''} ==`;
+                  }
+                  return '';
+              case 'h1':
+                  return `\n# ${translatedDescription}`;
+              case 'h2':
+                  return `## ${translatedDescription}`;
+              case 'h3':
+                  return `### ${translatedDescription}`;
+              default:
+                  return '';
+          }
+      }).join('\n');
+  };
+
 
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -625,6 +657,27 @@ export default function Home() {
               />
             </DragDropContext>
           </div>
+          
+           {translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule.length > 0 && (
+                <div className="space-y-4">
+                    {selectedLanguages.map(lang => {
+                        const langName = AVAILABLE_LANGUAGES.find(l => l.code === lang)?.name || lang;
+                        return (
+                            <Card key={lang}>
+                                <CardHeader>
+                                    <CardTitle className="text-lg">{langName} ({lang})</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <pre className="text-sm whitespace-pre-wrap font-sans bg-muted p-4 rounded-md">
+                                        {renderTextTranslation(lang)}
+                                    </pre>
+                                </CardContent>
+                            </Card>
+                        )
+                    })}
+                </div>
+           )}
+
         
         {/* Render Options Dialog */}
         <Dialog open={isRenderOptionsOpen} onOpenChange={setIsRenderOptionsOpen}>
@@ -974,3 +1027,5 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
