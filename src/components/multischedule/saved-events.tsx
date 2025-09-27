@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit, Save, PlusCircle, Bookmark, Check, Palette, ChevronDown, CalendarIcon } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, PlusCircle, Check, ChevronDown } from 'lucide-react';
 import { ScheduleEventIcon, IconName } from './schedule-event-icons';
 import { IconDropdown } from './icon-dropdown';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -18,30 +19,31 @@ interface SavedEventsProps {
   onAdd: (event: Partial<Omit<SavedEvent, 'id'>>) => void;
   onDelete: (id: string) => void;
   onUpdate: (event: SavedEvent) => void;
+  onSaveNew: (event: Partial<SavedEvent>) => void;
   onClose: () => void;
 }
 
-export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }: SavedEventsProps) {
+export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew, onClose }: SavedEventsProps) {
   const [editingEvent, setEditingEvent] = useState<SavedEvent | null>(null);
   
   const startCreating = () => {
-    const newEvent: SavedEvent = {
-        id: `${Date.now()}-${Math.random()}`,
+    // This object is a placeholder for the creation dialog. It doesn't have a real ID yet.
+    setEditingEvent({
+        id: 'new',
         description: 'Новая заготовка',
         icon: undefined,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         type: 'timed',
         color: undefined
-    };
-    setEditingEvent(newEvent);
+    });
   }
 
   const handleSave = (eventToSave: SavedEvent) => {
-    const exists = savedEvents.some(e => e.id === eventToSave.id);
-    if (exists) {
-        onUpdate(eventToSave);
+    // If id is 'new', it's a new event from the "Create" flow.
+    if (eventToSave.id === 'new') {
+        onSaveNew(eventToSave);
     } else {
-        onUpdate(eventToSave); // onUpdate from page.tsx can handle adding
+        onUpdate(eventToSave);
     }
     setEditingEvent(null);
   };
@@ -99,7 +101,6 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
                 event={editingEvent}
                 onSave={handleSave}
                 onClose={() => setEditingEvent(null)}
-                savedEvents={savedEvents}
             />
       </Dialog>
     </div>
@@ -111,17 +112,16 @@ interface EditSavedEventDialogProps {
     event: SavedEvent | null;
     onSave: (event: SavedEvent) => void;
     onClose: () => void;
-    savedEvents: SavedEvent[];
 }
 
-function EditSavedEventDialog({ event, onSave, onClose, savedEvents }: EditSavedEventDialogProps) {
+function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogProps) {
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState<IconName | undefined>(undefined);
     const [time, setTime] = useState('');
     const [type, setType] = useState<'timed' | 'untimed'>('timed');
     const [color, setColor] = useState<string | undefined>(undefined);
 
-    const isCreating = event ? !savedEvents.some(e => e.id === event.id) : false;
+    const isCreating = event?.id === 'new';
 
     useEffect(() => {
         if (event) {

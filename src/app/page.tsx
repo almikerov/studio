@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -107,7 +108,7 @@ export default function Home() {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
         const { schedule, cardTitle, imageUrl } = JSON.parse(storedState);
-        setSchedule(schedule || defaultSchedule);
+        setSchedule(schedule || []);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
       } else {
@@ -454,17 +455,17 @@ export default function Home() {
     setTranslatedSchedules(prev => prev.map(t => t.lang === lang ? { ...t, text: newText } : t));
   };
   
-  const handleSaveEvent = async (eventData: Partial<ScheduleItem>) => {
+  const handleSaveEvent = (eventData: Partial<ScheduleItem>) => {
     const { description, icon, time, type, color } = eventData;
-
+  
     if (!description || !type || ['comment', 'date', 'h1', 'h2', 'h3'].includes(type)) {
-        return;
-    }
-
-    if (savedEvents.some(e => e.description === description)) {
       return;
     }
-
+  
+    if (savedEvents.some(e => e.description === description)) {
+      return; // Avoid duplicates
+    }
+  
     const newSavedEvent: SavedEvent = {
       id: `${Date.now()}-${Math.random()}`,
       description,
@@ -534,14 +535,8 @@ export default function Home() {
 
 
   const handleUpdateSavedEvent = (updatedEvent: SavedEvent) => {
-      const exists = savedEvents.some(e => e.id === updatedEvent.id);
-      let newEvents;
-      if (exists) {
-          newEvents = savedEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e);
-      } else {
-          newEvents = [...savedEvents, updatedEvent];
-      }
-      updateSavedEvents(newEvents);
+    const newEvents = savedEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+    updateSavedEvents(newEvents);
   }
 
   const handleSaveApiConfig = () => {
@@ -839,6 +834,7 @@ export default function Home() {
                                   onDelete={(id) => {
                                       updateSavedEvents(savedEvents.filter(e => e.id !== id));
                                   }}
+                                  onSaveNew={handleSaveEvent}
                                   onClose={() => setIsSavedEventsOpen(false)}
                                />
                             </DialogContent>
