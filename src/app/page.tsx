@@ -313,6 +313,9 @@ export default function Home() {
         if (options.renderAsMobile) {
             clone.style.width = '420px'; // Set a fixed width for mobile-like rendering
             clone.classList.add('render-mobile-padding');
+        } else if (options.fitContent) {
+            clone.style.width = 'auto';
+            clone.style.display = 'inline-block';
         } else {
             clone.style.width = `${element.offsetWidth}px`;
         }
@@ -894,6 +897,7 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     
 
     
+
 
 
 
