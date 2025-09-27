@@ -193,9 +193,6 @@ export default function Home() {
     }
 
     setSchedule(prev => [...prev, newEvent]);
-    if (isMobile) {
-      setEditingEvent(newEvent);
-    }
   };
 
   const handleDeleteEvent = (id: string) => {

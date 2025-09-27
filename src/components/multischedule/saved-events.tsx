@@ -187,7 +187,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
                       {event.icon ? <ScheduleEventIcon icon={event.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="w-5 h-5"/>}
                       <p className="font-semibold truncate">{event.description}</p>
                   </div>
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" onClick={() => startEditing(event)}><Edit className="h-4 w-4" /></Button>
                       <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(event.id)}><Trash2 className="h-4 w-4" /></Button>
                   </div>
