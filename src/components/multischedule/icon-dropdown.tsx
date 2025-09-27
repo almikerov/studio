@@ -22,6 +22,13 @@ interface IconDropdownProps {
 }
 
 export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdownProps) {
+  const handleIconSelect = (icon: IconName | undefined) => {
+    onChange(icon);
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
@@ -38,7 +45,7 @@ export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdo
           <Button
             variant={!value ? 'secondary' : 'ghost'}
             size="icon"
-            onClick={() => onChange(undefined)}
+            onClick={() => handleIconSelect(undefined)}
             className="h-8 w-8"
           >
             <SquareDashed className="h-4 w-4 text-muted-foreground" />
@@ -48,7 +55,7 @@ export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdo
               key={icon}
               variant={value === icon ? 'secondary' : 'ghost'}
               size="icon"
-              onClick={() => onChange(icon as IconName)}
+              onClick={() => handleIconSelect(icon as IconName)}
               className="h-8 w-8"
             >
               <ScheduleEventIcon icon={icon as IconName} className="h-4 w-4" />
