@@ -74,7 +74,7 @@ const defaultSchedule: ScheduleItem[] = [
 ];
 
 export default function Home() {
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(defaultSchedule);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -107,9 +107,11 @@ export default function Home() {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
         const { schedule, cardTitle, imageUrl } = JSON.parse(storedState);
-        if (schedule) setSchedule(schedule);
+        setSchedule(schedule || defaultSchedule);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
+      } else {
+        setSchedule(defaultSchedule);
       }
 
       const storedEvents = localStorage.getItem('savedEvents');
@@ -126,10 +128,12 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
+      setSchedule(defaultSchedule);
     }
   }, []);
 
   useEffect(() => {
+    if (schedule.length === 0) return;
     try {
         const stateToSave = { schedule, cardTitle, imageUrl };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
@@ -875,5 +879,7 @@ export default function Home() {
     </main>
   );
 }
+
+    
 
     
