@@ -97,4 +97,7 @@ body {
   .render-mobile-padding {
     padding-top: 48px;
   }
+  .cloned-for-rendering .hide-border-on-print {
+    border-color: transparent !important;
+  }
 }

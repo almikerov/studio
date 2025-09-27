@@ -25,7 +25,7 @@ export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdo
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0">
+        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0 hide-border-on-print">
           {value ? (
             <ScheduleEventIcon icon={value} className="h-4 w-4" />
           ) : (
