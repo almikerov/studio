@@ -24,13 +24,11 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Separator } from '@/components/ui/separator';
 import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { Input } from '@/components/ui/input';
-import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ICONS as iconPaths } from '@/components/multischedule/icon-paths';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
+import html2canvas from 'html2canvas';
 
 export const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
@@ -295,209 +293,54 @@ export default function Home() {
   };
 
   const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
-    setIsDownloading(true);
+      const element = printableAreaRef.current;
+      if (!element) return null;
   
-    // --- CONFIG ---
-    const scale = 2;
-    const cardWidth = options.renderAsMobile ? 420 : 768;
-    const padding = options.renderAsMobile ? 16 : 24;
-    let contentWidth = cardWidth - padding * 2;
+      setIsDownloading(true);
   
-    const headerImageSize = options.renderAsMobile ? 40 : 96;
-    const headerTopPadding = padding;
-    const headerBottomPadding = options.renderAsMobile ? 8 : 16;
+      // Create a clone to manipulate styles without affecting the UI
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.classList.add('cloned-for-rendering');
   
-    const rowHeight = 44;
-    const iconContainerSize = 32;
-    const iconSize = 16;
-    const iconLeftMargin = 8;
-    const textLeftMargin = iconLeftMargin + iconContainerSize + 8;
-    
-    // Colors (assuming dark mode is off for simplicity, can be improved)
-    const colors = {
-      background: '#FFFFFF',
-      text: '#09090b',
-      muted: '#71717a',
-      cardBackground: '#FFFFFF',
-      rowColors: {
-        'red': '#fee2e2', 'orange': '#ffedd5', 'yellow': '#fef9c3',
-        'green': '#dcfce7', 'blue': '#dbeafe', 'purple': '#ede9fe', 'gray': '#f4f4f5'
+      // Temporarily set width for mobile rendering if needed
+      if (options.renderAsMobile) {
+          clone.style.width = '420px';
+          clone.classList.add('render-mobile-padding');
+      } else {
+          clone.style.width = `${element.offsetWidth}px`;
       }
-    };
+      
+      // Hide elements that should not be printed
+      const elementsToHide = clone.querySelectorAll('[data-no-print="true"]');
+      elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
   
-    // --- MEASUREMENT PASS ---
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+      // Append to body to ensure styles are computed
+      document.body.appendChild(clone);
   
-    // Measure title height
-    ctx.font = `bold ${24 * scale}px Arial`;
-    const titleLines = getWrappedTextLines(ctx, cardTitle, contentWidth - (imageUrl ? headerImageSize + 16 : 0), scale);
-    const titleHeight = titleLines.length * 28 * scale;
-    const headerHeight = Math.max(headerImageSize, titleHeight) + headerTopPadding + headerBottomPadding;
-  
-    // Measure schedule height
-    let scheduleHeight = schedule.length * rowHeight * scale;
-  
-    // Calculate total height
-    const totalHeight = headerHeight + scheduleHeight + padding * scale;
-    
-    // Setup final canvas
-    canvas.width = cardWidth * scale;
-    canvas.height = totalHeight;
-    ctx.scale(scale, scale);
-  
-    // --- DRAWING PASS ---
-  
-    // Draw background
-    ctx.fillStyle = colors.background;
-    ctx.fillRect(0, 0, cardWidth, totalHeight / scale);
-  
-    // Draw card background
-    ctx.fillStyle = colors.cardBackground;
-    ctx.fillRect(0, 0, cardWidth, totalHeight / scale);
-  
-    // Draw Header Image (if exists)
-    let imagePromise = Promise.resolve<HTMLImageElement | null>(null);
-    if (imageUrl) {
-        imagePromise = new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.onload = () => resolve(img);
-            img.onerror = () => resolve(null);
-            img.src = imageUrl;
-        });
-    }
-  
-    const loadedImage = await imagePromise;
-    if (loadedImage) {
-        ctx.save();
-        roundedRect(ctx, cardWidth - padding - headerImageSize, headerTopPadding, headerImageSize, headerImageSize, 6);
-        ctx.clip();
-        ctx.drawImage(loadedImage, cardWidth - padding - headerImageSize, headerTopPadding, headerImageSize, headerImageSize);
-        ctx.restore();
-    }
-  
-    // Draw Title
-    ctx.fillStyle = colors.text;
-    ctx.font = `bold 24px Arial`;
-    ctx.textBaseline = 'top';
-    titleLines.forEach((line, i) => {
-        ctx.fillText(line, padding, headerTopPadding + i * 28);
-    });
-  
-    // --- Draw Schedule Items ---
-    let currentY = headerHeight / scale;
-  
-    for (const item of schedule) {
-        const rowY = currentY;
-  
-        // Draw row background color
-        if (item.color && colors.rowColors[item.color as keyof typeof colors.rowColors]) {
-            ctx.fillStyle = colors.rowColors[item.color as keyof typeof colors.rowColors];
-            ctx.fillRect(padding, rowY, contentWidth, rowHeight);
-        }
-  
-        const rowCenterY = rowY + rowHeight / 2;
-  
-        // Draw Icon
-        if (item.icon && ['timed', 'untimed'].includes(item.type)) {
-            const iconX = padding + iconLeftMargin + (iconContainerSize - iconSize) / 2;
-            const iconY = rowCenterY - iconSize / 2;
-            drawIcon(ctx, item.icon, iconX, iconY, iconSize, colors.muted);
-        }
-  
-        let currentX = padding + textLeftMargin;
-        ctx.textBaseline = 'middle';
-  
-        if (item.type === 'timed') {
-            ctx.font = `600 16px "ui-monospace", "monospace"`;
-            ctx.fillStyle = colors.text;
-            ctx.fillText(item.time, currentX, rowCenterY);
-            currentX += ctx.measureText(item.time).width + 16;
-        }
-  
-        ctx.fillStyle = colors.text;
-        if (item.type === 'comment') {
-            ctx.font = `italic 14px Arial`;
-            ctx.fillStyle = colors.muted;
-            ctx.fillText(item.description, currentX, rowCenterY);
-        } else if (item.type === 'date' && item.date) {
-            ctx.font = `600 18px Arial`;
-            ctx.fillStyle = colors.muted;
-            const dateText = format(new Date(item.date), 'dd.MM.yyyy', { locale: ru });
-            ctx.fillText(dateText, padding, rowCenterY); // date starts from the left edge
-            currentX = padding + ctx.measureText(dateText).width + 8;
-            if(item.description) {
-              ctx.font = `16px Arial`;
-              ctx.fillText(item.description, currentX, rowCenterY);
-            }
-        } else if (item.type === 'h1' || item.type === 'h2' || item.type === 'h3') {
-            const fontSize = item.type === 'h1' ? 20 : item.type === 'h2' ? 18 : 16;
-            ctx.font = `bold ${fontSize}px Arial`;
-            ctx.fillText(item.description, padding, rowCenterY); // headers start from left edge
-        } else { // timed and untimed description
-            ctx.font = `16px Arial`;
-            ctx.fillText(item.description, currentX, rowCenterY);
-        }
-  
-        currentY += rowHeight;
-    }
-  
-    setIsDownloading(false);
-    return canvas;
+      try {
+          const canvas = await html2canvas(clone, {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: null, // Use our class-based background
+              onclone: (doc) => {
+                  // Ensure cross-origin images can be loaded
+                  const images = doc.getElementsByTagName('img');
+                  for (let i = 0; i < images.length; i++) {
+                      images[i].crossOrigin = 'anonymous';
+                  }
+              }
+          });
+          return canvas;
+      } catch (error) {
+          console.error("Error generating canvas with html2canvas", error);
+          return null;
+      } finally {
+          // Clean up the clone
+          document.body.removeChild(clone);
+          setIsDownloading(false);
+      }
   };
-  
-  // Helper to draw a rounded rectangle
-  function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + width - radius, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-    ctx.lineTo(x + width, y + height - radius);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-    ctx.lineTo(x + radius, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-  }
-  
-  // Helper to wrap text
-  function getWrappedTextLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, scale: number): string[] {
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = words[0];
-  
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width / scale;
-        if (width < maxWidth) {
-            currentLine += " " + word;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
-    }
-    lines.push(currentLine);
-    return lines;
-  }
-
-  function drawIcon(ctx: CanvasRenderingContext2D, iconName: IconName, x: number, y: number, size: number, color: string) {
-    const pathData = iconPaths[iconName];
-    if (!pathData) return;
-
-    const path = new Path2D(pathData.path);
-    const scale = size / pathData.viewBox;
-
-    ctx.save();
-    ctx.fillStyle = color;
-    ctx.translate(x, y);
-    ctx.scale(scale, scale);
-    ctx.fill(path);
-    ctx.restore();
-}
-
 
   const handleDownloadImage = async (options: RenderOptions) => {
     const canvas = await generateCanvas(options);
@@ -717,7 +560,7 @@ export default function Home() {
         />}
 
         
-          <div ref={printableAreaRef} className="space-y-8 bg-background p-0 rounded-lg printable-area-for-render">
+          <div ref={printableAreaRef} className="bg-background">
             <DragDropContext onDragEnd={onDragEnd}>
               <ScheduleView
                 schedule={schedule}
@@ -1045,3 +888,4 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     
 
     
+
