@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent, TranslationDisplayMode } from '@/app/pag
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon, Wrench } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -170,7 +170,15 @@ export function ScheduleView({
                       rows={1}
                   />
                 </div>
-                {isTranslatable && selectedLanguages.length > 0 && (
+                {isTranslatable && selectedLanguages.length > 0 && item.type !== 'date' && (
+                    <Input
+                        value={editedTranslations[selectedLanguages[0]] || ''}
+                        onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
+                        className="text-base h-10"
+                        placeholder={`Перевод (${selectedLanguages[0]})`}
+                    />
+                )}
+                 {isTranslatable && selectedLanguages.length > 0 && item.type === 'date' && (
                     <Input
                         value={editedTranslations[selectedLanguages[0]] || ''}
                         onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
@@ -394,7 +402,7 @@ export function ScheduleView({
                                         )}
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm italic text-muted-foreground mt-1">
+                                        <div className="text-sm italic text-muted-foreground mt-1 flex flex-col">
                                             {Object.entries(item.translations).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
@@ -453,7 +461,7 @@ export function ScheduleView({
                                                 )}
                                             </div>
                                              {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                                <div className="text-sm text-muted-foreground mt-1">
+                                                <div className="text-sm text-muted-foreground mt-1 flex flex-col">
                                                     {Object.entries(item.translations).map(([lang, text]) => (
                                                       <EditableField
                                                           key={lang}
@@ -505,7 +513,7 @@ export function ScheduleView({
                                     )}
                                   </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm text-muted-foreground mt-1">
+                                        <div className="text-sm text-muted-foreground mt-1 flex flex-col">
                                             {Object.entries(item.translations).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
@@ -654,7 +662,9 @@ export function ScheduleView({
                   <div className="h-10 flex justify-center items-center" data-no-print="true">
                     <Button
                       variant="ghost"
-                      className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
+                      className={cn("transition-opacity w-full",
+                        schedule.length > 0 ? "opacity-0 group-hover/list:opacity-100" : "opacity-100"
+                      )}
                       onClick={() => onAddNewEvent()}
                     >
                       <Plus className="h-4 w-4" />
@@ -666,7 +676,7 @@ export function ScheduleView({
           </Droppable>
 
         
-        {schedule.length === 0 && (
+        {schedule.length === 0 && !isMobile && (
           <div className="text-center text-muted-foreground py-16">
             <p className="text-lg font-semibold">Ваше расписание пусто</p>
             <p>Добавьте события, чтобы начать планировать свой день.</p>
