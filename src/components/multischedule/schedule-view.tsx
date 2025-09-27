@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 
 
-const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
@@ -240,8 +240,8 @@ export function ScheduleView({
   return (
     <Card className="shadow-lg overflow-hidden relative border-none sm:border sm:rounded-lg">
        {/* These are for tailwind to detect and generate dynamic classes */}
-       <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30"></div>
-       <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500"></div>
+       <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30 bg-gray-100 dark:bg-gray-900/30"></div>
+       <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500 bg-gray-500"></div>
 
       <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
@@ -256,24 +256,22 @@ export function ScheduleView({
                 )}
                 <div data-id="schedule-image-wrapper">
                     <ImageUploader onSetImageUrl={setImageUrl}>
-                        <DialogTrigger asChild>
-                            <div className="relative cursor-pointer">
-                                {imageUrl ? (
-                                <Image
-                                    src={imageUrl}
-                                    alt="Schedule image"
-                                    width={isMobile ? 80 : 96}
-                                    height={isMobile ? 80 : 96}
-                                    className="object-cover rounded-md aspect-square"
-                                    crossOrigin="anonymous"
-                                />
-                                ) : (
-                                <div data-id="image-placeholder" className="p-2" data-no-print="true">
-                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                                </div>
-                                )}
-                            </div>
-                        </DialogTrigger>
+                      <DialogTrigger asChild>
+                          {imageUrl ? (
+                            <Image
+                                src={imageUrl}
+                                alt="Schedule image"
+                                width={80}
+                                height={80}
+                                className="object-cover rounded-md aspect-square cursor-pointer"
+                                crossOrigin="anonymous"
+                            />
+                          ) : (
+                          <div data-id="image-placeholder" className="p-2 cursor-pointer" data-no-print="true">
+                              <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          )}
+                      </DialogTrigger>
                     </ImageUploader>
                 </div>
             </div>
@@ -354,12 +352,16 @@ export function ScheduleView({
                                 </div>
                             ) : (
                                 <>
-                                    <div className="w-8 h-8 flex items-center justify-center">
-                                      <IconDropdown
-                                        value={item.icon}
-                                        onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                      />
-                                    </div>
+                                    {item.icon ? (
+                                      <div className="w-8 h-8 flex items-center justify-center">
+                                        <IconDropdown
+                                          value={item.icon}
+                                          onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                        />
+                                      </div>
+                                    ) : (
+                                      !isMobile && <div className="w-8"></div>
+                                    )}
                                     
                                     <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                       {item.type === 'timed' ? (

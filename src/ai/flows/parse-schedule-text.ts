@@ -22,7 +22,7 @@ const ParsedScheduleItemSchema = z.object({
     time: z.string().describe("The time of the event in HH:mm format. If the event has no specific time, this should be an empty string."),
     description: z.string().describe("The description of the schedule event."),
     icon: z.enum(['football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt']).optional().describe("An icon for the event."),
-    color: z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple']).optional().describe('A color for the event row.'),
+    color: z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray']).optional().describe('A color for the event row.'),
 });
 
 const ParseScheduleTextOutputSchema = z.object({
@@ -48,7 +48,7 @@ Your task is to identify the schedule title, events, their times, and relevant m
 - The time should be in HH:mm format.
 - If an event doesn't have a specific time (e.g., it's just a task), the 'time' field should be an empty string.
 - If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'.
-- If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple'.
+- If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'.
 - Ignore any text that isn't a schedule item.
 
 Here is the text to parse:
