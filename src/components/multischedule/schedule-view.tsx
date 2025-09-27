@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -380,7 +378,7 @@ export function ScheduleView({
                                             value={item.description}
                                             setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                             className="text-card-foreground text-sm italic text-muted-foreground"
-                                            isTextarea={false}
+                                            isTextarea={true}
                                             data-id="description"
                                         />
                                         {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
@@ -393,7 +391,7 @@ export function ScheduleView({
                                                       setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                       className="inline"
                                                       as="span"
-                                                      isTextarea={false}
+                                                      isTextarea={true}
                                                   />
                                                 )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                             </span>
@@ -409,7 +407,7 @@ export function ScheduleView({
                                                     setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                     className="block"
                                                     as="div"
-                                                    isTextarea={false}
+                                                    isTextarea={true}
                                                 />
                                             ))}
                                         </div>
@@ -686,10 +684,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-    
-
-
-    
-
-    
