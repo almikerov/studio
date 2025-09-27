@@ -57,6 +57,7 @@ Your task is to identify the schedule title, events, their times, types, and oth
 - Ensure the 'description' for each schedule item starts with a capital letter.
 - If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'. Assign icons only to 'timed' and 'untimed' types.
 - For "Теория" (theory) or "Установка" (instructions), assign the 'camera' icon.
+- For a generic 'тренировка' (training), assign the 'football-field' icon. If the training is specified to be in a gym (e.g., 'тренировка в зале', 'тренажерный зал'), assign the 'dumbbell' icon.
 - If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors only to 'timed' and 'untimed' types.
 - Ignore any text that isn't a schedule item.
 
