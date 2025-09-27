@@ -324,19 +324,15 @@ export default function Home() {
         
         const fontEmbedCss = await htmlToImage.getFontEmbedCSS(element);
 
-        // Create a clone to manipulate styles without affecting the UI
         const clone = element.cloneNode(true) as HTMLElement;
-
-        // Apply a specific class for rendering to control styles if needed
         clone.classList.add('cloned-for-rendering');
         
-        // Always apply shadow padding first if requested
         if (options.withShadow) {
-            clone.style.padding = '20px';
+            clone.style.border = '20px solid transparent';
         }
 
         if (options.renderAsMobile) {
-            clone.style.width = '420px'; // Set a fixed width for mobile-like rendering
+            clone.style.width = '420px'; 
             clone.classList.add('render-mobile-padding');
         } else if (options.fitContent) {
             clone.style.width = 'auto';
@@ -345,9 +341,7 @@ export default function Home() {
             clone.style.width = `${element.offsetWidth}px`;
         }
 
-        // Hide elements that should not be part of the final image
         clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
-        // Make elements invisible but keep their space
         clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
         
         document.body.appendChild(clone);
@@ -357,7 +351,6 @@ export default function Home() {
                 pixelRatio: 2,
                 backgroundColor: backgroundColor,
                 fontEmbedCss: fontEmbedCss,
-                // Ensure external images are handled
                 fetchRequestInit: {
                     headers: new Headers(),
                     mode: 'cors',
@@ -369,7 +362,6 @@ export default function Home() {
             console.error("Error generating canvas with html-to-image", error);
             return null;
         } finally {
-            // Clean up the clone
             document.body.removeChild(clone);
             setIsDownloading(false);
         }
@@ -1110,5 +1102,6 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     
 
     
+
 
 
