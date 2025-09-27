@@ -375,36 +375,36 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div className='flex items-baseline gap-2'>
-                                    <div className="flex items-center">
-                                      <EditableField
-                                          isMobile={isMobile}
-                                          value={item.description}
-                                          setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                          className="text-card-foreground text-sm italic text-muted-foreground"
-                                          isTextarea={true}
-                                          data-id="description"
-                                      />
+                                <div>
+                                    <div className='flex items-baseline gap-2'>
+                                        <EditableField
+                                            isMobile={isMobile}
+                                            value={item.description}
+                                            setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                            className="text-card-foreground text-sm italic text-muted-foreground"
+                                            isTextarea={true}
+                                            data-id="description"
+                                        />
+                                        {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                            <div className="flex items-baseline text-muted-foreground text-sm italic">
+                                                ({Object.entries(item.translations).map(([lang, text], idx) => (
+                                                  <EditableField
+                                                      key={lang}
+                                                      isMobile={isMobile}
+                                                      value={text}
+                                                      setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                      className="inline"
+                                                      as="span"
+                                                      isTextarea={true}
+                                                  />
+                                                )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                            </div>
+                                        )}
                                     </div>
-                                    {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="flex items-baseline text-muted-foreground text-sm italic">
-                                            ({Object.entries(item.translations).map(([lang, text], idx) => (
-                                              <EditableField
-                                                  key={lang}
-                                                  isMobile={isMobile}
-                                                  value={text}
-                                                  setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                  className="inline"
-                                                  as="span"
-                                                  isTextarea={true}
-                                              />
-                                            )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
-                                        </div>
-                                    )}
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm italic text-muted-foreground">
+                                        <div className="text-sm italic text-muted-foreground mt-1">
                                             {Object.entries(item.translations).map(([lang, text]) => (
-                                              <div key={lang} className="flex items-center">
+                                              <div key={lang}>
                                                 <EditableField
                                                     isMobile={isMobile}
                                                     value={text}
@@ -420,37 +420,33 @@ export function ScheduleView({
                                 </div>
                             ) : item.type === 'date' && item.date ? (
                                 <div className="flex items-center gap-2 w-full">
-                                    <div className="flex items-center">
-                                      <Popover>
-                                          <PopoverTrigger asChild>
-                                              <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
-                                                  {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
-                                              </Button>
-                                          </PopoverTrigger>
-                                          <PopoverContent className="w-auto p-0">
-                                              <Calendar
-                                                  mode="single"
-                                                  selected={new Date(item.date)}
-                                                  onSelect={(date) => date && onUpdateEvent(item.id, { date: date.toISOString() })}
-                                                  initialFocus
-                                              />
-                                          </PopoverContent>
-                                      </Popover>
-                                    </div>
-                                    <div className="flex items-center">
-                                      <EditableField
-                                          isMobile={isMobile}
-                                          value={item.description || ''}
-                                          setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                          className="text-base font-normal text-muted-foreground"
-                                          placeholder=""
-                                          isTextarea={true}
-                                      />
-                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
+                                                {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0">
+                                            <Calendar
+                                                mode="single"
+                                                selected={new Date(item.date)}
+                                                onSelect={(date) => date && onUpdateEvent(item.id, { date: date.toISOString() })}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <EditableField
+                                        isMobile={isMobile}
+                                        value={item.description || ''}
+                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                        className="text-base font-normal text-muted-foreground"
+                                        placeholder=""
+                                        isTextarea={true}
+                                    />
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full flex items-baseline gap-2">
-                                  <div className="flex items-center">
+                                <div className="w-full">
+                                  <div className="flex items-baseline gap-2">
                                     <EditableField 
                                       isMobile={isMobile}
                                       as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
@@ -465,26 +461,26 @@ export function ScheduleView({
                                       data-id="description"
                                       isTextarea={true}
                                     />
+                                    {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                        <div className="flex items-baseline text-muted-foreground font-normal">
+                                            ({Object.entries(item.translations).map(([lang, text]) => (
+                                                <EditableField
+                                                    key={lang}
+                                                    isMobile={isMobile}
+                                                    value={text}
+                                                    setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                    className="inline"
+                                                    as="span"
+                                                    isTextarea={true}
+                                                />
+                                            )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                        </div>
+                                    )}
                                   </div>
-                                  {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                      <div className="flex items-baseline text-muted-foreground font-normal">
-                                          ({Object.entries(item.translations).map(([lang, text]) => (
-                                              <EditableField
-                                                  key={lang}
-                                                  isMobile={isMobile}
-                                                  value={text}
-                                                  setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                  className="inline"
-                                                  as="span"
-                                                  isTextarea={true}
-                                              />
-                                          )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
-                                      </div>
-                                  )}
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm text-muted-foreground mt-1">
                                             {Object.entries(item.translations).map(([lang, text]) => (
-                                              <div key={lang} className="flex items-center">
+                                              <div key={lang}>
                                                 <EditableField
                                                     isMobile={isMobile}
                                                     value={text}
@@ -686,3 +682,6 @@ export function ScheduleView({
 
 
 
+
+
+    
