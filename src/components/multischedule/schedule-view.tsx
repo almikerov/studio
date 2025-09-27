@@ -162,22 +162,12 @@ export function ScheduleView({
                   {isRegularEvent && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
                   
                   {editedType !== 'date' && (
-                      isCommentLike ? (
-                          <Textarea
-                              value={editedDescription}
-                              onChange={(e) => setEditedDescription(e.target.value)}
-                              className="flex-1 text-base"
-                              rows={3}
-                              placeholder="Комментарий или заголовок"
-                          />
-                      ) : (
-                           <Input
-                              value={editedDescription}
-                              onChange={(e) => setEditedDescription(e.target.value)}
-                              className="flex-1 text-base h-10"
-                              placeholder="Описание события"
-                          />
-                      )
+                      <Input
+                          value={editedDescription}
+                          onChange={(e) => setEditedDescription(e.target.value)}
+                          className="flex-1 text-base h-10"
+                          placeholder={isCommentLike ? "Комментарий или заголовок" : "Описание события"}
+                      />
                   )}
                 </div>
                 {isTranslatable && (
@@ -390,7 +380,7 @@ export function ScheduleView({
                                             value={item.description}
                                             setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                             className="text-card-foreground text-sm italic text-muted-foreground"
-                                            isTextarea={true}
+                                            isTextarea={false}
                                             data-id="description"
                                         />
                                         {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
@@ -419,7 +409,7 @@ export function ScheduleView({
                                                     setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                     className="block"
                                                     as="div"
-                                                    isTextarea={true}
+                                                    isTextarea={false}
                                                 />
                                             ))}
                                         </div>
@@ -491,7 +481,7 @@ export function ScheduleView({
                                                     setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                     className="block"
                                                     as="div"
-                                                    isTextarea={true}
+                                                    isTextarea={false}
                                                 />
                                             ))}
                                         </div>
@@ -550,7 +540,7 @@ export function ScheduleView({
                                                       setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                       className="block"
                                                       as="div"
-                                                      isTextarea={true}
+                                                      isTextarea={false}
                                                   />
                                                 ))}
                                             </div>

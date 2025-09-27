@@ -81,6 +81,7 @@ export const EditableField = ({
             className={`${className} h-auto p-0 bg-transparent outline-none ring-2 ring-ring rounded-md`}
             placeholder={placeholder}
             onClick={(e) => e.stopPropagation()}
+            rows={1}
         />
     }
     return <Input
