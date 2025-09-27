@@ -250,25 +250,27 @@ export function ScheduleView({
              { isRegularEvent && (
                 <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground ml-1">Цвет</Label>
-                    <div className="flex gap-2 justify-around">
-                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
-                        <div className="h-6 w-6 rounded-full border" />
-                    </Button>
-                    {ITEM_COLORS.map(color => (
-                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
-                        <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
-                        </Button>
-                    ))}
+                    <div className="flex gap-2 justify-around flex-wrap">
+                      <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
+                          <div className="h-6 w-6 rounded-full border" />
+                      </Button>
+                      {ITEM_COLORS.map(color => (
+                          <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
+                          <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
+                          </Button>
+                      ))}
                     </div>
                 </div>
             )}
 
             {/* Action buttons */}
-            <div className="flex gap-2 mt-4">
-               {isRegularEvent && <Button onClick={handleSaveToPreset} variant="outline" className="w-full" size="lg"><Bookmark /></Button> }
-                <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
+            <div className="flex flex-col gap-2 mt-4">
+               <div className="flex gap-2">
+                 {isRegularEvent && <Button onClick={handleSaveToPreset} variant="outline" className="flex-1" size="lg"><Bookmark /></Button> }
+                  <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="flex-1" size="lg"><Trash2 /></Button>
+               </div>
+                <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
             </div>
-            <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
         </div>
     );
   };
