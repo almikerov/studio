@@ -944,12 +944,15 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
                     {apiKeys.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">Нет ключей</p>
                     ) : (
-                        apiKeys.map(apiKey => (
-                            <div key={apiKey.id} className="flex items-center justify-between gap-2 p-2 border rounded-md">
-                                <span className="font-mono text-sm truncate">...{apiKey.key.slice(-4)}</span>
-                                <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}><Trash size={16}/></Button>
-                            </div>
-                        ))
+                        apiKeys.map(apiKey => {
+                            if (!apiKey || !apiKey.key) return null;
+                            return (
+                                <div key={apiKey.id} className="flex items-center justify-between gap-2 p-2 border rounded-md">
+                                    <span className="font-mono text-sm truncate">...{apiKey.key.slice(-4)}</span>
+                                    <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}><Trash size={16}/></Button>
+                                </div>
+                            )
+                        })
                     )}
                 </div>
             </div>
