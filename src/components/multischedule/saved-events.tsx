@@ -6,11 +6,13 @@ import { useState, useEffect } from 'react';
 import type { SavedEvent, ScheduleItem } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit, Save, PlusCircle, Check, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, PlusCircle, Check, ChevronDown, Clock, Tag, Type, Palette } from 'lucide-react';
 import { ScheduleEventIcon, IconName } from './schedule-event-icons';
 import { IconDropdown } from './icon-dropdown';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '../ui/label';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
 
@@ -22,6 +24,16 @@ interface SavedEventsProps {
   onSaveNew: (event: Partial<SavedEvent>) => void;
   onClose: () => void;
 }
+
+const typeLabels: Record<ScheduleItem['type'], string> = {
+    timed: 'Событие со временем',
+    untimed: 'Событие без времени',
+    date: 'Дата',
+    h1: 'Заголовок H1',
+    h2: 'Заголовок H2',
+    h3: 'Заголовок H3',
+    comment: 'Комментарий',
+};
 
 export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew, onClose }: SavedEventsProps) {
   const [editingEvent, setEditingEvent] = useState<SavedEvent | null>(null);
@@ -72,16 +84,42 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew,
             Создать заготовку
         </Button>
         {savedEvents.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {savedEvents.map(event => (
-              <li key={event.id} className="flex items-center justify-between gap-2 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => handleAddAndClose(event)}>
-                  <div className="flex items-center gap-4 flex-1 truncate">
+              <li 
+                  key={event.id}
+                  className={cn(
+                      "group relative flex flex-col gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer",
+                      event.color && `bg-${event.color}-100 dark:bg-${event.color}-900/30`
+                  )}
+                  onClick={() => handleAddAndClose(event)}
+              >
+                  <div className="flex items-center gap-4">
                       {event.icon ? <ScheduleEventIcon icon={event.icon} className="h-5 w-5 text-muted-foreground" /> : <div className="w-5 h-5"/>}
-                      <p className="font-semibold truncate">{event.description}</p>
+                      <p className="font-semibold text-lg flex-1 truncate">{event.description}</p>
+                      <div className="absolute top-2 right-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" onClick={() => setEditingEvent(event)}><Edit className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(event.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
                   </div>
-                  <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" onClick={() => setEditingEvent(event)}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(event.id)}><Trash2 className="h-4 w-4" /></Button>
+                  
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground pl-9">
+                      <div className="flex items-center gap-2">
+                          <Type className="h-4 w-4" />
+                          <span>{typeLabels[event.type]}</span>
+                      </div>
+                      {event.time && event.type === 'timed' && (
+                           <div className="flex items-center gap-2">
+                               <Clock className="h-4 w-4" />
+                               <span>{event.time}</span>
+                           </div>
+                      )}
+                      {event.color && (
+                          <div className="flex items-center gap-2">
+                            <div className={`h-3 w-3 rounded-full bg-${event.color}-500`}/>
+                            <span>{event.color}</span>
+                          </div>
+                      )}
                   </div>
               </li>
             ))}
@@ -120,7 +158,6 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
     const [color, setColor] = useState<string | undefined>(undefined);
 
     const isCreating = event?.id === 'new';
-    const isRegularEvent = ['timed', 'untimed'].includes(type);
 
     useEffect(() => {
         if (event) {
@@ -137,7 +174,7 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
             onSave({
                 ...event,
                 description,
-                icon: isRegularEvent ? icon : undefined,
+                icon,
                 time: type === 'timed' ? time : undefined,
                 type,
                 color,
@@ -155,7 +192,7 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
             <div className="flex flex-col gap-4 p-1">
                 
                 <div className="flex items-center gap-2">
-                    {isRegularEvent && <IconDropdown value={icon} onChange={setIcon} />}
+                    <IconDropdown value={icon} onChange={setIcon} />
                     <Input
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
