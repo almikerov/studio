@@ -139,11 +139,9 @@ export function DesktopNavbar({
                 <MenubarContent>
                     <MenubarItem onClick={undo} disabled={!canUndo}>
                         <Undo className="mr-2" /> Отменить
-                        <MenubarShortcut>{isMac ? '⌘Z' : 'Ctrl+Z'}</MenubarShortcut>
                     </MenubarItem>
                     <MenubarItem onClick={redo} disabled={!canRedo}>
                         <Redo className="mr-2" /> Повторить
-                        <MenubarShortcut>{isMac ? '⇧⌘Z' : 'Ctrl+Y'}</MenubarShortcut>
                     </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>

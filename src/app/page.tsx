@@ -211,28 +211,6 @@ export default function Home() {
         console.error("Failed to save state to localStorage", error);
     }
   }, [state, translationDisplayMode, selectedLanguages, textBlockTranslations]);
-
-
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const isUndo = (isMac ? event.metaKey : event.ctrlKey) && event.key === 'z' && !event.shiftKey;
-    const isRedo = (isMac ? event.metaKey && event.shiftKey : event.ctrlKey) && event.key === 'y' || (isMac && event.metaKey && event.shiftKey && event.key === 'z');
-
-    if (isUndo) {
-        event.preventDefault();
-        undo();
-    } else if (isRedo) {
-        event.preventDefault();
-        redo();
-    }
-  }, [undo, redo]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleKeyDown]);
   
   const updateSavedEvents = (newSavedEvents: SavedEvent[]) => {
     setSavedEvents(newSavedEvents);
