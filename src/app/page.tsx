@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -27,6 +28,7 @@ import { ImageUploader } from '@/components/multischedule/image-uploader';
 import { Input } from '@/components/ui/input';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -96,10 +98,8 @@ export default function Home() {
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
-  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<(() => void) | null>(null);
-  const [templateName, setTemplateName] = useState('');
   const [apiKeyInput, setApiKeyInput] = useState('');
 
 
@@ -546,15 +546,6 @@ export default function Home() {
     }
   };
   
-  const handleSaveTemplateClick = () => {
-    if (templateName.trim()) {
-        handleSaveTemplate(templateName.trim());
-        setTemplateName('');
-        setIsSaveTemplateDialogOpen(false);
-        setIsMobileMenuOpen(false);
-    }
-  };
-
   const openRenderOptions = (action: (options: {renderAsMobile: boolean}) => void) => {
     setRenderAction(() => (options: { renderAsMobile: boolean }) => {
       action(options);
@@ -687,198 +678,182 @@ export default function Home() {
                   <SheetHeader>
                       <SheetTitle>Меню</SheetTitle>
                   </SheetHeader>
-                  <div className="py-4 flex flex-col gap-4">
-                    <div>
-                      <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
-                      <Button onClick={() => openRenderOptions(handleDownloadImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
-                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
-                        Скачать PNG
-                      </Button>
-                       <Button onClick={() => openRenderOptions(handleCopyImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
-                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
-                        Копировать
-                      </Button>
-                      <Button onClick={() => openRenderOptions(handleShareImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
-                        {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
-                        Поделиться...
-                      </Button>
-                    </div>
+                  <ScrollArea className="h-[calc(100%-4rem)]">
+                    <div className="py-4 flex flex-col gap-4 px-3">
+                      <div>
+                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
+                        <Button onClick={() => openRenderOptions(handleDownloadImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                          {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Download className="mr-2" />}
+                          Скачать PNG
+                        </Button>
+                         <Button onClick={() => openRenderOptions(handleCopyImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                          {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Copy className="mr-2" />}
+                          Копировать
+                        </Button>
+                        <Button onClick={() => openRenderOptions(handleShareImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                          {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
+                          Поделиться...
+                        </Button>
+                      </div>
 
-                    <Separator />
-                     <div>
-                       <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Изображение</h3>
-                       <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={(open) => { if (!open) setIsMobileMenuOpen(false) }}>
-                         <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start w-full">
-                               <ImagePlus className="mr-2" /> Изменить изображение
-                            </Button>
-                         </DialogTrigger>
-                       </ImageUploader>
-                     </div>
+                      <Separator />
+                       <div>
+                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Изображение</h3>
+                         <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={(open) => { if (!open) setIsMobileMenuOpen(false) }}>
+                           <DialogTrigger asChild>
+                              <Button variant="ghost" className="justify-start w-full">
+                                 <ImagePlus className="mr-2" /> Изменить изображение
+                              </Button>
+                           </DialogTrigger>
+                         </ImageUploader>
+                       </div>
 
-                    <Separator />
+                      <Separator />
 
-                    <div>
-                      <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Инструменты</h3>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start w-full">
-                              <Languages className="mr-2" /> Перевести
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Перевод расписания</DialogTitle>
-                              <DialogDescription>Выберите языки для перевода.</DialogDescription>
-                            </DialogHeader>
-                            <div className="grid grid-cols-2 gap-4 py-4">
-                              {AVAILABLE_LANGUAGES.map(lang => (
-                                <div key={lang.code} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`lang-mobile-${lang.code}`}
-                                    checked={selectedLanguages.includes(lang.code)}
-                                    onCheckedChange={() => handleLanguageToggle(lang.code)}
-                                  />
-                                  <Label htmlFor={`lang-mobile-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
-                                </div>
-                              ))}
-                            </div>
-                            <Button onClick={handleTranslate} disabled={isLoading}>
-                              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                              Перевести
-                            </Button>
-                          </DialogContent>
-                        </Dialog>
-                        <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
-                          <DialogTrigger asChild>
-                             <Button variant="ghost" className="justify-start w-full">
-                              <Wand2 className="mr-2" /> ИИ-редактор
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                            <AiScheduleParser 
-                              onParse={handleAiParse} 
-                              isLoading={isLoading} 
-                              onClose={() => setIsAiParserOpen(false)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start w-full">
-                              <KeyRound className="mr-2" /> Gemini API Key
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Конфигурация Gemini API</DialogTitle>
-                              <DialogDescription>Введите ваш API ключ для доступа к Gemini AI.</DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4 space-y-4">
-                               <div>
-                                <Label htmlFor="api-key-mobile">API Key</Label>
-                                <Input
-                                  id="api-key-mobile"
-                                  type="password"
-                                  placeholder="Ваш API ключ"
-                                  value={apiKeyInput}
-                                  onChange={(e) => setApiKeyInput(e.target.value)}
-                                />
-                               </div>
-                            </div>
-                            <DialogFooter>
-                              <Button onClick={handleSaveApiConfig}>Сохранить</Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" className="justify-start w-full text-destructive hover:text-destructive">
-                                    <Trash className="mr-2" /> Очистить всё
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Это действие навсегда удалит ваше текущее расписание. Это действие нельзя будет отменить.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Отмена</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">Очистить</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                   </div>
-
-                   <Separator />
-
-                    <div>
-                      <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Библиотека</h3>
-                       <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start w-full">
-                              <BookOpen className="mr-2" /> Шаблоны
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                            <SavedTemplates 
-                              templates={savedTemplates}
-                              onLoad={(template) => { handleLoadTemplate(template); setIsTemplatesOpen(false); setIsMobileMenuOpen(false); }}
-                              onDelete={handleDeleteTemplate}
-                              onClose={() => setIsTemplatesOpen(false)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                         <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+                      <div>
+                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Инструменты</h3>
+                          <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="ghost" className="justify-start w-full">
-                                    <Save className="mr-2" /> Сохранить шаблон
-                                </Button>
+                              <Button variant="ghost" className="justify-start w-full">
+                                <Languages className="mr-2" /> Перевести
+                              </Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Сохранить шаблон</DialogTitle>
-                                </DialogHeader>
-                                <div className="py-4">
-                                    <Label htmlFor="template-name-mobile">Название шаблона</Label>
-                                    <Input id="template-name-mobile" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
-                                </div>
-                                <DialogFooter>
-                                    <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                        <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
-                           <DialogTrigger asChild>
-                            <Button variant="ghost" className="justify-start w-full">
-                              <Save className="mr-2" /> Заготовки
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                              <DialogHeader className="p-6 pb-0">
-                                <DialogTitle>Мои события</DialogTitle>
-                                <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+                              <DialogHeader>
+                                <DialogTitle>Перевод расписания</DialogTitle>
+                                <DialogDescription>Выберите языки для перевода.</DialogDescription>
                               </DialogHeader>
-                             <SavedEvents
-                                savedEvents={savedEvents}
-                                onAdd={(event) => {
-                                  handleAddNewEvent(event);
-                                  setIsSavedEventsOpen(false);
-                                  setIsMobileMenuOpen(false);
-                                }}
-                                onUpdate={handleUpdateSavedEvent}
-                                onDelete={(id) => {
-                                    updateSavedEvents(savedEvents.filter(e => e.id !== id));
-                                }}
-                                onClose={() => setIsSavedEventsOpen(false)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                    </div>
+                              <div className="grid grid-cols-2 gap-4 py-4">
+                                {AVAILABLE_LANGUAGES.map(lang => (
+                                  <div key={lang.code} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`lang-mobile-${lang.code}`}
+                                      checked={selectedLanguages.includes(lang.code)}
+                                      onCheckedChange={() => handleLanguageToggle(lang.code)}
+                                    />
+                                    <Label htmlFor={`lang-mobile-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                                  </div>
+                                ))}
+                              </div>
+                              <Button onClick={handleTranslate} disabled={isLoading}>
+                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Перевести
+                              </Button>
+                            </DialogContent>
+                          </Dialog>
+                          <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
+                            <DialogTrigger asChild>
+                               <Button variant="ghost" className="justify-start w-full">
+                                <Wand2 className="mr-2" /> ИИ-редактор
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                              <AiScheduleParser 
+                                onParse={handleAiParse} 
+                                isLoading={isLoading} 
+                                onClose={() => setIsAiParserOpen(false)}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                          <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" className="justify-start w-full">
+                                <KeyRound className="mr-2" /> Gemini API Key
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Конфигурация Gemini API</DialogTitle>
+                                <DialogDescription>Введите ваш API ключ для доступа к Gemini AI.</DialogDescription>
+                              </DialogHeader>
+                              <div className="py-4 space-y-4">
+                                 <div>
+                                  <Label htmlFor="api-key-mobile">API Key</Label>
+                                  <Input
+                                    id="api-key-mobile"
+                                    type="password"
+                                    placeholder="Ваш API ключ"
+                                    value={apiKeyInput}
+                                    onChange={(e) => setApiKeyInput(e.target.value)}
+                                  />
+                                 </div>
+                              </div>
+                              <DialogFooter>
+                                <Button onClick={handleSaveApiConfig}>Сохранить</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" className="justify-start w-full text-destructive hover:text-destructive">
+                                      <Trash className="mr-2" /> Очистить всё
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Вы уверены?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          Это действие навсегда удалит ваше текущее расписание. Это действие нельзя будет отменить.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                      <AlertDialogAction onClick={handleClearAll} className="bg-destructive hover:bg-destructive/90">Очистить</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                     </div>
 
-                  </div>
+                     <Separator />
+
+                      <div>
+                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Библиотека</h3>
+                         <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" className="justify-start w-full">
+                                <BookOpen className="mr-2" /> Шаблоны
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                              <SavedTemplates 
+                                templates={savedTemplates}
+                                onLoad={(template) => { handleLoadTemplate(template); setIsTemplatesOpen(false); setIsMobileMenuOpen(false); }}
+                                onDelete={handleDeleteTemplate}
+                                onClose={() => setIsTemplatesOpen(false)}
+                                onSaveTemplate={handleSaveTemplate}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                          <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
+                             <DialogTrigger asChild>
+                              <Button variant="ghost" className="justify-start w-full">
+                                <Save className="mr-2" /> Заготовки
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                                <DialogHeader className="p-6 pb-0">
+                                  <DialogTitle>Мои события</DialogTitle>
+                                  <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
+                                </DialogHeader>
+                               <SavedEvents
+                                  savedEvents={savedEvents}
+                                  onAdd={(event) => {
+                                    handleAddNewEvent(event);
+                                    setIsSavedEventsOpen(false);
+                                    setIsMobileMenuOpen(false);
+                                  }}
+                                  onUpdate={handleUpdateSavedEvent}
+                                  onDelete={(id) => {
+                                      updateSavedEvents(savedEvents.filter(e => e.id !== id));
+                                  }}
+                                  onClose={() => setIsSavedEventsOpen(false)}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                      </div>
+
+                    </div>
+                  </ScrollArea>
               </SheetContent>
            </Sheet>
         )}

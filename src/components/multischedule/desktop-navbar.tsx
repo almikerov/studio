@@ -15,6 +15,7 @@ import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
 import { ImageUploader } from './image-uploader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { SavedTemplates } from './saved-templates';
 
 
 const AVAILABLE_LANGUAGES = [
@@ -74,11 +75,10 @@ export function DesktopNavbar({
   setImageUrl,
   onClearAll,
 }: DesktopNavbarProps) {
-    const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
-    const [templateName, setTemplateName] = useState('');
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
     const [apiKeyInput, setApiKeyInput] = useState('');
+    const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
 
      React.useEffect(() => {
         const storedApiKey = localStorage.getItem('gemini-api-key');
@@ -86,14 +86,6 @@ export function DesktopNavbar({
             setApiKeyInput(storedApiKey);
         }
     }, []);
-
-    const handleSaveTemplateClick = () => {
-        if (templateName.trim()) {
-            onSaveTemplate(templateName.trim());
-            setTemplateName('');
-            setIsSaveTemplateDialogOpen(false);
-        }
-    };
     
     const handleAddFromSaved = (event: SavedEvent) => {
         onAddEventFromSaved(event);
@@ -231,59 +223,24 @@ export function DesktopNavbar({
             </MenubarMenu>
 
             <MenubarMenu>
-                <MenubarTrigger>Шаблоны</MenubarTrigger>
+                <MenubarTrigger>Библиотека</MenubarTrigger>
                 <MenubarContent>
-                    <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+                    <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <Save className="mr-2" /> Сохранить текущее
+                                <FolderDown className="mr-2" /> Шаблоны
                             </MenubarItem>
                         </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Сохранить шаблон расписания</DialogTitle>
-                            </DialogHeader>
-                            <div className="py-4">
-                                <Label htmlFor="template-name">Название шаблона</Label>
-                                <Input id="template-name" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
-                            </div>
-                            <DialogFooter>
-                                <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button>
-                            </DialogFooter>
+                        <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                            <SavedTemplates
+                                templates={savedTemplates}
+                                onLoad={(template) => { onLoadTemplate(template); setIsTemplatesOpen(false); }}
+                                onDelete={onDeleteTemplate}
+                                onClose={() => setIsTemplatesOpen(false)}
+                                onSaveTemplate={onSaveTemplate}
+                            />
                         </DialogContent>
                     </Dialog>
-                    <MenubarSub>
-                        <MenubarSubTrigger>
-                            <FolderDown className="mr-2" /> Загрузить
-                        </MenubarSubTrigger>
-                        <MenubarSubContent>
-                            {savedTemplates.length > 0 ? (
-                                savedTemplates.map(template => (
-                                    <MenubarItem key={template.id} onClick={() => onLoadTemplate(template)}>
-                                        {template.name}
-                                    </MenubarItem>
-                                ))
-                            ) : (
-                                <MenubarItem disabled>Нет сохраненных шаблонов</MenubarItem>
-                            )}
-                        </MenubarSubContent>
-                    </MenubarSub>
-                    <MenubarSub>
-                        <MenubarSubTrigger>
-                            <Trash2 className="mr-2" /> Удалить
-                        </MenubarSubTrigger>
-                        <MenubarSubContent>
-                             {savedTemplates.length > 0 ? (
-                                savedTemplates.map(template => (
-                                    <MenubarItem key={template.id} onClick={() => onDeleteTemplate(template.id)}>
-                                        {template.name}
-                                    </MenubarItem>
-                                ))
-                            ) : (
-                                <MenubarItem disabled>Нет шаблонов для удаления</MenubarItem>
-                            )}
-                        </MenubarSubContent>
-                    </MenubarSub>
                     <MenubarSeparator />
                     <MenubarGroup>
                         <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
@@ -319,5 +276,7 @@ export function DesktopNavbar({
   );
 }
 
+
+    
 
     

@@ -4,28 +4,61 @@
 import type { ScheduleTemplate } from '@/app/page';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Trash2 } from 'lucide-react';
-import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Download, Trash2, Save } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useState } from 'react';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface SavedTemplatesProps {
   templates: ScheduleTemplate[];
   onLoad: (template: ScheduleTemplate) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
+  onSaveTemplate: (name: string) => void;
 }
 
-export function SavedTemplates({ templates, onLoad, onDelete, onClose }: SavedTemplatesProps) {
-  
+export function SavedTemplates({ templates, onLoad, onDelete, onClose, onSaveTemplate }: SavedTemplatesProps) {
+  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+
   const handleLoad = (template: ScheduleTemplate) => {
     onLoad(template);
     onClose();
   }
 
+  const handleSaveTemplateClick = () => {
+    if (templateName.trim()) {
+        onSaveTemplate(templateName.trim());
+        setTemplateName('');
+        setIsSaveTemplateDialogOpen(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
-       <DialogHeader className="p-6 border-b">
-        <DialogTitle className="text-2xl font-bold">Мои расписания</DialogTitle>
-        <DialogDescription className="mt-2">Загрузите один из ваших сохраненных шаблонов, чтобы быстро начать работу.</DialogDescription>
+       <DialogHeader className="p-6 border-b flex-row justify-between items-center">
+        <div>
+            <DialogTitle className="text-2xl font-bold">Мои расписания</DialogTitle>
+            <DialogDescription className="mt-2">Загрузите или сохраните шаблон, чтобы быстро начать работу.</DialogDescription>
+        </div>
+        <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
+            <DialogTrigger asChild>
+                <Button><Save className="mr-2" />Сохранить текущее</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Сохранить шаблон расписания</DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="template-name">Название шаблона</Label>
+                    <Input id="template-name" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="например, 'День матча'" onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplateClick()} />
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSaveTemplateClick} disabled={!templateName.trim()}>Сохранить</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
       </DialogHeader>
       
       <div className="flex-1 overflow-y-auto p-6">

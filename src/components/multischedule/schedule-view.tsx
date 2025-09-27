@@ -249,11 +249,6 @@ export function ScheduleView({
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
             <div className="flex items-center gap-2">
-                {isMobile && (
-                    <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
-                        <Menu />
-                    </Button>
-                )}
                 <div data-id="schedule-image-wrapper">
                     <ImageUploader onSetImageUrl={setImageUrl}>
                       <DialogTrigger asChild>
@@ -261,8 +256,8 @@ export function ScheduleView({
                             <Image
                                 src={imageUrl}
                                 alt="Schedule image"
-                                width={80}
-                                height={80}
+                                width={isMobile ? 80 : 96}
+                                height={isMobile ? 80 : 96}
                                 className="object-cover rounded-md aspect-square cursor-pointer"
                                 crossOrigin="anonymous"
                             />
@@ -274,6 +269,11 @@ export function ScheduleView({
                       </DialogTrigger>
                     </ImageUploader>
                 </div>
+                 {isMobile && (
+                    <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
+                        <Menu />
+                    </Button>
+                )}
             </div>
         </div>
       </CardHeader>
