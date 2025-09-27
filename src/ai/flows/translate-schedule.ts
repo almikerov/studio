@@ -78,6 +78,7 @@ Output JSON:`;
 
   for (const apiKey of apiKeys) {
     try {
+      if (!apiKey) continue;
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
@@ -94,7 +95,8 @@ Output JSON:`;
       return TranslateScheduleOutputSchema.parse(parsedJson);
 
     } catch (error) {
-      console.warn(`API key ...${apiKey.slice(-4)} failed. Trying next one.`, error);
+      const keyIdentifier = apiKey ? `...${apiKey.slice(-4)}` : 'INVALID_KEY';
+      console.warn(`API key ${keyIdentifier} failed. Trying next one.`, error);
       lastError = error;
     }
   }
