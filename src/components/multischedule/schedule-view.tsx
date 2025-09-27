@@ -401,7 +401,7 @@ export function ScheduleView({
                                   <EditableField isMobile={isMobile} as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-start gap-2">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -413,13 +413,22 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-
-                                    <EditableField
-                                        isMobile={isMobile}
-                                        value={item.description}
-                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                        className={cn("flex-1 text-card-foreground cursor-pointer truncate", item.type === 'untimed' && 'pl-1 sm:pl-0')}
-                                    />
+                                     <div className="flex-1 flex justify-between gap-4">
+                                        <EditableField
+                                            isMobile={isMobile}
+                                            value={item.description}
+                                            setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                            className={cn("flex-1 text-card-foreground cursor-pointer truncate", item.type === 'untimed' && 'pl-1 sm:pl-0')}
+                                        />
+                                        {item.translation && (
+                                            <EditableField
+                                                isMobile={isMobile}
+                                                value={item.translation}
+                                                setValue={(val) => onUpdateEvent(item.id, { translation: val })}
+                                                className="flex-1 text-card-foreground cursor-pointer truncate text-right text-muted-foreground"
+                                            />
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

@@ -6,14 +6,13 @@ import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
-import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DesktopNavbar } from '@/components/multischedule/desktop-navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -50,6 +49,7 @@ export type ScheduleItem = {
   color?: string;
   type: 'timed' | 'untimed' | 'comment' | 'date' | 'h1' | 'h2' | 'h3';
   date?: string;
+  translation?: string;
 };
 export type TranslatedSchedule = { lang: string; text: string };
 
@@ -76,7 +76,6 @@ const defaultSchedule: ScheduleItem[] = [
 
 export default function Home() {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
-  const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
@@ -92,7 +91,7 @@ export default function Home() {
 
   const isMobile = useIsMobile();
 
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [isAiParserOpen, setIsAiParserOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
@@ -189,7 +188,7 @@ export default function Home() {
         ...newEventConfig,
     };
 
-    if (newEventConfig) { // If it's from a saved event or a typed button
+    if (newEventConfig) { 
         if (newEventConfig.type === 'date') {
             newEvent.time = '';
             newEvent.description = newEventConfig.description || '';
@@ -201,8 +200,12 @@ export default function Home() {
         setSchedule(prev => [...prev, newEvent]);
         setIsAddEventDialogOpen(false); // Close dialog if it was open
     } else {
-        // This is the default "add new blank event" from desktop
-        setSchedule(prev => [...prev, newEvent]);
+        setSchedule(prev => [...prev, {
+          id: `${Date.now()}-${Math.random()}`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          description: '',
+          type: 'timed',
+        }]);
     }
   };
 
@@ -238,13 +241,8 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-    if (schedule.length === 0) {
-      return;
-    }
-    
-    if (selectedLanguages.length === 0) {
-      return;
-    }
+    const itemsToTranslate = schedule.filter(item => item.description && !['date', 'comment'].includes(item.type));
+    if (itemsToTranslate.length === 0) return;
 
     setIsLoading(true);
     setIsMobileMenuOpen(false);
@@ -254,26 +252,20 @@ export default function Home() {
       setIsLoading(false);
       return;
     }
-    
-    const scheduleText = schedule.map(item => `${item.time}: ${item.description}`).join('\n');
 
     try {
-      const result = await translateSchedule({ scheduleText, targetLanguages: selectedLanguages }, apiKey);
-      const newTranslations = Object.entries(result).map(([lang, text]) => ({ lang, text }));
+      const descriptions = itemsToTranslate.map(item => item.description);
+      const result = await translateSchedule({ descriptions, targetLanguage: selectedLanguage }, apiKey);
       
-      // Update existing or add new
-      setTranslatedSchedules(prev => {
-          const updated = [...prev];
-          newTranslations.forEach(newT => {
-              const existingIndex = updated.findIndex(t => t.lang === newT.lang);
-              if (existingIndex > -1) {
-                  updated[existingIndex] = newT;
-              } else {
-                  updated.push(newT);
-              }
-          });
-          return updated;
+      const newSchedule = schedule.map(item => {
+        const translatedItem = result.translations.find(t => t.original === item.description);
+        if (translatedItem) {
+          return { ...item, translation: translatedItem.translated };
+        }
+        return item;
       });
+
+      setSchedule(newSchedule);
 
     } catch (error: any) {
       console.error('Translation failed:', error);
@@ -457,14 +449,6 @@ export default function Home() {
     }, 'image/png');
   };
 
-  const handleDeleteTranslation = (lang: string) => {
-    setTranslatedSchedules(prev => prev.filter(t => t.lang !== lang));
-  };
-
-  const handleUpdateTranslation = (lang: string, newText: string) => {
-    setTranslatedSchedules(prev => prev.map(t => t.lang === lang ? { ...t, text: newText } : t));
-  };
-  
   const handleSaveEvent = (eventData: Partial<ScheduleItem>) => {
     const { description, icon, time, type, color } = eventData;
   
@@ -472,7 +456,6 @@ export default function Home() {
       return;
     }
   
-    // Do not save if an event with the same description already exists
     if (savedEvents.some(e => e.description.toLowerCase() === description.toLowerCase())) {
       return;
     }
@@ -503,7 +486,6 @@ export default function Home() {
     setSchedule(template.schedule.map(item => ({...item, id: `${Date.now()}-${Math.random()}`}))); // new IDs
     setCardTitle(template.cardTitle);
     setImageUrl(template.imageUrl);
-    setTranslatedSchedules([]); // Clear translations
   };
   
   const handleDeleteTemplate = (id: string) => {
@@ -531,20 +513,12 @@ export default function Home() {
       }));
       setSchedule(newScheduleItems);
       setCardTitle(result.cardTitle);
-      setTranslatedSchedules([]);
     } catch (error: any) {
       console.error('AI parsing failed:', error);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleLanguageToggle = (code: string) => {
-    setSelectedLanguages(prev =>
-      prev.includes(code) ? prev.filter(lang => lang !== code) : [...prev, code]
-    );
-  };
-
 
   const handleUpdateSavedEvent = (updatedEvent: SavedEvent) => {
     const newEvents = savedEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e);
@@ -591,7 +565,6 @@ export default function Home() {
     setSchedule(defaultSchedule);
     setCardTitle('Расписание на день');
     setImageUrl(null);
-    setTranslatedSchedules([]);
     setIsMobileMenuOpen(false);
   }
 
@@ -613,8 +586,8 @@ export default function Home() {
             isSavedEventsOpen={isSavedEventsOpen}
             setIsSavedEventsOpen={setIsSavedEventsOpen}
             onAiParse={handleAiParse}
-            selectedLanguages={selectedLanguages}
-            onLanguageToggle={handleLanguageToggle}
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
             onTranslate={handleTranslate}
             isAiParserOpen={isAiParserOpen}
             setIsAiParserOpen={setIsAiParserOpen}
@@ -647,11 +620,6 @@ export default function Home() {
                 setIsAddEventDialogOpen={setIsAddEventDialogOpen}
               />
             </DragDropContext>
-            <TranslatedSchedulesView 
-              translatedSchedules={translatedSchedules}
-              onDelete={handleDeleteTranslation}
-              onUpdate={handleUpdateTranslation}
-            />
           </div>
         
         {/* Render Options Dialog */}
@@ -716,20 +684,16 @@ export default function Home() {
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>Перевод расписания</DialogTitle>
-                                <DialogDescription>Выберите языки для перевода.</DialogDescription>
+                                <DialogDescription>Выберите язык для перевода.</DialogDescription>
                               </DialogHeader>
-                              <div className="grid grid-cols-2 gap-4 py-4">
+                               <RadioGroup value={selectedLanguage} onValueChange={setSelectedLanguage} className="grid grid-cols-2 gap-4 py-4">
                                 {AVAILABLE_LANGUAGES.map(lang => (
                                   <div key={lang.code} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={`lang-mobile-${lang.code}`}
-                                      checked={selectedLanguages.includes(lang.code)}
-                                      onCheckedChange={() => handleLanguageToggle(lang.code)}
-                                    />
+                                    <RadioGroupItem value={lang.code} id={`lang-mobile-${lang.code}`} />
                                     <Label htmlFor={`lang-mobile-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
                                   </div>
                                 ))}
-                              </div>
+                              </RadioGroup>
                               <Button onClick={handleTranslate} disabled={isLoading}>
                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 Перевести
