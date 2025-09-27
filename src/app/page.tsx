@@ -291,7 +291,7 @@ export default function Home() {
 
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
-    clone.querySelectorAll('[data-id="placeholder-icon"]').forEach(el => el.remove());
+    
 
     clone.querySelectorAll('[data-id="icon-container"]').forEach(el => {
         const container = el as HTMLElement;
@@ -470,7 +470,7 @@ export default function Home() {
       description,
       icon,
       time: type === 'timed' ? time : undefined,
-      type: type,
+      type: type as 'timed' | 'untimed',
       color,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
@@ -838,10 +838,6 @@ export default function Home() {
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                                <DialogHeader className="p-6 pb-0">
-                                  <DialogTitle>Мои события</DialogTitle>
-                                  <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
-                                </DialogHeader>
                                <SavedEvents
                                   savedEvents={savedEvents}
                                   onAdd={(event) => {

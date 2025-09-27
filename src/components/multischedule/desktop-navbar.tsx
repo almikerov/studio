@@ -241,34 +241,27 @@ export function DesktopNavbar({
                             />
                         </DialogContent>
                     </Dialog>
-                    <MenubarSeparator />
-                    <MenubarGroup>
-                        <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
-                            <DialogTrigger asChild>
-                                <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                    <FileSignature className="mr-2" /> Заготовки событий
-                                </MenubarItem>
-                            </DialogTrigger>
-                            <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
-                                <DialogHeader className="p-6 pb-0">
-                                  <DialogTitle>Мои события</DialogTitle>
-                                  <DialogDescription>Управляйте вашими сохраненными событиями.</DialogDescription>
-                                </DialogHeader>
-                                <SavedEvents
-                                    savedEvents={savedEvents}
-                                    onAdd={handleAddFromSaved}
-                                    onUpdate={(updatedEvent) => {
-                                        const newEvents = savedEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e);
-                                        updateSavedEvents(newEvents);
-                                    }}
-                                    onDelete={(id) => {
-                                        updateSavedEvents(savedEvents.filter(e => e.id !== id));
-                                    }}
-                                    onClose={() => setIsSavedEventsOpen(false)}
-                                />
-                            </DialogContent>
-                        </Dialog>
-                    </MenubarGroup>
+                    <Dialog open={isSavedEventsOpen} onOpenChange={setIsSavedEventsOpen}>
+                        <DialogTrigger asChild>
+                            <MenubarItem onSelect={(e) => e.preventDefault()}>
+                                <FileSignature className="mr-2" /> Заготовки событий
+                            </MenubarItem>
+                        </DialogTrigger>
+                        <DialogContent className="p-0 max-w-2xl h-[80vh] flex flex-col">
+                            <SavedEvents
+                                savedEvents={savedEvents}
+                                onAdd={handleAddFromSaved}
+                                onUpdate={(updatedEvent) => {
+                                    const newEvents = savedEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+                                    updateSavedEvents(newEvents);
+                                }}
+                                onDelete={(id) => {
+                                    updateSavedEvents(savedEvents.filter(e => e.id !== id));
+                                }}
+                                onClose={() => setIsSavedEventsOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
                 </MenubarContent>
             </MenubarMenu>
         </Menubar>
