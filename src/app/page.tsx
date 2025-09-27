@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -72,6 +72,7 @@ export type ScheduleTemplate = {
 };
 
 export type TranslationDisplayMode = 'inline' | 'block';
+export type RenderOptions = { renderAsMobile?: boolean, fitContent?: boolean };
 
 const defaultSchedule: ScheduleItem[] = [
     { id: `${Date.now()}-${Math.random()}`, time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
@@ -102,7 +103,7 @@ export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
-  const [renderAction, setRenderAction] = useState<(() => void) | null>(null);
+  const [renderAction, setRenderAction] = useState<((options: RenderOptions) => void) | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState('');
 
 
@@ -279,7 +280,7 @@ export default function Home() {
     }
   };
 
-  const generateCanvas = async (options: { renderAsMobile: boolean }): Promise<HTMLCanvasElement | null> => {
+  const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
     const element = printableAreaRef.current;
     if (!element) return null;
   
@@ -294,8 +295,21 @@ export default function Home() {
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';
-    clone.style.width = options.renderAsMobile ? '420px' : '768px';
+
+    if (options.fitContent) {
+        clone.style.width = 'max-content';
+    } else {
+        clone.style.width = options.renderAsMobile ? '420px' : '768px';
+    }
     clone.style.height = 'auto';
+
+    document.body.appendChild(clone);
+    
+    // If fitContent, we measure the width and set it explicitly for html2canvas
+    if (options.fitContent) {
+        const contentWidth = clone.scrollWidth + 2; // add a little buffer
+        clone.style.width = `${contentWidth}px`;
+    }
 
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
@@ -376,7 +390,6 @@ export default function Home() {
         }
     }
 
-    document.body.appendChild(clone);
     
     try {
       const canvas = await html2canvas(clone, {
@@ -396,7 +409,7 @@ export default function Home() {
   };
 
 
-  const handleDownloadImage = async (options: { renderAsMobile: boolean }) => {
+  const handleDownloadImage = async (options: RenderOptions) => {
     const canvas = await generateCanvas(options);
     if (!canvas) return;
     
@@ -406,7 +419,7 @@ export default function Home() {
     link.click();
   };
 
-  const handleCopyImage = async (options: { renderAsMobile: boolean }) => {
+  const handleCopyImage = async (options: RenderOptions) => {
     const canvas = await generateCanvas(options);
     if (!canvas) return;
 
@@ -425,7 +438,7 @@ export default function Home() {
     }
   }
 
-  const handleShareImage = async (options: { renderAsMobile: boolean }) => {
+  const handleShareImage = async (options: RenderOptions) => {
     const canvas = await generateCanvas(options);
     if (!canvas) return;
 
@@ -539,8 +552,8 @@ export default function Home() {
     }
   };
   
-  const openRenderOptions = (action: (options: {renderAsMobile: boolean}) => void) => {
-    setRenderAction(() => (options: { renderAsMobile: boolean }) => {
+  const openRenderOptions = (action: (options: RenderOptions) => void) => {
+    setRenderAction(() => (options: RenderOptions) => {
       action(options);
       setIsRenderOptionsOpen(false);
     });
@@ -640,7 +653,7 @@ export default function Home() {
                     <DialogTitle>Параметры рендеринга</DialogTitle>
                     <DialogDescription>Выберите как вы хотите сохранить изображение.</DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
                     <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false })}>
                         <Laptop className="h-8 w-8" />
                         <span>Десктоп (широкий)</span>
@@ -648,6 +661,10 @@ export default function Home() {
                     <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true })}>
                         <Smartphone className="h-8 w-8" />
                         <span>Мобильный (узкий)</span>
+                    </Button>
+                    <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ fitContent: true })}>
+                        <Ruler className="h-8 w-8" />
+                        <span>По ширине текста</span>
                     </Button>
                 </div>
             </DialogContent>
