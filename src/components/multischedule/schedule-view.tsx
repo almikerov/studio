@@ -47,6 +47,7 @@ interface ScheduleViewProps {
   isAddEventDialogOpen: boolean;
   setIsAddEventDialogOpen: (open: boolean) => void;
   translationDisplayMode: TranslationDisplayMode;
+  selectedLanguages: string[];
 }
 
 export function ScheduleView({ 
@@ -54,10 +55,11 @@ export function ScheduleView({
   imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen,
-  translationDisplayMode
+  translationDisplayMode, selectedLanguages
 }: ScheduleViewProps) {
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [editedTranslations, setEditedTranslations] = useState<Record<string, string>>({});
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const [editedDate, setEditedDate] = useState<Date | undefined>(new Date());
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
@@ -67,6 +69,7 @@ export function ScheduleView({
     if (editingEvent) { // For mobile modal
         setEditedTime(editingEvent.time);
         setEditedDescription(editingEvent.description || '');
+        setEditedTranslations(editingEvent.translations || {});
         setEditedType(editingEvent.type);
         if (editingEvent.type === 'date' && editingEvent.date) {
             setEditedDate(new Date(editingEvent.date));
@@ -87,10 +90,19 @@ export function ScheduleView({
       description: editedDescription,
       type: editedType,
       date: editedType === 'date' && editedDate ? editedDate.toISOString() : undefined,
+      translations: editedTranslations,
     });
     
     if (isMobile) {
       handleCloseEditModal();
+    }
+  };
+
+  const handleTranslationChange = (id: string, lang: string, text: string) => {
+    const item = schedule.find(i => i.id === id);
+    if (item) {
+        const newTranslations = { ...(item.translations || {}), [lang]: text };
+        onUpdateEvent(id, { translations: newTranslations });
     }
   };
 
@@ -138,6 +150,8 @@ export function ScheduleView({
 
     const isCommentLike = ['comment', 'h1', 'h2', 'h3'].includes(editedType);
     const isRegularEvent = !isCommentLike && editedType !== 'date';
+    const isTranslatable = ['timed', 'untimed', 'h1', 'h2', 'h3', 'comment'].includes(editedType);
+
 
     return (
         <div className="flex flex-col gap-4 p-1">
@@ -165,6 +179,20 @@ export function ScheduleView({
                     )
                 )}
             </div>
+
+            {isTranslatable && (
+                <div className="space-y-2">
+                    <Label htmlFor="translation-input" className="text-sm font-medium">Перевод</Label>
+                    <Textarea
+                        id="translation-input"
+                        value={editedTranslations[selectedLanguages[0]] || ''}
+                        onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
+                        className="flex-1 text-base"
+                        rows={3}
+                        placeholder={`Перевод (${selectedLanguages.join(', ')})`}
+                    />
+                </div>
+            )}
 
             {/* Type selector */}
             <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
@@ -359,23 +387,43 @@ export function ScheduleView({
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
                                 <div className='flex-1'>
-                                    <EditableField
-                                        isMobile={isMobile}
-                                        value={item.description}
-                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                        className="text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
-                                        isTextarea={true}
-                                        data-id="description"
-                                    />
-                                     {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <span className="text-muted-foreground ml-2 text-sm italic">
-                                            ({Object.values(item.translations).join(', ')})
-                                        </span>
-                                    )}
-                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                    <div className="flex items-baseline gap-2">
+                                        <EditableField
+                                            isMobile={isMobile}
+                                            value={item.description}
+                                            setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                            className="text-card-foreground text-sm italic text-muted-foreground"
+                                            isTextarea={true}
+                                            data-id="description"
+                                        />
+                                        {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                            <span className="text-muted-foreground text-sm italic">
+                                                ({Object.entries(item.translations).map(([lang, text], idx) => (
+                                                  <EditableField
+                                                      key={lang}
+                                                      isMobile={isMobile}
+                                                      value={text}
+                                                      setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                      className="inline"
+                                                      as="span"
+                                                      isTextarea={false}
+                                                  />
+                                                )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                            </span>
+                                        )}
+                                    </div>
+                                    {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm italic text-muted-foreground mt-1 pl-2">
                                             {Object.entries(item.translations).map(([lang, text]) => (
-                                                <div key={lang}>{text}</div>
+                                                <EditableField
+                                                    key={lang}
+                                                    isMobile={isMobile}
+                                                    value={text}
+                                                    setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                    className="block"
+                                                    as="div"
+                                                    isTextarea={true}
+                                                />
                                             ))}
                                         </div>
                                     )}
@@ -421,16 +469,33 @@ export function ScheduleView({
                                         setValue={(val) => onUpdateEvent(item.id, {description: val})} 
                                         data-id="description"
                                       />
-                                       {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                            <span className="text-muted-foreground font-normal">
-                                                ({Object.values(item.translations).join(', ')})
-                                            </span>
-                                        )}
+                                      {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                          <span className="text-muted-foreground font-normal">
+                                              ({Object.entries(item.translations).map(([lang, text]) => (
+                                                  <EditableField
+                                                      key={lang}
+                                                      isMobile={isMobile}
+                                                      value={text}
+                                                      setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                      className="inline"
+                                                      as="span"
+                                                  />
+                                              )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                          </span>
+                                      )}
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm text-muted-foreground mt-1">
                                             {Object.entries(item.translations).map(([lang, text]) => (
-                                                <div key={lang}>{text}</div>
+                                                <EditableField
+                                                    key={lang}
+                                                    isMobile={isMobile}
+                                                    value={text}
+                                                    setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                    className="block"
+                                                    as="div"
+                                                    isTextarea={true}
+                                                />
                                             ))}
                                         </div>
                                     )}
@@ -463,16 +528,33 @@ export function ScheduleView({
                                                 data-id="description"
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                                 <span className="text-muted-foreground ml-2">
-                                                    ({Object.values(item.translations).join(', ')})
-                                                 </span>
+                                                <span className="text-muted-foreground ml-2">
+                                                    ({Object.entries(item.translations).map(([lang, text]) => (
+                                                        <EditableField
+                                                            key={lang}
+                                                            isMobile={isMobile}
+                                                            value={text}
+                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                            className="inline"
+                                                            as="span"
+                                                        />
+                                                    )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                                </span>
                                             )}
                                         </div>
 
                                         {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                             <div className="text-sm text-muted-foreground mt-1">
                                                 {Object.entries(item.translations).map(([lang, text]) => (
-                                                    <div key={lang}>{text}</div>
+                                                    <EditableField
+                                                      key={lang}
+                                                      isMobile={isMobile}
+                                                      value={text}
+                                                      setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                      className="block"
+                                                      as="div"
+                                                      isTextarea={true}
+                                                  />
                                                 ))}
                                             </div>
                                         )}
@@ -563,6 +645,37 @@ export function ScheduleView({
               </div>
             )}
           </Droppable>
+
+          {(translationDisplayMode === 'text-block' && schedule.some(item => item.translations && Object.keys(item.translations).length > 0)) && (
+            <Card className="mt-4">
+                <CardContent className="p-4">
+                    <pre className="text-sm whitespace-pre-wrap font-sans">
+                        {schedule.map(item => {
+                            if (!item.description && item.type !== 'date') return null;
+                            
+                            const translationText = Object.values(item.translations || {}).join(' / ');
+
+                            switch(item.type) {
+                                case 'timed':
+                                    return `${item.time} ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                case 'untimed':
+                                    return `- ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                case 'h1':
+                                case 'h2':
+                                case 'h3':
+                                    return `\n${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                case 'comment':
+                                    return `// ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                case 'date':
+                                     return item.date ? `\n${format(new Date(item.date), 'PPP', { locale: ru })}${item.description ? ` - ${item.description}`: ''}\n` : '';
+                                default:
+                                    return null;
+                            }
+                        }).join('')}
+                    </pre>
+                </CardContent>
+            </Card>
+        )}
         
         {schedule.length === 0 && (
           <div className="text-center text-muted-foreground py-16">

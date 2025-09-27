@@ -170,14 +170,18 @@ export function DesktopNavbar({
                                  </div>
                                   <div className="space-y-3">
                                       <Label>Стиль отображения</Label>
-                                       <RadioGroup value={translationDisplayMode} onValueChange={(val) => setTranslationDisplayMode(val as TranslationDisplayMode)} className="flex space-x-4">
+                                       <RadioGroup value={translationDisplayMode} onValueChange={(val) => setTranslationDisplayMode(val as TranslationDisplayMode)} className="flex flex-col space-y-2">
                                           <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="inline" id="mode-desktop-inline" />
                                             <Label htmlFor="mode-desktop-inline" className="font-normal cursor-pointer">В скобках</Label>
                                           </div>
                                           <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="block" id="mode-desktop-block" />
-                                            <Label htmlFor="mode-desktop-block" className="font-normal cursor-pointer">Блоком</Label>
+                                            <Label htmlFor="mode-desktop-block" className="font-normal cursor-pointer">Под словом</Label>
+                                          </div>
+                                          <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="text-block" id="mode-desktop-text" />
+                                            <Label htmlFor="mode-desktop-text" className="font-normal cursor-pointer">Текстом</Label>
                                           </div>
                                         </RadioGroup>
                                   </div>
@@ -305,6 +309,7 @@ export function DesktopNavbar({
     
 
     
+
 
 
 

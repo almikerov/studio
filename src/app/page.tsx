@@ -71,7 +71,7 @@ export type ScheduleTemplate = {
   imageUrl: string | null;
 };
 
-export type TranslationDisplayMode = 'inline' | 'block';
+export type TranslationDisplayMode = 'inline' | 'block' | 'text-block';
 export type RenderOptions = { renderAsMobile?: boolean, fitContent?: boolean };
 
 const defaultSchedule: ScheduleItem[] = [
@@ -111,11 +111,13 @@ export default function Home() {
     try {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
-        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode } = JSON.parse(storedState);
+        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode, selectedLanguages: storedLangs } = JSON.parse(storedState);
         setSchedule(schedule || []);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
         if (storedMode) setTranslationDisplayMode(storedMode);
+        if (storedLangs) setSelectedLanguages(storedLangs);
+
       } else {
         setSchedule(defaultSchedule);
       }
@@ -143,12 +145,12 @@ export default function Home() {
         return;
     }
     try {
-        const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode };
+        const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
     } catch (error) {
         console.error("Failed to save state to localStorage", error);
     }
-  }, [schedule, cardTitle, imageUrl, translationDisplayMode]);
+  }, [schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages]);
   
   const updateSavedEvents = (newSavedEvents: SavedEvent[]) => {
     setSavedEvents(newSavedEvents);
@@ -247,7 +249,7 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-    const itemsToTranslate = schedule.filter(item => item.description && item.type !== 'date');
+    const itemsToTranslate = schedule.filter(item => item.description && ['timed', 'untimed', 'comment', 'h1', 'h2', 'h3'].includes(item.type));
     if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
 
     setIsLoading(true);
@@ -268,7 +270,8 @@ export default function Home() {
         if (translatedItem) {
           return { ...item, translations: translatedItem.translations };
         }
-        return { ...item, translations: {} };
+        // Don't clear old translations if this item wasn't part of the current batch
+        return item; 
       });
 
       setSchedule(newSchedule);
@@ -647,6 +650,7 @@ export default function Home() {
                 isAddEventDialogOpen={isAddEventDialogOpen}
                 setIsAddEventDialogOpen={setIsAddEventDialogOpen}
                 translationDisplayMode={translationDisplayMode}
+                selectedLanguages={selectedLanguages}
               />
             </DragDropContext>
           </div>
@@ -741,14 +745,18 @@ export default function Home() {
                                  </div>
                                   <div className="space-y-3">
                                       <Label>Стиль отображения</Label>
-                                       <RadioGroup value={translationDisplayMode} onValueChange={(val) => setTranslationDisplayMode(val as TranslationDisplayMode)} className="flex space-x-4">
+                                       <RadioGroup value={translationDisplayMode} onValueChange={(val) => setTranslationDisplayMode(val as TranslationDisplayMode)} className="flex flex-col space-y-2">
                                           <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="inline" id="mode-mobile-inline" />
                                             <Label htmlFor="mode-mobile-inline" className="font-normal cursor-pointer">В скобках</Label>
                                           </div>
                                           <div className="flex items-center space-x-2">
                                             <RadioGroupItem value="block" id="mode-mobile-block" />
-                                            <Label htmlFor="mode-mobile-block" className="font-normal cursor-pointer">Блоком</Label>
+                                            <Label htmlFor="mode-mobile-block" className="font-normal cursor-pointer">Под словом</Label>
+                                          </div>
+                                           <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="text-block" id="mode-mobile-text" />
+                                            <Label htmlFor="mode-mobile-text" className="font-normal cursor-pointer">Текстом</Label>
                                           </div>
                                         </RadioGroup>
                                   </div>
