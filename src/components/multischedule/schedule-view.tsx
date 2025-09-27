@@ -475,7 +475,7 @@ export function ScheduleView({
                                       )}
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm text-muted-foreground">
+                                        <div className="text-sm text-muted-foreground mt-1">
                                             {Object.entries(item.translations).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
@@ -659,6 +659,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
