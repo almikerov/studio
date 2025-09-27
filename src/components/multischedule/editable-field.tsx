@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -99,3 +100,5 @@ export const EditableField = ({
 
   return <Component onClick={handleClick} className={`${className} ${!isMobile ? 'cursor-pointer' : ''} min-h-[1em]`} {...props}>{value || placeholder}</Component>
 }
+
+    

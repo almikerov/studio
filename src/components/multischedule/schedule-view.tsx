@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -173,7 +174,7 @@ export function ScheduleView({
                         value={editedTranslations[selectedLanguages[0]] || ''}
                         onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
                         className="text-base h-10"
-                        placeholder={`Перевод (${selectedLanguages.join(', ')})`}
+                        placeholder="Перевод"
                     />
                 )}
             </div>
@@ -464,6 +465,7 @@ export function ScheduleView({
                                                       setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                       className="inline"
                                                       as="span"
+                                                      isTextarea={true}
                                                   />
                                               )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                           </span>
@@ -479,7 +481,7 @@ export function ScheduleView({
                                                     setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                     className="block"
                                                     as="div"
-                                                    isTextarea={false}
+                                                    isTextarea={true}
                                                 />
                                             ))}
                                         </div>
@@ -511,6 +513,7 @@ export function ScheduleView({
                                                 className="inline"
                                                 as="span"
                                                 data-id="description"
+                                                isTextarea={true}
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <span className="text-muted-foreground">
@@ -522,6 +525,7 @@ export function ScheduleView({
                                                             setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                             className="inline"
                                                             as="span"
+                                                            isTextarea={true}
                                                         />
                                                     )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                                 </span>
@@ -538,7 +542,7 @@ export function ScheduleView({
                                                       setValue={(val) => handleTranslationChange(item.id, lang, val)}
                                                       className="block"
                                                       as="div"
-                                                      isTextarea={false}
+                                                      isTextarea={true}
                                                   />
                                                 ))}
                                             </div>
@@ -684,3 +688,5 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    

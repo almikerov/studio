@@ -61,18 +61,16 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew,
 
   return (
     <div className="flex flex-col h-full">
-      <DialogHeader className="p-6 border-b block sm:flex sm:flex-row justify-between items-center">
-        <div className="mb-4 sm:mb-0">
-          <DialogTitle className="text-2xl font-bold">Мои заготовки</DialogTitle>
-          <DialogDescription className="mt-2 text-sm sm:text-base">Добавьте событие в расписание или создайте новое.</DialogDescription>
-        </div>
-        <Button onClick={startCreating} className="w-full sm:w-auto">
-            <PlusCircle className="mr-2"/>
-            Создать
-        </Button>
+      <DialogHeader className="p-6 border-b">
+        <DialogTitle className="text-2xl font-bold">Мои заготовки</DialogTitle>
+        <DialogDescription className="mt-2 text-sm sm:text-base">Добавьте событие в расписание или создайте новое.</DialogDescription>
       </DialogHeader>
       
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-2">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+        <Button onClick={startCreating} className="w-full sm:w-auto" size="lg">
+            <PlusCircle className="mr-2"/>
+            Создать заготовку
+        </Button>
         {savedEvents.length > 0 ? (
           <ul className="space-y-2">
             {savedEvents.map(event => (
@@ -212,3 +210,5 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
         </DialogContent>
     );
 }
+
+    

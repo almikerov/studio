@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ScheduleTemplate } from '@/app/page';
@@ -37,14 +38,15 @@ export function SavedTemplates({ templates, onLoad, onDelete, onClose, onSaveTem
 
   return (
     <div className="flex flex-col h-full">
-       <DialogHeader className="p-6 border-b block sm:flex sm:flex-row justify-between items-center">
-        <div className="mb-4 sm:mb-0">
-            <DialogTitle className="text-2xl font-bold">Мои расписания</DialogTitle>
-            <DialogDescription className="mt-2 text-sm sm:text-base">Загрузите или сохраните шаблон.</DialogDescription>
-        </div>
+       <DialogHeader className="p-6 border-b">
+        <DialogTitle className="text-2xl font-bold">Мои расписания</DialogTitle>
+        <DialogDescription className="mt-2 text-sm sm:text-base">Загрузите или сохраните шаблон.</DialogDescription>
+      </DialogHeader>
+      
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
         <Dialog open={isSaveTemplateDialogOpen} onOpenChange={setIsSaveTemplateDialogOpen}>
             <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto"><Save className="mr-2" />Сохранить текущее</Button>
+                <Button className="w-full sm:w-auto" size="lg"><Save className="mr-2" />Сохранить текущее расписание</Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -59,9 +61,6 @@ export function SavedTemplates({ templates, onLoad, onDelete, onClose, onSaveTem
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-      </DialogHeader>
-      
-      <div className="flex-1 overflow-y-auto p-6">
         {templates.length > 0 ? (
           <ul className="space-y-4">
             {templates.map(template => (
@@ -87,3 +86,5 @@ export function SavedTemplates({ templates, onLoad, onDelete, onClose, onSaveTem
     </div>
   );
 }
+
+    
