@@ -3,7 +3,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
@@ -29,7 +28,9 @@ import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-ico
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-
+import { ICONS as iconPaths } from '@/components/multischedule/icon-paths';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 export const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
@@ -55,7 +56,7 @@ export type ScheduleItem = {
 export type TranslatedSchedule = { lang: string; text: string };
 
 export type SavedEvent = {
-  id: string;
+  id:string;
   description: string;
   icon?: IconName;
   time?: string;
@@ -294,151 +295,208 @@ export default function Home() {
   };
 
   const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
-    const element = printableAreaRef.current;
-    if (!element) return null;
-  
     setIsDownloading(true);
   
-    // Use a temporary class to modify styles just for rendering
-    element.classList.add('cloned-for-rendering');
+    // --- CONFIG ---
+    const scale = 2;
+    const cardWidth = options.renderAsMobile ? 420 : 768;
+    const padding = options.renderAsMobile ? 16 : 24;
+    let contentWidth = cardWidth - padding * 2;
   
-    if (options.renderAsMobile) {
-      element.classList.add('render-mobile-padding');
-    }
+    const headerImageSize = options.renderAsMobile ? 40 : 96;
+    const headerTopPadding = padding;
+    const headerBottomPadding = options.renderAsMobile ? 8 : 16;
   
-    const originalWidth = element.style.width;
-    if (options.fitContent) {
-      element.style.width = 'max-content';
-    } else {
-      element.style.width = options.renderAsMobile ? '420px' : '768px';
-    }
-  
-    if (options.fitContent) {
-      const contentWidth = element.scrollWidth + 2; 
-      element.style.width = `${contentWidth}px`;
-    }
-  
-    // Find all elements that should not be printed and temporarily hide them
-    const noPrintElements = element.querySelectorAll('[data-no-print="true"], [data-drag-handle="true"], #card-footer, [data-mobile-arrow]');
-    noPrintElements.forEach(el => (el as HTMLElement).style.display = 'none');
-  
-    element.querySelectorAll('[data-id="icon-container"]').forEach(el => {
-      const container = el as HTMLElement;
-      if (container.dataset.hasIcon === 'false') {
-        container.style.visibility = 'hidden';
+    const rowHeight = 44;
+    const iconContainerSize = 32;
+    const iconSize = 16;
+    const iconLeftMargin = 8;
+    const textLeftMargin = iconLeftMargin + iconContainerSize + 8;
+    
+    // Colors (assuming dark mode is off for simplicity, can be improved)
+    const colors = {
+      background: '#FFFFFF',
+      text: '#09090b',
+      muted: '#71717a',
+      cardBackground: '#FFFFFF',
+      rowColors: {
+        'red': '#fee2e2', 'orange': '#ffedd5', 'yellow': '#fef9c3',
+        'green': '#dcfce7', 'blue': '#dbeafe', 'purple': '#ede9fe', 'gray': '#f4f4f5'
       }
-    });
-  
-    if (!imageUrl) {
-      const placeholder = element.querySelector('[data-id="image-placeholder"]');
-      if (placeholder) (placeholder as HTMLElement).style.display = 'none';
-    }
-  
-    element.querySelectorAll('.truncate').forEach(el => {
-      el.classList.remove('truncate');
-    });
-  
-    const content = element.querySelector<HTMLDivElement>('[data-schedule-content]');
-    const originalContentStyle = { height: content?.style.height, maxHeight: content?.style.maxHeight, overflow: content?.style.overflow };
-    if (content) {
-      content.style.height = 'auto';
-      content.style.maxHeight = 'none';
-      content.style.overflow = 'visible';
-    }
-  
-    // Add padding to the bottom to avoid cutting off content
-    const card = element.querySelector<HTMLDivElement>('.shadow-lg');
-    const originalCardPadding = card?.style.paddingBottom;
-    if(card) {
-        card.style.paddingBottom = '32px';
-    }
-
-    const imageWrapper = element.querySelector('[data-id="schedule-image-wrapper"]');
-    const imageElement = imageWrapper?.querySelector('img');
-    let originalImageSrc: string | undefined;
-    if(imageElement) {
-        originalImageSrc = imageElement.src;
-    }
-  
-    const loadImageAsBase64 = (url: string): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const img = new window.Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Failed to get canvas context'));
-            return;
-          }
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = (e) => {
-          console.error("Image load error:", e);
-          reject(new Error(`Failed to load image at ${url}`));
-        };
-        img.src = url;
-      });
     };
   
-    if (imageElement && imageUrl) {
-      try {
-        const base64Url = await loadImageAsBase64(imageUrl);
-        imageElement.src = base64Url;
-      } catch (error) {
-        console.error(error);
-      }
+    // --- MEASUREMENT PASS ---
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+  
+    // Measure title height
+    ctx.font = `bold ${24 * scale}px Arial`;
+    const titleLines = getWrappedTextLines(ctx, cardTitle, contentWidth - (imageUrl ? headerImageSize + 16 : 0), scale);
+    const titleHeight = titleLines.length * 28 * scale;
+    const headerHeight = Math.max(headerImageSize, titleHeight) + headerTopPadding + headerBottomPadding;
+  
+    // Measure schedule height
+    let scheduleHeight = schedule.length * rowHeight * scale;
+  
+    // Calculate total height
+    const totalHeight = headerHeight + scheduleHeight + padding * scale;
+    
+    // Setup final canvas
+    canvas.width = cardWidth * scale;
+    canvas.height = totalHeight;
+    ctx.scale(scale, scale);
+  
+    // --- DRAWING PASS ---
+  
+    // Draw background
+    ctx.fillStyle = colors.background;
+    ctx.fillRect(0, 0, cardWidth, totalHeight / scale);
+  
+    // Draw card background
+    ctx.fillStyle = colors.cardBackground;
+    ctx.fillRect(0, 0, cardWidth, totalHeight / scale);
+  
+    // Draw Header Image (if exists)
+    let imagePromise = Promise.resolve<HTMLImageElement | null>(null);
+    if (imageUrl) {
+        imagePromise = new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = imageUrl;
+        });
     }
   
-    let canvas: HTMLCanvasElement | null = null;
-    try {
-      canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: null,
-      });
-    } catch (err) {
-      console.error("Error generating canvas: ", err);
-    } finally {
-      // --- Cleanup ---
-      element.classList.remove('cloned-for-rendering', 'render-mobile-padding');
-      element.style.width = originalWidth;
-      if(card) {
-        card.style.paddingBottom = originalCardPadding || '';
-      }
-      noPrintElements.forEach(el => (el as HTMLElement).style.display = '');
-      
-      element.querySelectorAll('[data-id="icon-container"]').forEach(el => {
-          (el as HTMLElement).style.visibility = '';
-      });
-  
-      if (!imageUrl) {
-        const placeholder = element.querySelector('[data-id="image-placeholder"]');
-        if (placeholder) (placeholder as HTMLElement).style.display = '';
-      }
-  
-      element.querySelectorAll('.truncate').forEach(el => {
-        // This is tricky, maybe better to just leave it. Assuming it's fine.
-      });
-  
-      if (content) {
-        content.style.height = originalContentStyle.height || '';
-        content.style.maxHeight = originalContentStyle.maxHeight || '';
-        content.style.overflow = originalContentStyle.overflow || '';
-      }
-       if (imageElement && originalImageSrc) {
-        imageElement.src = originalImageSrc;
-      }
-  
-      setIsDownloading(false);
+    const loadedImage = await imagePromise;
+    if (loadedImage) {
+        ctx.save();
+        roundedRect(ctx, cardWidth - padding - headerImageSize, headerTopPadding, headerImageSize, headerImageSize, 6);
+        ctx.clip();
+        ctx.drawImage(loadedImage, cardWidth - padding - headerImageSize, headerTopPadding, headerImageSize, headerImageSize);
+        ctx.restore();
     }
   
+    // Draw Title
+    ctx.fillStyle = colors.text;
+    ctx.font = `bold 24px Arial`;
+    ctx.textBaseline = 'top';
+    titleLines.forEach((line, i) => {
+        ctx.fillText(line, padding, headerTopPadding + i * 28);
+    });
+  
+    // --- Draw Schedule Items ---
+    let currentY = headerHeight / scale;
+  
+    for (const item of schedule) {
+        const rowY = currentY;
+  
+        // Draw row background color
+        if (item.color && colors.rowColors[item.color as keyof typeof colors.rowColors]) {
+            ctx.fillStyle = colors.rowColors[item.color as keyof typeof colors.rowColors];
+            ctx.fillRect(padding, rowY, contentWidth, rowHeight);
+        }
+  
+        const rowCenterY = rowY + rowHeight / 2;
+  
+        // Draw Icon
+        if (item.icon && ['timed', 'untimed'].includes(item.type)) {
+            const iconX = padding + iconLeftMargin + (iconContainerSize - iconSize) / 2;
+            const iconY = rowCenterY - iconSize / 2;
+            drawIcon(ctx, item.icon, iconX, iconY, iconSize, colors.muted);
+        }
+  
+        let currentX = padding + textLeftMargin;
+        ctx.textBaseline = 'middle';
+  
+        if (item.type === 'timed') {
+            ctx.font = `600 16px "ui-monospace", "monospace"`;
+            ctx.fillStyle = colors.text;
+            ctx.fillText(item.time, currentX, rowCenterY);
+            currentX += ctx.measureText(item.time).width + 16;
+        }
+  
+        ctx.fillStyle = colors.text;
+        if (item.type === 'comment') {
+            ctx.font = `italic 14px Arial`;
+            ctx.fillStyle = colors.muted;
+            ctx.fillText(item.description, currentX, rowCenterY);
+        } else if (item.type === 'date' && item.date) {
+            ctx.font = `600 18px Arial`;
+            ctx.fillStyle = colors.muted;
+            const dateText = format(new Date(item.date), 'dd.MM.yyyy', { locale: ru });
+            ctx.fillText(dateText, padding, rowCenterY); // date starts from the left edge
+            currentX = padding + ctx.measureText(dateText).width + 8;
+            if(item.description) {
+              ctx.font = `16px Arial`;
+              ctx.fillText(item.description, currentX, rowCenterY);
+            }
+        } else if (item.type === 'h1' || item.type === 'h2' || item.type === 'h3') {
+            const fontSize = item.type === 'h1' ? 20 : item.type === 'h2' ? 18 : 16;
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.fillText(item.description, padding, rowCenterY); // headers start from left edge
+        } else { // timed and untimed description
+            ctx.font = `16px Arial`;
+            ctx.fillText(item.description, currentX, rowCenterY);
+        }
+  
+        currentY += rowHeight;
+    }
+  
+    setIsDownloading(false);
     return canvas;
   };
+  
+  // Helper to draw a rounded rectangle
+  function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+  
+  // Helper to wrap text
+  function getWrappedTextLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, scale: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = words[0];
+  
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width / scale;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
+  }
+
+  function drawIcon(ctx: CanvasRenderingContext2D, iconName: IconName, x: number, y: number, size: number, color: string) {
+    const pathData = iconPaths[iconName];
+    if (!pathData) return;
+
+    const path = new Path2D(pathData.path);
+    const scale = size / pathData.viewBox;
+
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    ctx.fill(path);
+    ctx.restore();
+}
 
 
   const handleDownloadImage = async (options: RenderOptions) => {

@@ -53,7 +53,7 @@ const SoccerBall = (props: LucideProps) => (
 );
 
 
-export const ICONS = {
+const ICONS_COMPONENTS = {
   'football-field': FootballField,
   dumbbell: Dumbbell,
   passport: PassportIcon,
@@ -73,7 +73,10 @@ export const ICONS = {
   shirt: Shirt,
 };
 
-export type IconName = keyof typeof ICONS;
+export type IconName = keyof typeof ICONS_COMPONENTS;
+
+export const ICONS = Object.keys(ICONS_COMPONENTS) as IconName[];
+
 
 interface ScheduleEventIconProps extends LucideProps {
   icon: IconName;
@@ -83,7 +86,7 @@ export const ScheduleEventIcon = ({
   icon,
   ...props
 }: ScheduleEventIconProps) => {
-  const IconComponent = ICONS[icon];
+  const IconComponent = ICONS_COMPONENTS[icon];
   if (!IconComponent) return null;
   return <IconComponent {...props} />;
 };
