@@ -323,7 +323,7 @@ export function ScheduleView({
                     </Button>
                 )}
                 <div className="relative">
-                    <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? (open) => { if (!open) setIsMobileMenuOpen(false) } : undefined} >
+                    <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? (open) => { if (!open) setIsMobileMenuOpen(false) } : undefined}>
                         <div className="absolute inset-0 cursor-pointer" data-no-print="true" />
                     </ImageUploader>
                     {imageUrl ? (
@@ -336,7 +336,7 @@ export function ScheduleView({
                             crossOrigin="anonymous"
                         />
                     ) : (
-                        <div className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square", isMobile ? "w-20 h-20" : "w-24 h-24")}>
+                         <div className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square cursor-pointer", isMobile ? "w-20 h-20" : "w-24 h-24")}>
                            <ImagePlus className="h-8 w-8 text-muted-foreground" />
                         </div>
                     )}
@@ -362,7 +362,7 @@ export function ScheduleView({
                         )}
                         onClick={() => editingId !== item.id && handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle className={cn("cursor-grab active:cursor-grabbing p-2 flex")}>
+                         <div {...provided.dragHandleProps} data-drag-handle="true" className={cn("cursor-grab active:cursor-grabbing p-2 flex")}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
                          </div>
                          
@@ -602,3 +602,6 @@ export function ScheduleView({
 
 
 
+
+
+    

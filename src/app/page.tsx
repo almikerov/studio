@@ -231,12 +231,10 @@ export default function Home() {
 
   const handleTranslate = async () => {
     if (schedule.length === 0) {
-      console.error('Error: Your schedule is empty.');
       return;
     }
     
     if (selectedLanguages.length === 0) {
-      console.log('No translation needed: No languages selected.');
       return;
     }
 
@@ -245,7 +243,6 @@ export default function Home() {
 
     const apiKey = localStorage.getItem('gemini-api-key');
     if (!apiKey) {
-      console.error('Error: API key not found.');
       setIsLoading(false);
       return;
     }
@@ -293,6 +290,7 @@ export default function Home() {
     clone.style.height = 'auto';
 
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
+    clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
     
     const footer = clone.querySelector('#card-footer');
     if (footer) footer.remove();
@@ -399,7 +397,6 @@ export default function Home() {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        console.log("Copied image to clipboard.");
       }, 'image/png');
     } catch (err) {
       console.error("Ошибка копирования в буфер обмена: ", err);
@@ -412,7 +409,6 @@ export default function Home() {
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        console.error("Error: Failed to create blob for sharing.");
         return;
       }
       const file = new File([blob], "multischedule.png", { type: "image/png" });
@@ -425,9 +421,7 @@ export default function Home() {
       if (navigator.canShare && navigator.canShare(data)) {
         try {
           await navigator.share(data);
-          console.log("Shared successfully.");
         } catch (error) {
-          console.error("Ошибка отправки: ", error);
           if ((error as Error).name !== 'AbortError') {
             console.error("Share failed.");
           }
@@ -497,7 +491,6 @@ export default function Home() {
 
     const apiKey = localStorage.getItem('gemini-api-key');
     if (!apiKey) {
-      console.error('Error: API key not found.');
       setIsLoading(false);
       return;
     }
@@ -912,4 +905,6 @@ export default function Home() {
 }
 
     
+    
+
     
