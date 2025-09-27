@@ -59,7 +59,6 @@ export function ScheduleView({
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
   const [editedDate, setEditedDate] = useState<Date | undefined>(new Date());
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
-  const [lastAdded, setLastAdded] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -120,13 +119,6 @@ export function ScheduleView({
         setEditedType(type);
     }
   };
-
-  const handleAddNewEventAndEdit = () => {
-    const newId = Date.now().toString() + Math.random();
-    onAddNewEvent({id: newId, type: 'timed'});
-    setLastAdded(newId);
-  }
-
   
   const renderEditContent = (item: ScheduleItem) => {
     const handleSaveToPreset = () => {
@@ -162,10 +154,10 @@ export function ScheduleView({
                             placeholder="Комментарий или заголовок"
                         />
                     ) : (
-                        <Input
+                         <Input
                             value={editedDescription}
                             onChange={(e) => setEditedDescription(e.target.value)}
-                            className="flex-1 text-base h-auto"
+                            className="flex-1 text-base h-10"
                             placeholder="Описание события"
                         />
                     )
@@ -250,7 +242,7 @@ export function ScheduleView({
              { isRegularEvent && (
                 <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground ml-1">Цвет</Label>
-                    <div className="flex gap-2 justify-around flex-wrap">
+                    <div className="grid grid-cols-4 gap-2">
                       <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
                           <div className="h-6 w-6 rounded-full border" />
                       </Button>
@@ -359,7 +351,7 @@ export function ScheduleView({
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
-                           ) : <div /> }
+                           ) : <div className="w-8 h-8"/> }
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
