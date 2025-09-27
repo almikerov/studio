@@ -286,11 +286,11 @@ export function ScheduleView({
             <div className="flex-1">
                 <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
-             <div className="flex items-center gap-2">
-                 <div data-id="schedule-image-wrapper">
-                    {imageUrl ? (
-                        <ImageUploader onSetImageUrl={setImageUrl}>
-                             <Button asChild variant="ghost" className="p-0 h-auto w-auto cursor-pointer">
+             <div className="flex items-center gap-2" data-id="schedule-image-wrapper">
+                 {imageUrl ? (
+                    <ImageUploader onSetImageUrl={setImageUrl}>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" className="p-0 h-auto w-auto cursor-pointer">
                                 <Image
                                     src={imageUrl}
                                     alt="Schedule image"
@@ -299,16 +299,18 @@ export function ScheduleView({
                                     className="object-cover rounded-md aspect-square"
                                     crossOrigin="anonymous"
                                 />
-                             </Button>
-                        </ImageUploader>
-                    ) : (
-                        <ImageUploader onSetImageUrl={setImageUrl}>
-                             <Button variant="ghost" size="icon">
+                            </Button>
+                        </DialogTrigger>
+                    </ImageUploader>
+                 ) : (
+                    <ImageUploader onSetImageUrl={setImageUrl}>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
                                 <ImagePlus className="h-6 w-6 text-muted-foreground" />
                             </Button>
-                        </ImageUploader>
-                    )}
-                </div>
+                        </DialogTrigger>
+                    </ImageUploader>
+                 )}
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -348,15 +350,15 @@ export function ScheduleView({
                          )}
 
                         <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                            {item.icon ? (
+                           {['timed', 'untimed'].includes(item.type) ? (
                                 <IconDropdown
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
-                            ) : (
-                                <div data-no-icon-placeholder={!item.icon}/>
-                            )
-                            }
+                           ) : (
+                               <div data-no-icon-placeholder={!item.icon}/>
+                           )
+                           }
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
