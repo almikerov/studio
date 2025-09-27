@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -71,7 +70,7 @@ export type ScheduleTemplate = {
 };
 
 const defaultSchedule: ScheduleItem[] = [
-    { id: '0', time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
+    { id: `${Date.now()}-${Math.random()}`, time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
 ];
 
 export default function Home() {
@@ -176,7 +175,7 @@ export default function Home() {
   
   const handleAddNewEvent = (newEventConfig?: Partial<ScheduleItem>) => {
     const newEvent: ScheduleItem = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random()}`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       description: 'Новое событие',
       type: 'timed',
@@ -463,7 +462,7 @@ export default function Home() {
     }
 
     const newSavedEvent: SavedEvent = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random()}`,
       description,
       icon,
       time: type === 'timed' ? time : undefined,
@@ -475,7 +474,7 @@ export default function Home() {
 
   const handleSaveTemplate = (name: string) => {
     const newTemplate: ScheduleTemplate = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random()}`,
       name,
       schedule,
       cardTitle,
@@ -485,7 +484,7 @@ export default function Home() {
   };
   
   const handleLoadTemplate = (template: ScheduleTemplate) => {
-    setSchedule(template.schedule.map(item => ({...item, id: Date.now().toString() + Math.random()}))); // new IDs
+    setSchedule(template.schedule.map(item => ({...item, id: `${Date.now()}-${Math.random()}`}))); // new IDs
     setCardTitle(template.cardTitle);
     setImageUrl(template.imageUrl);
     setTranslatedSchedules([]); // Clear translations
@@ -510,7 +509,7 @@ export default function Home() {
       const result = await parseScheduleFromText({ text }, apiKey);
       const newScheduleItems = result.schedule.map(item => ({
         ...item,
-        id: Date.now().toString() + Math.random(),
+        id: `${Date.now()}-${Math.random()}`,
         type: item.time ? 'timed' : 'untimed',
       } as ScheduleItem));
       setSchedule(newScheduleItems);
@@ -609,7 +608,6 @@ export default function Home() {
             savedEvents={savedEvents}
             onAddEventFromSaved={(event) => {
               handleAddNewEvent(event);
-              setIsSavedEventsOpen(false);
             }}
             updateSavedEvents={updateSavedEvents}
             isSavedEventsOpen={isSavedEventsOpen}
@@ -831,8 +829,6 @@ export default function Home() {
                                   savedEvents={savedEvents}
                                   onAdd={(event) => {
                                     handleAddNewEvent(event);
-                                    setIsSavedEventsOpen(false);
-                                    setIsMobileMenuOpen(false);
                                   }}
                                   onUpdate={handleUpdateSavedEvent}
                                   onDelete={(id) => {
@@ -879,3 +875,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
