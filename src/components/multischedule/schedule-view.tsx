@@ -401,7 +401,7 @@ export function ScheduleView({
                                   <EditableField isMobile={isMobile} as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : (
-                                <div className="flex items-start gap-2">
+                                <div className="flex items-center gap-2">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -414,7 +414,7 @@ export function ScheduleView({
                                         </div>
                                      )}
                                      <div className="flex-1 flex justify-between gap-4">
-                                        <p className={cn("flex-1 text-card-foreground cursor-pointer truncate", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                        <p className={cn("flex-1 text-card-foreground cursor-pointer", item.type === 'untimed' && 'pl-1 sm:pl-0', !item.translation && 'truncate')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
@@ -515,7 +515,7 @@ export function ScheduleView({
                     <Button
                       variant="ghost"
                       className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
-                      onClick={() => setIsAddEventDialogOpen(true)}
+                      onClick={() => onAddNewEvent()}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
