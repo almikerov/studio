@@ -132,9 +132,11 @@ export function DesktopNavbar({
                 <MenubarTrigger>Инструменты</MenubarTrigger>
                 <MenubarContent>
                     <ImageUploader onSetImageUrl={setImageUrl}>
-                       <MenubarItem onSelect={(e) => e.preventDefault()}>
-                            <ImagePlus className="mr-2" /> Изменить изображение
-                       </MenubarItem>
+                       <DialogTrigger asChild>
+                            <MenubarItem onSelect={(e) => e.preventDefault()}>
+                                <ImagePlus className="mr-2" /> Изменить изображение
+                            </MenubarItem>
+                       </DialogTrigger>
                     </ImageUploader>
                     <Dialog open={isTranslateDialogOpen} onOpenChange={setIsTranslateDialogOpen}>
                         <DialogTrigger asChild>

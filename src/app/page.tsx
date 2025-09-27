@@ -291,6 +291,8 @@ export default function Home() {
 
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => el.remove());
     clone.querySelectorAll('[data-drag-handle="true"]').forEach(el => el.remove());
+    clone.querySelectorAll('[data-id="placeholder-icon"]').forEach(el => el.remove());
+
     
     const footer = clone.querySelector('#card-footer');
     if (footer) footer.remove();
@@ -706,9 +708,11 @@ export default function Home() {
                      <div>
                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Изображение</h3>
                        <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={(open) => { if (!open) setIsMobileMenuOpen(false) }}>
-                         <Button variant="ghost" className="justify-start w-full">
-                           <ImagePlus className="mr-2" /> Изменить изображение
-                         </Button>
+                         <DialogTrigger asChild>
+                            <Button variant="ghost" className="justify-start w-full">
+                               <ImagePlus className="mr-2" /> Изменить изображение
+                            </Button>
+                         </DialogTrigger>
                        </ImageUploader>
                      </div>
 

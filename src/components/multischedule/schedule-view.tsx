@@ -256,8 +256,9 @@ export function ScheduleView({
                 )}
                 <div data-id="schedule-image-wrapper">
                     <ImageUploader onSetImageUrl={setImageUrl}>
-                        <div className="relative cursor-pointer">
-                             {imageUrl ? (
+                        <DialogTrigger asChild>
+                            <div className="relative cursor-pointer">
+                                {imageUrl ? (
                                 <Image
                                     src={imageUrl}
                                     alt="Schedule image"
@@ -266,12 +267,13 @@ export function ScheduleView({
                                     className="object-cover rounded-md aspect-square"
                                     crossOrigin="anonymous"
                                 />
-                            ) : (
-                                 <div data-id="image-placeholder" className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square", isMobile ? "w-20 h-20" : "w-24 h-24")}>
-                                   <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                                ) : (
+                                <div data-id="image-placeholder" className="p-2" data-no-print="true">
+                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
                                 </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        </DialogTrigger>
                     </ImageUploader>
                 </div>
             </div>

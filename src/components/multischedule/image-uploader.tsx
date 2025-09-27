@@ -55,13 +55,9 @@ export function ImageUploader({ children, onSetImageUrl, onOpenChange }: ImageUp
     if(onOpenChange) onOpenChange(open);
   }
   
-  const Trigger = children ? DialogTrigger : Button;
-  
   return (
     <Dialog open={dialogOpen} onOpenChange={handleOpen}>
-       <Trigger asChild={!!children} id="image-uploader-trigger" data-no-print="true">
-          {children || <Button variant="ghost" size="icon"><ImagePlus className="h-5 w-5" /></Button>}
-       </Trigger>
+       {children}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Изменить изображение</DialogTitle>
