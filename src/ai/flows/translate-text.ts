@@ -48,14 +48,18 @@ Output JSON:`;
   
   const result = await model.generateContent(prompt);
   const response = await result.response;
-  const text = response.text();
+  const rawText = response.text();
   
   try {
-    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsedJson = JSON.parse(cleanedText);
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("No JSON object found in the AI response.");
+    }
+    const jsonString = jsonMatch[0];
+    const parsedJson = JSON.parse(jsonString);
     return TranslateTextOutputSchema.parse(parsedJson);
   } catch (error) {
-    console.error("Failed to parse AI response:", text, error);
+    console.error("Failed to parse AI response:", rawText, error);
     throw new Error("AI response was not valid JSON.");
   }
 }
