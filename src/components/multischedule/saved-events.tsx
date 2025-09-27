@@ -37,7 +37,12 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
   }
 
   const handleSave = (eventToSave: SavedEvent) => {
-    onUpdate(eventToSave);
+    const exists = savedEvents.some(e => e.id === eventToSave.id);
+    if (exists) {
+        onUpdate(eventToSave);
+    } else {
+        onUpdate(eventToSave); // onUpdate from page.tsx can handle adding
+    }
     setEditingEvent(null);
   };
   
@@ -61,7 +66,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
         </div>
         <Button onClick={startCreating} className="w-full sm:w-auto">
             <PlusCircle className="mr-2"/>
-            Создать заготовку
+            Создать
         </Button>
       </DialogHeader>
       
@@ -94,6 +99,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
                 event={editingEvent}
                 onSave={handleSave}
                 onClose={() => setEditingEvent(null)}
+                savedEvents={savedEvents}
             />
       </Dialog>
     </div>
@@ -105,16 +111,17 @@ interface EditSavedEventDialogProps {
     event: SavedEvent | null;
     onSave: (event: SavedEvent) => void;
     onClose: () => void;
+    savedEvents: SavedEvent[];
 }
 
-function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogProps) {
+function EditSavedEventDialog({ event, onSave, onClose, savedEvents }: EditSavedEventDialogProps) {
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState<IconName | undefined>(undefined);
     const [time, setTime] = useState('');
     const [type, setType] = useState<'timed' | 'untimed'>('timed');
     const [color, setColor] = useState<string | undefined>(undefined);
 
-    const isCreating = !event?.description;
+    const isCreating = event ? !savedEvents.some(e => e.id === event.id) : false;
 
     useEffect(() => {
         if (event) {
