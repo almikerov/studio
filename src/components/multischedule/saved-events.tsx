@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit, Save, PlusCircle } from 'lucide-react';
 import { ScheduleEventIcon, IconName } from './schedule-event-icons';
 import { IconDropdown } from './icon-dropdown';
+import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface SavedEventsProps {
   savedEvents: SavedEvent[];
@@ -79,16 +80,18 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-6 pt-2">
-        <div className="flex justify-end">
-            <Button onClick={() => setIsCreating(true)} size="sm">
-                <PlusCircle className="mr-2"/>
-                Создать
-            </Button>
+      <DialogHeader className="p-6 border-b block sm:flex sm:flex-row justify-between items-center">
+        <div className="mb-4 sm:mb-0">
+          <DialogTitle className="text-2xl font-bold">Мои заготовки</DialogTitle>
+          <DialogDescription className="mt-2 text-sm sm:text-base">Добавьте событие в расписание или создайте новое.</DialogDescription>
         </div>
-      </div>
+        <Button onClick={() => setIsCreating(true)} className="w-full sm:w-auto">
+            <PlusCircle className="mr-2"/>
+            Создать
+        </Button>
+      </DialogHeader>
       
-      <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
         {isCreating && (
              <div className="p-4 rounded-lg border bg-card space-y-3">
                 <div className='flex items-center gap-2'>
@@ -137,15 +140,11 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
             ))}
           </ul>
         ) : (
-          !isCreating && <div className="text-center text-muted-foreground py-16">
+          !isCreating && <div className="text-center text-muted-foreground py-16 h-full flex flex-col justify-center items-center">
             <p className="text-lg">Нет заготовок</p>
-            <p className="text-sm">Нажмите "Создать", чтобы добавить первую.</p>
+            <p className="text-sm mt-1">Нажмите "Создать", чтобы добавить первую.</p>
           </div>
         )}
-      </div>
-
-      <div className="p-6 border-t">
-        <Button onClick={onClose} variant="outline" className="w-full">Закрыть</Button>
       </div>
     </div>
   );
