@@ -207,6 +207,9 @@ export function ScheduleView({
                                 "w-full justify-start text-left font-normal",
                                 !editedDate && "text-muted-foreground"
                             )}
+                            onClick={(e) => {
+                                if (isMobile) e.preventDefault();
+                            }}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {editedDate ? format(editedDate, "PPP", { locale: ru }) : <span>Выберите дату</span>}
@@ -230,7 +233,7 @@ export function ScheduleView({
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="text-base"
-                    placeholder="Описание (необязательно)"
+                    placeholder="Описание"
                 />
               </div>
             )}
@@ -246,9 +249,9 @@ export function ScheduleView({
             )}
         
             {/* Color palette for regular events */}
-            { isRegularEvent && (
-                <div>
-                    <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
+             { isRegularEvent && (
+                <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground ml-1">Цвет</Label>
                     <div className="flex gap-2 justify-around">
                     <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
                         <div className="h-6 w-6 rounded-full border" />
@@ -287,26 +290,30 @@ export function ScheduleView({
             </div>
              <div className="flex items-center gap-2">
                  <div data-id="schedule-image-wrapper">
-                  <ImageUploader onSetImageUrl={setImageUrl}>
-                      <DialogTrigger asChild>
-                          {imageUrl ? (
-                              <Image
-                                  src={imageUrl}
-                                  alt="Schedule image"
-                                  width={isMobile ? 80 : 96}
-                                  height={isMobile ? 80 : 96}
-                                  className="object-cover rounded-md aspect-square cursor-pointer"
-                                  crossOrigin="anonymous"
-                              />
-                          ) : (
-                               <div data-id="image-placeholder" className="p-2" data-no-print="true">
-                                   <Button variant="ghost" size="icon">
-                                       <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                                   </Button>
-                               </div>
-                          )}
-                      </DialogTrigger>
-                  </ImageUploader>
+                    {imageUrl ? (
+                        <ImageUploader onSetImageUrl={setImageUrl}>
+                            <DialogTrigger asChild>
+                                <Image
+                                    src={imageUrl}
+                                    alt="Schedule image"
+                                    width={isMobile ? 80 : 96}
+                                    height={isMobile ? 80 : 96}
+                                    className="object-cover rounded-md aspect-square cursor-pointer"
+                                    crossOrigin="anonymous"
+                                />
+                            </DialogTrigger>
+                        </ImageUploader>
+                    ) : (
+                        <div data-id="image-placeholder" className="p-2" data-no-print="true">
+                            <ImageUploader onSetImageUrl={setImageUrl}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                                    </Button>
+                                </DialogTrigger>
+                            </ImageUploader>
+                        </div>
+                    )}
                 </div>
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
@@ -334,9 +341,11 @@ export function ScheduleView({
                         )}
                         onClick={() => handleEdit(item)}
                       >
-                         <div {...provided.dragHandleProps} data-drag-handle="true" className={cn("cursor-grab active:cursor-grabbing p-2 flex")}>
-                           <GripVertical className="h-5 w-5 text-muted-foreground" />
-                         </div>
+                        {!isMobile && (
+                          <div {...provided.dragHandleProps} data-drag-handle="true" className="cursor-grab active:cursor-grabbing p-2">
+                             <GripVertical className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
                          
                          {isMobile && (
                             <Button data-mobile-arrow data-no-print="true" variant="ghost" size="icon" className="h-8 w-8" disabled={index === 0} onClick={(e) => { e.stopPropagation(); onMoveEvent(index, 'up'); }}>
@@ -344,16 +353,17 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        <div className="w-8 h-8 flex items-center justify-center" {...(!item.icon && {'data-no-icon-placeholder': true})}>
-                           {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? (
-                               <IconDropdown
-                                   value={item.icon}
-                                   onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                               />
-                           ) : item.icon ? (
-                               <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
-                           ) : null }
-                        </div>
+                        {item.icon ? (
+                            <div className="w-8 h-8 flex items-center justify-center">
+                                <IconDropdown
+                                    value={item.icon}
+                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                />
+                            </div>
+                        ) : (
+                          <div className="w-8 h-8" data-no-icon-placeholder></div>
+                        )
+                        }
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
@@ -386,6 +396,7 @@ export function ScheduleView({
                                         value={item.description || ''}
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                         className="text-base font-normal text-muted-foreground"
+                                        placeholder=""
                                     />
                                 </div>
                             ) : item.type === 'h1' ? (
@@ -529,5 +540,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-    

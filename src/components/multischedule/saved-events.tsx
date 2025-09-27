@@ -97,7 +97,6 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
                         value={newEventDescription}
                         onChange={(e) => setNewEventDescription(e.target.value)}
                         placeholder="Новое событие..."
-                        autoFocus
                     />
                 </div>
                 <div className="flex justify-end gap-2">
@@ -151,5 +150,3 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onClose }:
     </div>
   );
 }
-
-    
