@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent, TranslationDisplayMode } from '@/app/pag
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon, Wrench } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -444,6 +444,7 @@ export function ScheduleView({
                                                 className="text-base font-normal text-muted-foreground"
                                                 placeholder="Описание (необязательно)"
                                                 isTextarea={true}
+                                                data-make-invisible={!item.description ? 'true' : undefined}
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <span className="text-muted-foreground text-base font-normal">
@@ -718,5 +719,6 @@ export function ScheduleView({
 
 
     
+
 
 
