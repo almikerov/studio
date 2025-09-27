@@ -108,7 +108,7 @@ export default function Home() {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
         const { schedule, cardTitle, imageUrl } = JSON.parse(storedState);
-        setSchedule(schedule || []);
+        setSchedule(schedule || defaultSchedule);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
       } else {
@@ -286,6 +286,9 @@ export default function Home() {
     const clone = element.cloneNode(true) as HTMLElement;
 
     clone.classList.add('cloned-for-rendering');
+    if (options.renderAsMobile) {
+      clone.classList.add('render-mobile-padding');
+    }
     clone.style.position = 'absolute';
     clone.style.left = '-9999px';
     clone.style.top = '0px';

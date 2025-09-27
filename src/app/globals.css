@@ -100,4 +100,7 @@ body {
     position: relative;
     top: -2px;
   }
+  .render-mobile-padding {
+    padding-top: 48px;
+  }
 }
