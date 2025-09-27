@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import {
   Popover,
   PopoverContent,
@@ -22,15 +23,19 @@ interface IconDropdownProps {
 }
 
 export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdownProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const setIsOpen = isControlled ? onOpenChange : setInternalOpen;
+
   const handleIconSelect = (icon: IconName | undefined) => {
     onChange(icon);
-    if (onOpenChange) {
-      onOpenChange(false);
-    }
+    setIsOpen(false);
   };
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="h-8 w-8 shrink-0 hide-border-on-print">
           {value ? (
