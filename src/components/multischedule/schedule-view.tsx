@@ -414,20 +414,29 @@ export function ScheduleView({
                                         </div>
                                      )}
                                      <div className="flex-1 flex justify-between gap-4">
-                                        <EditableField
-                                            isMobile={isMobile}
-                                            value={item.description}
-                                            setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                            className={cn("flex-1 text-card-foreground cursor-pointer truncate", item.type === 'untimed' && 'pl-1 sm:pl-0')}
-                                        />
-                                        {item.translation && (
+                                        <p className={cn("flex-1 text-card-foreground cursor-pointer truncate", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                            if (isMobile) return;
+                                            const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
+                                            descEl?.click();
+                                        }}>
                                             <EditableField
                                                 isMobile={isMobile}
-                                                value={item.translation}
-                                                setValue={(val) => onUpdateEvent(item.id, { translation: val })}
-                                                className="flex-1 text-card-foreground cursor-pointer truncate text-right text-muted-foreground"
+                                                value={item.description}
+                                                setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                                className="inline"
+                                                as="span"
+                                                data-id="description"
                                             />
-                                        )}
+                                            {item.translation && (
+                                                <EditableField
+                                                    isMobile={isMobile}
+                                                    value={`(${item.translation})`}
+                                                    setValue={(val) => onUpdateEvent(item.id, { translation: val.replace(/[()]/g, '') })}
+                                                    className="inline text-muted-foreground ml-2"
+                                                    as="span"
+                                                />
+                                            )}
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -506,7 +515,7 @@ export function ScheduleView({
                     <Button
                       variant="ghost"
                       className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
-                      onClick={() => onAddNewEvent()}
+                      onClick={() => setIsAddEventDialogOpen(true)}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -538,3 +547,5 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    

@@ -8,11 +8,12 @@ interface EditableFieldProps {
   value: string;
   setValue: (val: string) => void;
   className?: string;
-  as?: 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4';
+  as?: 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'span';
   inputType?: 'text' | 'time';
   placeholder?: string;
   isTextarea?: boolean;
   isMobile?: boolean | undefined;
+  'data-id'?: string;
 }
 
 export const EditableField = ({ 
@@ -24,6 +25,7 @@ export const EditableField = ({
     placeholder,
     isTextarea = false,
     isMobile,
+    ...props
 }: EditableFieldProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(value);
@@ -94,5 +96,7 @@ export const EditableField = ({
     />
   }
 
-  return <Component onClick={handleClick} className={`${className} ${!isMobile ? 'cursor-pointer' : ''} min-h-[1em] w-full`}>{value || placeholder}</Component>
+  return <Component onClick={handleClick} className={`${className} ${!isMobile ? 'cursor-pointer' : ''} min-h-[1em]`} {...props}>{value || placeholder}</Component>
 }
+
+    
