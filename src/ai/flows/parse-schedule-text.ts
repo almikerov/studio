@@ -34,13 +34,10 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKey: string): Promise<ParseScheduleTextOutput> {
-  if (!apiKey) {
+export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKeys: string[]): Promise<ParseScheduleTextOutput> {
+  if (!apiKeys || apiKeys.length === 0) {
     throw new Error('API key is not provided');
   }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text.
@@ -58,7 +55,7 @@ Your task is to identify the schedule title, events, their times, types, and oth
 - If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'. Assign icons only to 'timed' and 'untimed' types.
 - For "Теория" (theory) or "Установка" (instructions), assign the 'camera' icon.
 - For a generic 'тренировка' (training), assign the 'football-field' icon. If the training is specified to be in a gym (e.g., 'тренировка в зале', 'тренажерный зал'), assign the 'dumbbell' icon.
-- If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors only to 'timed' and 'untimed' types.
+- If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors to all item types.
 - Ignore any text that isn't a schedule item.
 
 Here is the text to parse:
@@ -81,21 +78,31 @@ Output JSON:
 
 Output JSON:`;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const rawText = response.text();
+  let lastError: any = null;
 
-  try {
-    // Find the JSON block in the response
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No JSON object found in the AI response.");
+  for (const apiKey of apiKeys) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const rawText = response.text();
+      
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("No JSON object found in the AI response.");
+      }
+      const jsonString = jsonMatch[0];
+      const parsedJson = JSON.parse(jsonString);
+      return ParseScheduleTextOutputSchema.parse(parsedJson);
+
+    } catch (error) {
+      console.warn(`API key ...${apiKey.slice(-4)} failed. Trying next one.`, error);
+      lastError = error;
     }
-    const jsonString = jsonMatch[0];
-    const parsedJson = JSON.parse(jsonString);
-    return ParseScheduleTextOutputSchema.parse(parsedJson);
-  } catch (error) {
-    console.error("Failed to parse AI response:", rawText, error);
-    throw new Error("AI response was not valid JSON.");
   }
+
+  console.error("All API keys failed.", lastError);
+  throw new Error("AI response was not valid JSON or all API keys failed.");
 }

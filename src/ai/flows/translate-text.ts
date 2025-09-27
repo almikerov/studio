@@ -24,13 +24,10 @@ const TranslateTextOutputSchema = z.object({
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
 
-export async function translateText(input: TranslateTextInput, apiKey: string): Promise<TranslateTextOutput> {
-  if (!apiKey) {
+export async function translateText(input: TranslateTextInput, apiKeys: string[]): Promise<TranslateTextOutput> {
+  if (!apiKeys || apiKeys.length === 0) {
     throw new Error('API key is not provided');
   }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const languages = input.targetLanguages.join(', ');
 
@@ -46,20 +43,31 @@ ${languages}
 
 Output JSON:`;
   
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const rawText = response.text();
-  
-  try {
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("No JSON object found in the AI response.");
+  let lastError: any = null;
+
+  for (const apiKey of apiKeys) {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const rawText = response.text();
+      
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("No JSON object found in the AI response.");
+      }
+      const jsonString = jsonMatch[0];
+      const parsedJson = JSON.parse(jsonString);
+      return TranslateTextOutputSchema.parse(parsedJson);
+
+    } catch (error) {
+      console.warn(`API key ...${apiKey.slice(-4)} failed. Trying next one.`, error);
+      lastError = error;
     }
-    const jsonString = jsonMatch[0];
-    const parsedJson = JSON.parse(jsonString);
-    return TranslateTextOutputSchema.parse(parsedJson);
-  } catch (error) {
-    console.error("Failed to parse AI response:", rawText, error);
-    throw new Error("AI response was not valid JSON.");
   }
+  
+  console.error("All API keys failed.", lastError);
+  throw new Error("AI response was not valid JSON or all API keys failed.");
 }
