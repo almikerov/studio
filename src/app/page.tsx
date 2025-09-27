@@ -330,6 +330,11 @@ export default function Home() {
         // Apply a specific class for rendering to control styles if needed
         clone.classList.add('cloned-for-rendering');
         
+        // Always apply shadow padding first if requested
+        if (options.withShadow) {
+            clone.style.padding = '20px';
+        }
+
         if (options.renderAsMobile) {
             clone.style.width = '420px'; // Set a fixed width for mobile-like rendering
             clone.classList.add('render-mobile-padding');
@@ -338,10 +343,6 @@ export default function Home() {
             clone.style.display = 'inline-block';
         } else {
             clone.style.width = `${element.offsetWidth}px`;
-        }
-
-        if (options.withShadow) {
-            clone.style.padding = '20px';
         }
 
         // Hide elements that should not be part of the final image
@@ -1109,4 +1110,5 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     
 
     
+
 
