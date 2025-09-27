@@ -358,13 +358,28 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <EditableField
-                                    isMobile={isMobile}
-                                    value={item.description}
-                                    setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                    className="text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
-                                    isTextarea={true}
-                                />
+                                <div className='flex-1'>
+                                    <EditableField
+                                        isMobile={isMobile}
+                                        value={item.description}
+                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                        className="text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
+                                        isTextarea={true}
+                                        data-id="description"
+                                    />
+                                     {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                        <span className="text-muted-foreground ml-2 text-sm italic">
+                                            ({Object.values(item.translations).join(', ')})
+                                        </span>
+                                    )}
+                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                        <div className="text-sm italic text-muted-foreground mt-1 pl-2">
+                                            {Object.entries(item.translations).map(([lang, text]) => (
+                                                <div key={lang}>{text}</div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             ) : item.type === 'date' && item.date ? (
                                 <div className="flex items-center gap-2 flex-1 render-align-fix">
                                     <Popover>
@@ -390,17 +405,35 @@ export function ScheduleView({
                                         placeholder=""
                                     />
                                 </div>
-                            ) : item.type === 'h1' ? (
-                                <div className="w-full flex items-center render-header-align-fix">
-                                  <EditableField isMobile={isMobile} as='h2' className='text-xl font-bold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
-                                </div>
-                            ) : item.type === 'h2' ? (
-                                <div className="w-full flex items-center render-header-align-fix">
-                                  <EditableField isMobile={isMobile} as='h3' className='text-lg font-semibold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
-                                </div>
-                            ) : item.type === 'h3' ? (
-                                <div className="w-full flex items-center render-header-align-fix">
-                                  <EditableField isMobile={isMobile} as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
+                            ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
+                                <div className="w-full flex-1">
+                                    <div className='flex items-baseline gap-2'>
+                                      <EditableField 
+                                        isMobile={isMobile}
+                                        as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
+                                        className={cn(
+                                            'font-bold',
+                                            item.type === 'h1' && 'text-xl',
+                                            item.type === 'h2' && 'text-lg',
+                                            item.type === 'h3' && 'text-base'
+                                        )}
+                                        value={item.description} 
+                                        setValue={(val) => onUpdateEvent(item.id, {description: val})} 
+                                        data-id="description"
+                                      />
+                                       {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                            <span className="text-muted-foreground font-normal">
+                                                ({Object.values(item.translations).join(', ')})
+                                            </span>
+                                        )}
+                                    </div>
+                                    {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                        <div className="text-sm text-muted-foreground mt-1">
+                                            {Object.entries(item.translations).map(([lang, text]) => (
+                                                <div key={lang}>{text}</div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2 w-full">
@@ -553,5 +586,8 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    
+
 
     
