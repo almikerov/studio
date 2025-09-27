@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { EditableField } from '@/components/multischedule/editable-field';
+import { cn } from '@/lib/utils';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -84,7 +85,7 @@ export type ApiKey = {
 };
 
 export type TranslationDisplayMode = 'inline' | 'block' | 'text-block';
-export type RenderOptions = { renderAsMobile?: boolean, fitContent?: boolean };
+export type RenderOptions = { renderAsMobile?: boolean, fitContent?: boolean, withShadow?: boolean };
 
 const defaultSchedule: ScheduleItem[] = [
     { id: `${Date.now()}-${Math.random()}`, time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
@@ -121,6 +122,7 @@ export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
+  const [renderWithShadow, setRenderWithShadow] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: RenderOptions) => void) | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
@@ -338,6 +340,10 @@ export default function Home() {
             clone.style.width = `${element.offsetWidth}px`;
         }
 
+        if (options.withShadow) {
+            clone.style.padding = '20px';
+        }
+
         // Hide elements that should not be part of the final image
         clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
         // Make elements invisible but keep their space
@@ -515,7 +521,7 @@ export default function Home() {
   
   const openRenderOptions = (action: (options: RenderOptions) => void) => {
     setRenderAction(() => (options: RenderOptions) => {
-      action(options);
+      action({...options, withShadow: renderWithShadow});
       setIsRenderOptionsOpen(false);
     });
     setIsRenderOptionsOpen(true);
@@ -682,7 +688,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
         />}
 
         
-          <div ref={printableAreaRef} className="bg-background space-y-4">
+          <div ref={printableAreaRef}>
             <DragDropContext onDragEnd={onDragEnd}>
               <ScheduleView
                 schedule={schedule}
@@ -710,30 +716,34 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             </DragDropContext>
           
            {translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule.length > 0 && (
-                <div className="space-y-4">
-                    {selectedLanguages.map(lang => (
-                            <Card key={lang}>
-                                <CardHeader className="p-4 flex-row items-center justify-between">
-                                    <EditableField
-                                        as="h2"
-                                        className="text-lg font-semibold leading-none tracking-tight flex-1"
-                                        value={textBlockTranslations[lang]?.title || ''}
-                                        setValue={(value) => handleTextBlockChange(lang, 'title', value)}
-                                        isMobile={isMobile}
-                                    />
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveLanguageFromTextBlock(lang)} data-no-print="true">
-                                        <Trash className="h-4 w-4" />
-                                    </Button>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-0">
+                <div className={cn(
+                    "border bg-card text-card-foreground",
+                    "rounded-b-lg border-t-0 rounded-t-none shadow-none"
+                )}>
+                    {selectedLanguages.map((lang, index) => (
+                            <div key={lang}>
+                                {index > 0 && <Separator />}
+                                <div className="p-4 flex-row items-center justify-between">
+                                    <div className='flex items-center justify-between'>
+                                        <EditableField
+                                            as="h2"
+                                            className="text-lg font-semibold leading-none tracking-tight flex-1"
+                                            value={textBlockTranslations[lang]?.title || ''}
+                                            setValue={(value) => handleTextBlockChange(lang, 'title', value)}
+                                            isMobile={isMobile}
+                                        />
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveLanguageFromTextBlock(lang)} data-no-print="true">
+                                            <Trash className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                     <Textarea
                                         value={textBlockTranslations[lang]?.content || ''}
                                         onChange={(e) => handleTextBlockChange(lang, 'content', e.target.value)}
-                                        className="text-sm font-sans whitespace-pre-wrap p-0 border-none focus-visible:ring-0 shadow-none h-auto min-h-[100px] resize-none"
+                                        className="text-sm font-sans whitespace-pre-wrap p-0 border-none focus-visible:ring-0 shadow-none h-auto min-h-[100px] resize-none mt-2"
                                         rows={Math.max(5, (textBlockTranslations[lang]?.content || '').split('\n').length)}
                                     />
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </div>
                         )
                     )}
                 </div>
@@ -748,19 +758,25 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                     <DialogTitle>Параметры рендеринга</DialogTitle>
                     <DialogDescription>Выберите как вы хотите сохранить изображение.</DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
-                    <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false })}>
-                        <Laptop className="h-8 w-8" />
-                        <span>Десктоп (широкий)</span>
-                    </Button>
-                    <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true })}>
-                        <Smartphone className="h-8 w-8" />
-                        <span>Мобильный (узкий)</span>
-                    </Button>
-                    <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ fitContent: true })}>
-                        <Ruler className="h-8 w-8" />
-                        <span>По ширине текста</span>
-                    </Button>
+                <div className="space-y-4 py-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false })}>
+                            <Laptop className="h-8 w-8" />
+                            <span>Десктоп (широкий)</span>
+                        </Button>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true })}>
+                            <Smartphone className="h-8 w-8" />
+                            <span>Мобильный (узкий)</span>
+                        </Button>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ fitContent: true })}>
+                            <Ruler className="h-8 w-8" />
+                            <span>По ширине текста</span>
+                        </Button>
+                    </div>
+                     <div className="flex items-center space-x-2 pt-4">
+                        <Checkbox id="render-shadow" checked={renderWithShadow} onCheckedChange={(checked) => setRenderWithShadow(!!checked)} />
+                        <Label htmlFor="render-shadow">Отображать тени</Label>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
@@ -1093,3 +1109,4 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     
 
     
+

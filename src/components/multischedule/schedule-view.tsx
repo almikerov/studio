@@ -178,7 +178,7 @@ export function ScheduleView({
                                 value={editedTranslations[lang] || ''}
                                 onChange={(e) => setEditedTranslations(prev => ({...prev, [lang]: e.target.value}))}
                                 className="text-base h-10"
-                                placeholder={`Перевод`}
+                                placeholder={`Перевод на ${lang}`}
                             />
                         </div>
                     ))}
@@ -282,10 +282,13 @@ export function ScheduleView({
     );
   };
 
-
+const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule.length > 0;
 
   return (
-    <Card className="shadow-lg overflow-hidden sm:border sm:rounded-lg">
+    <Card className={cn(
+      "shadow-lg overflow-hidden sm:border sm:rounded-lg",
+      showTextBlock && "rounded-b-none"
+      )}>
        {/* These are for tailwind to detect and generate dynamic classes */}
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30 bg-gray-100 dark:bg-gray-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500 bg-gray-500"></div>
@@ -542,7 +545,7 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1 w-full", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0', !item.description && 'w-full')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
@@ -699,3 +702,4 @@ export function ScheduleView({
     </Card>
   );
 }
+
