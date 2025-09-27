@@ -99,5 +99,7 @@ body {
   }
   .cloned-for-rendering .hide-border-on-print {
     border-color: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
   }
 }
