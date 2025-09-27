@@ -12,6 +12,7 @@ interface EditableFieldProps {
   inputType?: 'text' | 'time';
   placeholder?: string;
   isTextarea?: boolean;
+  isMobile?: boolean | undefined;
 }
 
 export const EditableField = ({ 
@@ -22,6 +23,7 @@ export const EditableField = ({
     inputType = 'text',
     placeholder,
     isTextarea = false,
+    isMobile,
 }: EditableFieldProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(value);
@@ -61,11 +63,12 @@ export const EditableField = ({
   };
   
   const handleClick = (e: React.MouseEvent) => {
+    if (isMobile) return;
     e.stopPropagation();
     setIsEditing(true);
   }
 
-  if (isEditing) {
+  if (isEditing && !isMobile) {
     if (isTextarea) {
         return <Textarea
             ref={textareaRef}
@@ -91,5 +94,5 @@ export const EditableField = ({
     />
   }
 
-  return <Component onClick={handleClick} className={`${className} cursor-pointer min-h-[1em] w-full`}>{value || placeholder}</Component>
+  return <Component onClick={handleClick} className={`${className} ${!isMobile ? 'cursor-pointer' : ''} min-h-[1em] w-full`}>{value || placeholder}</Component>
 }

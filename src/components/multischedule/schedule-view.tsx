@@ -147,7 +147,7 @@ export function ScheduleView({
     return (
         <div className="flex flex-col gap-4 p-1">
             <div className="flex items-center gap-2">
-                {item.icon && editedType !== 'comment' && editedType !== 'date' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                {editedType !== 'comment' && editedType !== 'date' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
                 {editedType !== 'date' && 
                     <Textarea
                         value={editedDescription}
@@ -193,7 +193,6 @@ export function ScheduleView({
                     className="rounded-md border"
                     />
                 <Textarea 
-                    placeholder="Описание (необязательно)"
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="text-base"
@@ -246,29 +245,33 @@ export function ScheduleView({
       <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
-                <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
+                <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
              <div className="flex items-center gap-2" data-id="schedule-image-wrapper">
-                <ImageUploader onSetImageUrl={setImageUrl}>
-                  <DialogTrigger asChild>
-                     <div className="cursor-pointer">
-                       {imageUrl ? (
-                          <Image
-                              src={imageUrl}
-                              alt="Schedule image"
-                              width={isMobile ? 80 : 96}
-                              height={isMobile ? 80 : 96}
-                              className="object-cover rounded-md aspect-square"
-                              crossOrigin="anonymous"
-                          />
-                       ) : (
-                        <div data-id="image-placeholder" className="p-2" data-no-print="true">
-                            <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                     </div>
-                  </DialogTrigger>
-                </ImageUploader>
+                {imageUrl ? (
+                    <ImageUploader onSetImageUrl={setImageUrl}>
+                        <DialogTrigger asChild>
+                            <Image
+                                src={imageUrl}
+                                alt="Schedule image"
+                                width={isMobile ? 80 : 96}
+                                height={isMobile ? 80 : 96}
+                                className="object-cover rounded-md aspect-square cursor-pointer"
+                                crossOrigin="anonymous"
+                            />
+                        </DialogTrigger>
+                    </ImageUploader>
+                ) : (
+                    <div data-id="image-placeholder" className="p-2" data-no-print="true">
+                        <ImageUploader onSetImageUrl={setImageUrl}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                                </Button>
+                            </DialogTrigger>
+                        </ImageUploader>
+                    </div>
+                )}
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -306,17 +309,20 @@ export function ScheduleView({
                          )}
 
                         <div className="w-8 h-8 flex items-center justify-center" {...(!item.icon && {'data-no-icon-placeholder': true})}>
-                           {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
+                           {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? (
                                <IconDropdown
                                    value={item.icon}
                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                />
-                           )}
+                           ) : item.icon ? (
+                               <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
+                           ) : null }
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
                                 <EditableField
+                                    isMobile={isMobile}
                                     value={item.description}
                                     setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                     className="text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
@@ -340,6 +346,7 @@ export function ScheduleView({
                                         </PopoverContent>
                                     </Popover>
                                     <EditableField
+                                        isMobile={isMobile}
                                         value={item.description || ''}
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                         className="text-base font-normal text-muted-foreground"
@@ -347,21 +354,22 @@ export function ScheduleView({
                                 </div>
                             ) : item.type === 'h1' ? (
                                 <div className="w-full flex items-center render-header-align-fix">
-                                  <EditableField as='h2' className='text-xl font-bold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
+                                  <EditableField isMobile={isMobile} as='h2' className='text-xl font-bold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : item.type === 'h2' ? (
                                 <div className="w-full flex items-center render-header-align-fix">
-                                  <EditableField as='h3' className='text-lg font-semibold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
+                                  <EditableField isMobile={isMobile} as='h3' className='text-lg font-semibold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : item.type === 'h3' ? (
                                 <div className="w-full flex items-center render-header-align-fix">
-                                  <EditableField as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
+                                  <EditableField isMobile={isMobile} as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
+                                                isMobile={isMobile}
                                                 value={item.time}
                                                 setValue={(val) => onUpdateEvent(item.id, { time: val })}
                                                 className="font-mono text-base font-semibold"
@@ -371,6 +379,7 @@ export function ScheduleView({
                                      )}
 
                                     <EditableField
+                                        isMobile={isMobile}
                                         value={item.description}
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                         className="flex-1 text-card-foreground cursor-pointer truncate"
