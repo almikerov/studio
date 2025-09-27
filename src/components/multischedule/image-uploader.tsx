@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, type ReactNode } from 'react';
@@ -46,7 +47,7 @@ export function ImageUploader({ children, onSetImageUrl, onOpenChange }: ImageUp
 
   const closeDialog = () => {
     setDialogOpen(false);
-    if(onOpenChange) onOpenChange(true); // hack to close mobile menu
+    if(onOpenChange) onOpenChange(false);
   }
 
   const handleOpen = (open: boolean) => {
@@ -97,3 +98,4 @@ export function ImageUploader({ children, onSetImageUrl, onOpenChange }: ImageUp
     </Dialog>
   );
 }
+

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ScheduleTemplate, SavedEvent } from '@/app/page';
@@ -325,3 +326,4 @@ export function DesktopNavbar({
 
 
     
+
