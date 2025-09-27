@@ -161,11 +161,12 @@ export function ScheduleView({
                   {isRegularEvent && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
                   
                   {editedType !== 'date' && (
-                      <Input
+                      <Textarea
                           value={editedDescription}
                           onChange={(e) => setEditedDescription(e.target.value)}
                           className="flex-1 text-base h-10"
                           placeholder={isCommentLike ? "Комментарий или заголовок" : "Описание события"}
+                          rows={1}
                       />
                   )}
                 </div>
@@ -218,7 +219,7 @@ export function ScheduleView({
                             }}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {editedDate ? format(editedDate, "PPP", { locale: ru }) : <span>Выберите дату</span>}
+                            {editedDate ? format(editedDate, "dd.MM.yyyy", { locale: ru }) : <span>Выберите дату</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -399,7 +400,7 @@ export function ScheduleView({
                                         )}
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm italic text-muted-foreground mt-1 pl-0">
+                                        <div className="text-sm italic text-muted-foreground mt-1 pl-1">
                                             {Object.entries(item.translations).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
@@ -419,7 +420,7 @@ export function ScheduleView({
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button variant="ghost" className="h-auto p-0 font-semibold text-lg text-muted-foreground hover:bg-transparent" disabled={isMobile}>
-                                                {format(new Date(item.date), 'PPP', { locale: ru })}
+                                                {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0">
@@ -656,7 +657,7 @@ export function ScheduleView({
                                 case 'comment':
                                     return `// ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
                                 case 'date':
-                                     return item.date ? `\n${format(new Date(item.date), 'PPP', { locale: ru })}${item.description ? ` - ${item.description}`: ''}\n` : '';
+                                     return item.date ? `\n${format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}${item.description ? ` - ${item.description}`: ''}\n` : '';
                                 default:
                                     return null;
                             }
@@ -688,5 +689,7 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    
 
     
