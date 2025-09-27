@@ -551,7 +551,7 @@ export function ScheduleView({
                                                 isMobile={isMobile}
                                                 value={item.description}
                                                 setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
-                                                className="inline w-full"
+                                                className={cn("inline", !item.description && "w-full")}
                                                 as="span"
                                                 data-id="description"
                                                 isTextarea={true}
