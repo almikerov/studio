@@ -14,7 +14,6 @@ import { Label } from '../ui/label';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
 
 interface SavedEventsProps {
   savedEvents: SavedEvent[];
@@ -23,6 +22,7 @@ interface SavedEventsProps {
   onUpdate: (event: SavedEvent) => void;
   onSaveNew: (event: Partial<SavedEvent>) => void;
   onClose: () => void;
+  itemColors: string[];
 }
 
 const typeLabels: Record<ScheduleItem['type'], string> = {
@@ -35,7 +35,7 @@ const typeLabels: Record<ScheduleItem['type'], string> = {
     comment: 'Комментарий',
 };
 
-export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew, onClose }: SavedEventsProps) {
+export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew, onClose, itemColors }: SavedEventsProps) {
   const [editingEvent, setEditingEvent] = useState<SavedEvent | null>(null);
   
   const startCreating = () => {
@@ -137,6 +137,7 @@ export function SavedEvents({ savedEvents, onAdd, onDelete, onUpdate, onSaveNew,
                 event={editingEvent}
                 onSave={handleSave}
                 onClose={() => setEditingEvent(null)}
+                itemColors={itemColors}
             />
       </Dialog>
     </div>
@@ -148,9 +149,10 @@ interface EditSavedEventDialogProps {
     event: SavedEvent | null;
     onSave: (event: SavedEvent) => void;
     onClose: () => void;
+    itemColors: string[];
 }
 
-function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogProps) {
+function EditSavedEventDialog({ event, onSave, onClose, itemColors }: EditSavedEventDialogProps) {
     const [description, setDescription] = useState('');
     const [icon, setIcon] = useState<IconName | undefined>(undefined);
     const [time, setTime] = useState('');
@@ -237,7 +239,7 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
                     <Button variant={!color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => setColor(undefined)}>
                         <div className="h-6 w-6 rounded-full border" />
                     </Button>
-                    {ITEM_COLORS.map(c => (
+                    {itemColors.map(c => (
                         <Button key={c} variant={color === c ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => setColor(c)}>
                         <div className={`h-6 w-6 rounded-full bg-${c}-500`} />
                         </Button>

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -40,6 +40,8 @@ export const AVAILABLE_LANGUAGES = [
   { code: 'ja', name: 'Японский' },
   { code: 'zh', name: 'Китайский' },
 ];
+
+export const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
 
 
 export type ScheduleItem = { 
@@ -111,6 +113,7 @@ export default function Home() {
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: RenderOptions) => void) | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
 
   useEffect(() => {
@@ -323,7 +326,7 @@ export default function Home() {
         // Hide elements that should not be part of the final image
         clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
         // Make elements invisible but keep their space
-        clone.querySelectorAll('[data-make-invisible="true"]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
+        clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
         
         document.body.appendChild(clone);
         
@@ -533,6 +536,28 @@ export default function Home() {
     setIsMobileMenuOpen(false);
   }
 
+  const handleColorize = (mode: 'single' | 'rainbow' | 'random', color?: string) => {
+    let newSchedule: ScheduleItem[];
+
+    switch (mode) {
+        case 'single':
+            newSchedule = schedule.map(item => ({ ...item, color: color }));
+            break;
+        case 'rainbow':
+            newSchedule = schedule.map((item, index) => ({ ...item, color: ITEM_COLORS[index % ITEM_COLORS.length] }));
+            break;
+        case 'random':
+            newSchedule = schedule.map(item => ({ ...item, color: ITEM_COLORS[Math.floor(Math.random() * ITEM_COLORS.length)] }));
+            break;
+        default:
+            newSchedule = schedule;
+            break;
+    }
+    setSchedule(newSchedule);
+    setIsColorizeOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <main className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto space-y-4">
@@ -566,6 +591,10 @@ export default function Home() {
             updateApiKeys={updateApiKeys}
             isApiKeyDialogOpen={isApiKeyDialogOpen}
             setIsApiKeyDialogOpen={setIsApiKeyDialogOpen}
+            isColorizeOpen={isColorizeOpen}
+            setIsColorizeOpen={setIsColorizeOpen}
+            onColorize={handleColorize}
+            itemColors={ITEM_COLORS}
         />}
 
         
@@ -592,6 +621,7 @@ export default function Home() {
                 setIsAddEventDialogOpen={setIsAddEventDialogOpen}
                 translationDisplayMode={translationDisplayMode}
                 selectedLanguages={selectedLanguages}
+                itemColors={ITEM_COLORS}
               />
             </DragDropContext>
           </div>
@@ -713,6 +743,19 @@ export default function Home() {
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
+
+                           <Dialog open={isColorizeOpen} onOpenChange={setIsColorizeOpen}>
+                              <DialogTrigger asChild>
+                                 <Button variant="ghost" className="justify-start w-full">
+                                    <Paintbrush className="mr-2" /> Раскрасить
+                                 </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <ColorizeDialogContent onColorize={handleColorize} itemColors={ITEM_COLORS} />
+                              </DialogContent>
+                          </Dialog>
+
+
                           <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
                             <DialogTrigger asChild>
                                <Button variant="ghost" className="justify-start w-full">
@@ -794,6 +837,7 @@ export default function Home() {
                                   }}
                                   onSaveNew={handleSaveEvent}
                                   onClose={() => setIsSavedEventsOpen(false)}
+                                  itemColors={ITEM_COLORS}
                                />
                             </DialogContent>
                           </Dialog>
@@ -892,14 +936,41 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     );
 }
 
+export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: (mode: 'single' | 'rainbow' | 'random', color?: string) => void, itemColors: string[] }) {
+    const [selectedColor, setSelectedColor] = useState(itemColors[0]);
 
-
-    
-
-    
-
-
-
-
-
-
+    return (
+        <>
+            <DialogHeader>
+                <DialogTitle>Раскрасить расписание</DialogTitle>
+                <DialogDescription>Примените цвет к элементам вашего расписания.</DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                    <Label>Один цвет</Label>
+                    <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-4 gap-2 flex-1">
+                            {itemColors.map(color => (
+                                <Button
+                                    key={color}
+                                    variant={selectedColor === color ? 'secondary' : 'ghost'}
+                                    size="icon"
+                                    className="h-10 w-10 rounded-full"
+                                    onClick={() => setSelectedColor(color)}
+                                >
+                                    <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
+                                </Button>
+                            ))}
+                        </div>
+                        <Button onClick={() => onColorize('single', selectedColor)} className="h-24 flex-1">Применить</Button>
+                    </div>
+                </div>
+                <Separator />
+                <div className="grid grid-cols-2 gap-4">
+                    <Button variant="outline" onClick={() => onColorize('rainbow')}>Радуга</Button>
+                    <Button variant="outline" onClick={() => onColorize('random')}>Случайно</Button>
+                </div>
+            </div>
+        </>
+    );
+}

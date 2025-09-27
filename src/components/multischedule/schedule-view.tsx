@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent, TranslationDisplayMode } from '@/app/pag
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon, Wrench } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -25,7 +25,6 @@ import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 
 
-const ITEM_COLORS = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
 
 interface ScheduleViewProps {
   schedule: ScheduleItem[];
@@ -48,6 +47,7 @@ interface ScheduleViewProps {
   setIsAddEventDialogOpen: (open: boolean) => void;
   translationDisplayMode: TranslationDisplayMode;
   selectedLanguages: string[];
+  itemColors: string[];
 }
 
 export function ScheduleView({ 
@@ -55,7 +55,7 @@ export function ScheduleView({
   imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen,
-  translationDisplayMode, selectedLanguages
+  translationDisplayMode, selectedLanguages, itemColors
 }: ScheduleViewProps) {
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -165,20 +165,17 @@ export function ScheduleView({
                   <Textarea
                       value={editedDescription}
                       onChange={(e) => setEditedDescription(e.target.value)}
-                      className={cn(
-                          "flex-1 text-base h-10",
-                          editedType === 'date' && 'w-full'
-                      )}
+                      className="flex-1 text-base h-10"
                       placeholder="Описание"
                       rows={1}
                   />
                 </div>
-                {isTranslatable && (
+                {isTranslatable && selectedLanguages.length > 0 && (
                     <Input
                         value={editedTranslations[selectedLanguages[0]] || ''}
                         onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
                         className="text-base h-10"
-                        placeholder="Перевод"
+                        placeholder={`Перевод (${selectedLanguages[0]})`}
                     />
                 )}
             </div>
@@ -259,7 +256,7 @@ export function ScheduleView({
                     <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, undefined)}>
                         <div className="h-6 w-6 rounded-full border" />
                     </Button>
-                    {ITEM_COLORS.map(color => (
+                    {itemColors.map(color => (
                         <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-10 w-10 rounded-full" onClick={() => handleColorChange(item.id, color)}>
                         <div className={`h-6 w-6 rounded-full bg-${color}-500`} />
                         </Button>
@@ -431,7 +428,7 @@ export function ScheduleView({
                                             </PopoverContent>
                                         </Popover>
                                         <div className="flex-1 flex flex-col">
-                                            <div className="flex items-center gap-2 w-full">
+                                            <div className="flex items-center gap-2">
                                                 <EditableField
                                                     isMobile={isMobile}
                                                     value={item.description || ''}
@@ -455,23 +452,24 @@ export function ScheduleView({
                                                     </span>
                                                 )}
                                             </div>
+                                             {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                                <div className="text-sm text-muted-foreground mt-1">
+                                                    {Object.entries(item.translations).map(([lang, text]) => (
+                                                      <EditableField
+                                                          key={lang}
+                                                          isMobile={isMobile}
+                                                          value={text}
+                                                          setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                          className="w-full"
+                                                          as="div"
+                                                          isTextarea={true}
+                                                      />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm text-muted-foreground mt-1 pl-2">
-                                            {Object.entries(item.translations).map(([lang, text]) => (
-                                              <EditableField
-                                                  key={lang}
-                                                  isMobile={isMobile}
-                                                  value={text}
-                                                  setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                  className="w-full"
-                                                  as="div"
-                                                  isTextarea={true}
-                                              />
-                                            ))}
-                                        </div>
-                                    )}
+                                   
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
                                 <div className="flex-1 flex flex-col">
@@ -614,7 +612,7 @@ export function ScheduleView({
                                     <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
                                         <div className="h-4 w-4 rounded-full border" />
                                     </Button>
-                                    {ITEM_COLORS.map(color => (
+                                    {itemColors.map(color => (
                                         <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
                                         <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
                                         </Button>
@@ -690,30 +688,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-

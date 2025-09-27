@@ -3,14 +3,14 @@
 'use client';
 
 import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode, ApiKey } from '@/app/page';
-import { ApiKeyManagerDialogContent } from '@/app/page';
+import { ApiKeyManagerDialogContent, ColorizeDialogContent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Plus } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Plus, Paintbrush } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
@@ -51,6 +51,10 @@ interface DesktopNavbarProps {
   updateApiKeys: (keys: ApiKey[]) => void;
   isApiKeyDialogOpen: boolean;
   setIsApiKeyDialogOpen: (open: boolean) => void;
+  isColorizeOpen: boolean;
+  setIsColorizeOpen: (open: boolean) => void;
+  onColorize: (mode: 'single' | 'rainbow' | 'random', color?: string) => void;
+  itemColors: string[];
 }
 
 export function DesktopNavbar({
@@ -83,6 +87,10 @@ export function DesktopNavbar({
   updateApiKeys,
   isApiKeyDialogOpen,
   setIsApiKeyDialogOpen,
+  isColorizeOpen,
+  setIsColorizeOpen,
+  onColorize,
+  itemColors
 }: DesktopNavbarProps) {
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -187,6 +195,16 @@ export function DesktopNavbar({
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
+                    <Dialog open={isColorizeOpen} onOpenChange={setIsColorizeOpen}>
+                         <DialogTrigger asChild>
+                            <MenubarItem onSelect={(e) => e.preventDefault()}>
+                                <Paintbrush className="mr-2" /> Раскрасить
+                            </MenubarItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <ColorizeDialogContent onColorize={onColorize} itemColors={itemColors} />
+                        </DialogContent>
+                    </Dialog>
                     <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
@@ -268,6 +286,7 @@ export function DesktopNavbar({
                                 }}
                                 onSaveNew={onSaveEvent}
                                 onClose={() => setIsSavedEventsOpen(false)}
+                                itemColors={itemColors}
                             />
                         </DialogContent>
                     </Dialog>
