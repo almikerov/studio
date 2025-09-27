@@ -170,20 +170,12 @@ export function ScheduleView({
                       rows={1}
                   />
                 </div>
-                {isTranslatable && selectedLanguages.length > 0 && item.type !== 'date' && (
+                {isTranslatable && selectedLanguages.length > 0 && (
                     <Input
                         value={editedTranslations[selectedLanguages[0]] || ''}
                         onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
                         className="text-base h-10"
-                        placeholder={`Перевод (${selectedLanguages[0]})`}
-                    />
-                )}
-                 {isTranslatable && selectedLanguages.length > 0 && item.type === 'date' && (
-                    <Input
-                        value={editedTranslations[selectedLanguages[0]] || ''}
-                        onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
-                        className="text-base h-10"
-                        placeholder={`Перевод (${selectedLanguages[0]})`}
+                        placeholder={'Перевод'}
                     />
                 )}
             </div>

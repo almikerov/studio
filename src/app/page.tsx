@@ -31,6 +31,8 @@ import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-ico
 import * as htmlToImage from 'html-to-image';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { Textarea } from '@/components/ui/textarea';
+import { EditableField } from '@/components/multischedule/editable-field';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -88,6 +90,11 @@ const defaultSchedule: ScheduleItem[] = [
     { id: `${Date.now()}-${Math.random()}`, time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
 ];
 
+type TextBlockTranslation = {
+    title: string;
+    content: string;
+}
+
 export default function Home() {
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -107,6 +114,7 @@ export default function Home() {
 
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
   const [translationDisplayMode, setTranslationDisplayMode] = useState<TranslationDisplayMode>('inline');
+  const [textBlockTranslations, setTextBlockTranslations] = useState<Record<string, TextBlockTranslation>>({});
   const [isAiParserOpen, setIsAiParserOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
@@ -122,12 +130,13 @@ export default function Home() {
     try {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
-        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode, selectedLanguages: storedLangs } = JSON.parse(storedState);
+        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode, selectedLanguages: storedLangs, textBlockTranslations: storedTextBlocks } = JSON.parse(storedState);
         setSchedule(schedule || []);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
         if (storedMode) setTranslationDisplayMode(storedMode);
         if (storedLangs) setSelectedLanguages(storedLangs);
+        if (storedTextBlocks) setTextBlockTranslations(storedTextBlocks);
 
       } else {
         setSchedule(defaultSchedule);
@@ -156,12 +165,12 @@ export default function Home() {
         return;
     }
     try {
-        const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages };
+        const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages, textBlockTranslations };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
     } catch (error) {
         console.error("Failed to save state to localStorage", error);
     }
-  }, [schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages]);
+  }, [schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages, textBlockTranslations]);
   
   const updateSavedEvents = (newSavedEvents: SavedEvent[]) => {
     setSavedEvents(newSavedEvents);
@@ -281,11 +290,14 @@ export default function Home() {
         if (translatedItem) {
           return { ...item, translations: translatedItem.translations };
         }
-        // Don't clear old translations if this item wasn't part of the current batch
         return item; 
       });
-
       setSchedule(newSchedule);
+
+       // Update text-block translations
+       if (translationDisplayMode === 'text-block') {
+         updateTextBlockTranslations(newSchedule);
+       }
 
     } catch (error: any) {
       console.error('Translation failed:', error);
@@ -296,6 +308,7 @@ export default function Home() {
 
   const handleClearTranslations = () => {
     setSchedule(prev => prev.map(item => ({...item, translations: {}})));
+    setTextBlockTranslations({});
   };
   
     const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
@@ -560,34 +573,62 @@ export default function Home() {
     setIsMobileMenuOpen(false);
   };
   
-  const renderTextTranslation = (lang: string) => {
-      return schedule.map(item => {
-          const translatedDescription = item.translations?.[lang] ?? item.description;
+  const renderTextTranslation = (lang: string, scheduleToRender: ScheduleItem[]) => {
+    return scheduleToRender.map(item => {
+        const translatedDescription = item.translations?.[lang] ?? item.description;
 
-          switch (item.type) {
-              case 'timed':
-                  return `${item.time} ${translatedDescription}`;
-              case 'untimed':
-                  return `- ${translatedDescription}`;
-              case 'comment':
-                  return `// ${translatedDescription}`;
-              case 'date':
-                  if (item.date) {
-                      const dateString = format(new Date(item.date), 'dd.MM.yyyy', { locale: ru });
-                      return `\n== ${dateString}${translatedDescription ? ` (${translatedDescription})` : ''} ==`;
-                  }
-                  return '';
-              case 'h1':
-                  return `\n# ${translatedDescription}`;
-              case 'h2':
-                  return `## ${translatedDescription}`;
-              case 'h3':
-                  return `### ${translatedDescription}`;
-              default:
-                  return '';
-          }
-      }).join('\n');
-  };
+        switch (item.type) {
+            case 'timed':
+                return `${item.time} ${translatedDescription}`;
+            case 'untimed':
+                return `- ${translatedDescription}`;
+            case 'comment':
+                return `// ${translatedDescription}`;
+            case 'date':
+                if (item.date) {
+                    const dateString = format(new Date(item.date), 'dd.MM.yyyy', { locale: ru });
+                    return `\n== ${dateString}${translatedDescription ? ` (${translatedDescription})` : ''} ==`;
+                }
+                return '';
+            case 'h1':
+                return `\n# ${translatedDescription}`;
+            case 'h2':
+                return `## ${translatedDescription}`;
+            case 'h3':
+                return `### ${translatedDescription}`;
+            default:
+                return '';
+        }
+    }).join('\n');
+};
+
+const updateTextBlockTranslations = (currentSchedule: ScheduleItem[]) => {
+    const newTextBlocks: Record<string, TextBlockTranslation> = {};
+    selectedLanguages.forEach(lang => {
+        const langName = AVAILABLE_LANGUAGES.find(l => l.code === lang)?.name || lang;
+        newTextBlocks[lang] = {
+            title: textBlockTranslations[lang]?.title || langName,
+            content: renderTextTranslation(lang, currentSchedule),
+        }
+    });
+    setTextBlockTranslations(newTextBlocks);
+};
+
+useEffect(() => {
+    if (translationDisplayMode === 'text-block' && selectedLanguages.length > 0) {
+        updateTextBlockTranslations(schedule);
+    }
+}, [translationDisplayMode, selectedLanguages]);
+
+const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: string) => {
+    setTextBlockTranslations(prev => ({
+        ...prev,
+        [lang]: {
+            ...prev[lang],
+            [field]: value
+        }
+    }));
+};
 
 
   return (
@@ -660,21 +701,28 @@ export default function Home() {
           
            {translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule.length > 0 && (
                 <div className="space-y-4">
-                    {selectedLanguages.map(lang => {
-                        const langName = AVAILABLE_LANGUAGES.find(l => l.code === lang)?.name || lang;
-                        return (
+                    {selectedLanguages.map(lang => (
                             <Card key={lang}>
                                 <CardHeader>
-                                    <CardTitle className="text-lg">{langName} ({lang})</CardTitle>
+                                    <EditableField
+                                        as="h2"
+                                        className="text-lg font-semibold leading-none tracking-tight"
+                                        value={textBlockTranslations[lang]?.title || ''}
+                                        setValue={(value) => handleTextBlockChange(lang, 'title', value)}
+                                        isMobile={isMobile}
+                                    />
                                 </CardHeader>
                                 <CardContent>
-                                    <pre className="text-sm whitespace-pre-wrap font-sans bg-muted p-4 rounded-md">
-                                        {renderTextTranslation(lang)}
-                                    </pre>
+                                    <Textarea
+                                        value={textBlockTranslations[lang]?.content || ''}
+                                        onChange={(e) => handleTextBlockChange(lang, 'content', e.target.value)}
+                                        className="text-sm font-sans whitespace-pre-wrap p-0 border-none focus-visible:ring-0 shadow-none h-auto min-h-[100px]"
+                                        rows={Math.max(5, (textBlockTranslations[lang]?.content || '').split('\n').length)}
+                                    />
                                 </CardContent>
                             </Card>
                         )
-                    })}
+                    )}
                 </div>
            )}
 
