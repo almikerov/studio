@@ -2,14 +2,14 @@
 
 'use client';
 
-import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode } from '@/app/page';
+import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode, ApiKey } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash } from 'lucide-react';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
@@ -46,6 +46,8 @@ interface DesktopNavbarProps {
   onSaveEvent: (event: Partial<SavedEvent>) => void;
   translationDisplayMode: TranslationDisplayMode;
   setTranslationDisplayMode: (mode: TranslationDisplayMode) => void;
+  apiKeys: ApiKey[];
+  updateApiKeys: (keys: ApiKey[]) => void;
 }
 
 export function DesktopNavbar({
@@ -74,18 +76,12 @@ export function DesktopNavbar({
   onSaveEvent,
   translationDisplayMode,
   setTranslationDisplayMode,
+  apiKeys,
+  updateApiKeys,
 }: DesktopNavbarProps) {
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
-    const [apiKeyInput, setApiKeyInput] = useState('');
     const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
-
-     React.useEffect(() => {
-        const storedApiKey = localStorage.getItem('gemini-api-key');
-        if (storedApiKey) {
-            setApiKeyInput(storedApiKey);
-        }
-    }, []);
     
     const handleAddFromSaved = (event: SavedEvent) => {
         onAddEventFromSaved(event);
@@ -100,15 +96,6 @@ export function DesktopNavbar({
         onClearTranslations();
         setIsTranslateDialogOpen(false);
     }
-
-    const handleSaveApiConfig = () => {
-        try {
-            localStorage.setItem('gemini-api-key', apiKeyInput);
-            setIsApiKeyDialogOpen(false);
-        } catch (error) {
-            console.error("Failed to save to localStorage", error);
-        }
-    };
 
   return (
     <div className="flex items-center justify-between rounded-lg border bg-card p-1 h-auto">
@@ -209,29 +196,11 @@ export function DesktopNavbar({
                      <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <KeyRound className="mr-2" /> Gemini API Key
+                                <KeyRound className="mr-2" /> Gemini API Keys
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Конфигурация Gemini API</DialogTitle>
-                                <DialogDescription>Введите ваш API ключ для доступа к Gemini AI.</DialogDescription>
-                            </DialogHeader>
-                            <div className="py-4 space-y-4">
-                                <div>
-                                <Label htmlFor="api-key-desktop">API Key</Label>
-                                <Input
-                                    id="api-key-desktop"
-                                    type="password"
-                                    placeholder="Ваш API ключ"
-                                    value={apiKeyInput}
-                                    onChange={(e) => setApiKeyInput(e.target.value)}
-                                />
-                                </div>
-                            </div>
-                            <DialogFooter className="sm:justify-end">
-                              <Button onClick={handleSaveApiConfig}>Сохранить</Button>
-                            </DialogFooter>
+                            <ApiKeyManagerDialogContent apiKeys={apiKeys} updateApiKeys={updateApiKeys} onClose={() => setIsApiKeyDialogOpen(false)} />
                         </DialogContent>
                     </Dialog>
                     <MenubarSeparator />
@@ -306,11 +275,56 @@ export function DesktopNavbar({
 }
 
 
-    
+function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: { apiKeys: ApiKey[], updateApiKeys: (keys: ApiKey[]) => void, onClose: () => void }) {
+    const [newApiKey, setNewApiKey] = useState('');
 
-    
+    const handleAddKey = () => {
+        if (newApiKey.trim()) {
+            const newKey = { id: `${Date.now()}`, key: newApiKey.trim() };
+            updateApiKeys([...apiKeys, newKey]);
+            setNewApiKey('');
+        }
+    };
 
+    const handleDeleteKey = (id: string) => {
+        updateApiKeys(apiKeys.filter(k => k.id !== id));
+    };
 
-
-
+    return (
+        <>
+            <DialogHeader>
+                <DialogTitle>Конфигурация Gemini API</DialogTitle>
+                <DialogDescription>Добавьте и управляйте вашими API ключами. Если один ключ не сработает, приложение автоматически попробует следующий.</DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="flex gap-2">
+                    <Input
+                        type="password"
+                        placeholder="Новый API ключ"
+                        value={newApiKey}
+                        onChange={(e) => setNewApiKey(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddKey()}
+                    />
+                    <Button onClick={handleAddKey}><Plus/></Button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                    <Label>Сохраненные ключи</Label>
+                    {apiKeys.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">Нет ключей</p>
+                    ) : (
+                        apiKeys.map(apiKey => (
+                            <div key={apiKey.id} className="flex items-center justify-between gap-2 p-2 border rounded-md">
+                                <span className="font-mono text-sm truncate">...{apiKey.key.slice(-4)}</span>
+                                <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}><Trash size={16}/></Button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={onClose}>Закрыть</Button>
+            </DialogFooter>
+        </>
+    );
+}
 

@@ -72,6 +72,11 @@ export type ScheduleTemplate = {
   imageUrl: string | null;
 };
 
+export type ApiKey = {
+  id: string;
+  key: string;
+};
+
 export type TranslationDisplayMode = 'inline' | 'block' | 'text-block';
 export type RenderOptions = { renderAsMobile?: boolean, fitContent?: boolean };
 
@@ -105,7 +110,7 @@ export default function Home() {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: RenderOptions) => void) | null>(null);
-  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
 
 
   useEffect(() => {
@@ -131,9 +136,9 @@ export default function Home() {
       if (storedTemplates) {
         setSavedTemplates(JSON.parse(storedTemplates));
       }
-      const storedApiKey = localStorage.getItem('gemini-api-key');
-      if (storedApiKey) {
-        setApiKeyInput(storedApiKey);
+      const storedApiKeys = localStorage.getItem('gemini-api-keys');
+      if (storedApiKeys) {
+        setApiKeys(JSON.parse(storedApiKeys));
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
@@ -256,15 +261,15 @@ export default function Home() {
     setIsLoading(true);
     setIsMobileMenuOpen(false);
 
-    const apiKey = localStorage.getItem('gemini-api-key');
-    if (!apiKey) {
+    if (apiKeys.length === 0) {
+      console.error("No API keys found.");
       setIsLoading(false);
       return;
     }
 
     try {
       const descriptions = itemsToTranslate.map(item => item.description);
-      const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages }, apiKey);
+      const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages }, apiKeys.map(k => k.key));
       
       const newSchedule = schedule.map(item => {
         const translatedItem = result.results.find(t => t.original === item.description);
@@ -524,14 +529,14 @@ export default function Home() {
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
 
-    const apiKey = localStorage.getItem('gemini-api-key');
-    if (!apiKey) {
+    if (apiKeys.length === 0) {
+      console.error("No API keys found.");
       setIsLoading(false);
       return;
     }
-
+    
     try {
-      const result = await parseScheduleFromText({ text }, apiKey);
+      const result = await parseScheduleFromText({ text }, apiKeys.map(k => k.key));
       const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
@@ -552,12 +557,12 @@ export default function Home() {
     updateSavedEvents(newEvents);
   }
 
-  const handleSaveApiConfig = () => {
+  const updateApiKeys = (newApiKeys: ApiKey[]) => {
+    setApiKeys(newApiKeys);
     try {
-      localStorage.setItem('gemini-api-key', apiKeyInput);
-      setIsApiKeyDialogOpen(false);
+        localStorage.setItem('gemini-api-keys', JSON.stringify(newApiKeys));
     } catch (error) {
-      console.error("Failed to save to localStorage", error);
+        console.error("Failed to save API keys to localStorage", error);
     }
   };
   
@@ -628,6 +633,8 @@ export default function Home() {
             onSaveEvent={handleSaveEvent}
             translationDisplayMode={translationDisplayMode}
             setTranslationDisplayMode={setTranslationDisplayMode}
+            apiKeys={apiKeys}
+            updateApiKeys={updateApiKeys}
         />}
 
         
@@ -792,29 +799,11 @@ export default function Home() {
                           <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                             <DialogTrigger asChild>
                               <Button variant="ghost" className="justify-start w-full">
-                                <KeyRound className="mr-2" /> Gemini API Key
+                                <KeyRound className="mr-2" /> Gemini API Keys
                               </Button>
                             </DialogTrigger>
                             <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Конфигурация Gemini API</DialogTitle>
-                                <DialogDescription>Введите ваш API ключ для доступа к Gemini AI.</DialogDescription>
-                              </DialogHeader>
-                              <div className="py-4 space-y-4">
-                                 <div>
-                                  <Label htmlFor="api-key-mobile">API Key</Label>
-                                  <Input
-                                    id="api-key-mobile"
-                                    type="password"
-                                    placeholder="Ваш API ключ"
-                                    value={apiKeyInput}
-                                    onChange={(e) => setApiKeyInput(e.target.value)}
-                                  />
-                                 </div>
-                              </div>
-                              <DialogFooter>
-                                <Button onClick={handleSaveApiConfig}>Сохранить</Button>
-                              </DialogFooter>
+                                <ApiKeyManagerDialogContent apiKeys={apiKeys} updateApiKeys={updateApiKeys} onClose={() => setIsApiKeyDialogOpen(false)} />
                             </DialogContent>
                           </Dialog>
                            <AlertDialog>
@@ -914,3 +903,58 @@ export default function Home() {
     </main>
   );
 }
+
+
+function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: { apiKeys: ApiKey[], updateApiKeys: (keys: ApiKey[]) => void, onClose: () => void }) {
+    const [newApiKey, setNewApiKey] = useState('');
+
+    const handleAddKey = () => {
+        if (newApiKey.trim()) {
+            const newKey = { id: `${Date.now()}`, key: newApiKey.trim() };
+            updateApiKeys([...apiKeys, newKey]);
+            setNewApiKey('');
+        }
+    };
+
+    const handleDeleteKey = (id: string) => {
+        updateApiKeys(apiKeys.filter(k => k.id !== id));
+    };
+
+    return (
+        <>
+            <DialogHeader>
+                <DialogTitle>Конфигурация Gemini API</DialogTitle>
+                <DialogDescription>Добавьте и управляйте вашими API ключами. Если один ключ не сработает, приложение автоматически попробует следующий.</DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="flex gap-2">
+                    <Input
+                        type="password"
+                        placeholder="Новый API ключ"
+                        value={newApiKey}
+                        onChange={(e) => setNewApiKey(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddKey()}
+                    />
+                    <Button onClick={handleAddKey}><Plus/></Button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                    <Label>Сохраненные ключи</Label>
+                    {apiKeys.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">Нет ключей</p>
+                    ) : (
+                        apiKeys.map(apiKey => (
+                            <div key={apiKey.id} className="flex items-center justify-between gap-2 p-2 border rounded-md">
+                                <span className="font-mono text-sm truncate">...{apiKey.key.slice(-4)}</span>
+                                <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}><Trash size={16}/></Button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={onClose}>Закрыть</Button>
+            </DialogFooter>
+        </>
+    );
+}
+

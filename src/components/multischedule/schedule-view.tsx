@@ -158,7 +158,7 @@ export function ScheduleView({
             {/* Description/Icon input */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  {isRegularEvent && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                  <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />
                   
                   {editedType !== 'date' && (
                       <Textarea
@@ -361,12 +361,10 @@ export function ScheduleView({
                          )}
 
                         <div data-id="icon-container" data-has-icon={String(!!item.icon)} className="w-8 h-8 flex items-center justify-center shrink-0">
-                           {['timed', 'untimed'].includes(item.type) ? (
-                                <IconDropdown
-                                    value={item.icon}
-                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                />
-                           ) : <div className="w-8 h-8"/> }
+                           <IconDropdown
+                                value={item.icon}
+                                onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                           />
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
@@ -501,7 +499,7 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
