@@ -721,7 +721,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                                         setValue={(value) => handleTextBlockChange(lang, 'title', value)}
                                         isMobile={isMobile}
                                     />
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveLanguageFromTextBlock(lang)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveLanguageFromTextBlock(lang)} data-no-print="true">
                                         <Trash className="h-4 w-4" />
                                     </Button>
                                 </CardHeader>
