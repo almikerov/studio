@@ -28,7 +28,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
+
 
 export const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
@@ -291,56 +292,60 @@ export default function Home() {
   const handleClearTranslations = () => {
     setSchedule(prev => prev.map(item => ({...item, translations: {}})));
   };
+  
+    const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
+        const element = printableAreaRef.current;
+        if (!element) return null;
 
-  const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
-      const element = printableAreaRef.current;
-      if (!element) return null;
-  
-      setIsDownloading(true);
-  
-      // Create a clone to manipulate styles without affecting the UI
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.classList.add('cloned-for-rendering');
-  
-      // Temporarily set width for mobile rendering if needed
-      if (options.renderAsMobile) {
-          clone.style.width = '420px';
-          clone.classList.add('render-mobile-padding');
-      } else {
-          clone.style.width = `${element.offsetWidth}px`;
-      }
-      
-      // Hide elements that should not be printed
-      const elementsToHide = clone.querySelectorAll('[data-no-print="true"]');
-      elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
-  
-      // Append to body to ensure styles are computed
-      document.body.appendChild(clone);
-  
-      try {
-          const canvas = await html2canvas(clone, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: null, // Use our class-based background
-              onclone: (doc) => {
-                  // Ensure cross-origin images can be loaded
-                  const images = doc.getElementsByTagName('img');
-                  for (let i = 0; i < images.length; i++) {
-                      images[i].crossOrigin = 'anonymous';
-                  }
-              }
-          });
-          return canvas;
-      } catch (error) {
-          console.error("Error generating canvas with html2canvas", error);
-          return null;
-      } finally {
-          // Clean up the clone
-          document.body.removeChild(clone);
-          setIsDownloading(false);
-      }
-  };
+        setIsDownloading(true);
+
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
+        
+        const fontEmbedCss = await htmlToImage.getFontEmbedCss(element);
+
+        // Create a clone to manipulate styles without affecting the UI
+        const clone = element.cloneNode(true) as HTMLElement;
+
+        // Apply a specific class for rendering to control styles if needed
+        clone.classList.add('cloned-for-rendering');
+        
+        if (options.renderAsMobile) {
+            clone.style.width = '420px'; // Set a fixed width for mobile-like rendering
+            clone.classList.add('render-mobile-padding');
+        } else {
+            clone.style.width = `${element.offsetWidth}px`;
+        }
+
+        // Hide elements that should not be part of the final image
+        const elementsToHide = clone.querySelectorAll('[data-no-print="true"]');
+        elementsToHide.forEach(el => (el as HTMLElement).style.display = 'none');
+        
+        document.body.appendChild(clone);
+        
+        try {
+            const canvas = await htmlToImage.toCanvas(clone, {
+                pixelRatio: 2,
+                backgroundColor: backgroundColor,
+                fontEmbedCss: fontEmbedCss,
+                // Ensure external images are handled
+                fetchRequestInit: {
+                    headers: new Headers(),
+                    mode: 'cors',
+                    cache: 'no-cache'
+                }
+            });
+            return canvas;
+        } catch (error) {
+            console.error("Error generating canvas with html-to-image", error);
+            return null;
+        } finally {
+            // Clean up the clone
+            document.body.removeChild(clone);
+            setIsDownloading(false);
+        }
+    };
+
 
   const handleDownloadImage = async (options: RenderOptions) => {
     const canvas = await generateCanvas(options);
@@ -888,4 +893,5 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     
 
     
+
 
