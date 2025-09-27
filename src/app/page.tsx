@@ -635,6 +635,8 @@ export default function Home() {
             setTranslationDisplayMode={setTranslationDisplayMode}
             apiKeys={apiKeys}
             updateApiKeys={updateApiKeys}
+            isApiKeyDialogOpen={isApiKeyDialogOpen}
+            setIsApiKeyDialogOpen={setIsApiKeyDialogOpen}
         />}
 
         
@@ -905,7 +907,7 @@ export default function Home() {
 }
 
 
-function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: { apiKeys: ApiKey[], updateApiKeys: (keys: ApiKey[]) => void, onClose: () => void }) {
+export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: { apiKeys: ApiKey[], updateApiKeys: (keys: ApiKey[]) => void, onClose: () => void }) {
     const [newApiKey, setNewApiKey] = useState('');
 
     const handleAddKey = () => {
