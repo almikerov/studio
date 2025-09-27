@@ -54,7 +54,6 @@ export function ScheduleView({
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen
 }: ScheduleViewProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
   const [editedType, setEditedType] = useState<ScheduleItem['type']>('timed');
@@ -89,7 +88,6 @@ export function ScheduleView({
       date: editedType === 'date' && editedDate ? editedDate.toISOString() : undefined,
     });
     
-    setEditingId(null);
     if (isMobile) {
       handleCloseEditModal();
     }
@@ -267,7 +265,7 @@ export function ScheduleView({
 
             {/* Action buttons */}
             <div className="flex gap-2 mt-4">
-                <Button onClick={handleSaveToPreset} variant="outline" className="w-full" size="lg"><Bookmark /></Button>
+               {isRegularEvent && <Button onClick={handleSaveToPreset} variant="outline" className="w-full" size="lg"><Bookmark /></Button> }
                 <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
             </div>
             <Button onClick={() => handleSave(item.id)} className="w-full" size="lg"><Check className="mr-2"/>Сохранить и закрыть</Button>
@@ -292,25 +290,23 @@ export function ScheduleView({
                  <div data-id="schedule-image-wrapper">
                     {imageUrl ? (
                         <ImageUploader onSetImageUrl={setImageUrl}>
-                            <DialogTrigger asChild>
+                             <Button asChild variant="ghost" className="p-0 h-auto w-auto cursor-pointer">
                                 <Image
                                     src={imageUrl}
                                     alt="Schedule image"
                                     width={isMobile ? 80 : 96}
                                     height={isMobile ? 80 : 96}
-                                    className="object-cover rounded-md aspect-square cursor-pointer"
+                                    className="object-cover rounded-md aspect-square"
                                     crossOrigin="anonymous"
                                 />
-                            </DialogTrigger>
+                             </Button>
                         </ImageUploader>
                     ) : (
                         <div data-id="image-placeholder" className="p-2" data-no-print="true">
                             <ImageUploader onSetImageUrl={setImageUrl}>
-                                <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                                    </Button>
-                                </DialogTrigger>
+                                 <Button variant="ghost" size="icon">
+                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                                </Button>
                             </ImageUploader>
                         </div>
                     )}
@@ -353,17 +349,17 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        {item.icon ? (
-                            <div className="w-8 h-8 flex items-center justify-center">
+                        <div className="w-8 h-8 flex items-center justify-center">
+                            {item.icon ? (
                                 <IconDropdown
                                     value={item.icon}
                                     onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                                 />
-                            </div>
-                        ) : (
-                          <div className="w-8 h-8" data-no-icon-placeholder></div>
-                        )
-                        }
+                            ) : (
+                                <div data-no-icon-placeholder/>
+                            )
+                            }
+                        </div>
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
