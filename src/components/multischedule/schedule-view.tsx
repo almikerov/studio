@@ -351,7 +351,7 @@ export function ScheduleView({
                         onClick={() => handleEdit(item)}
                       >
                         {!isMobile && (
-                           <div {...provided.dragHandleProps} data-drag-handle="true" className="cursor-grab active:cursor-grabbing p-2 flex items-center">
+                           <div {...provided.dragHandleProps} data-drag-handle="true" className="flex items-center cursor-grab active:cursor-grabbing p-2">
                              <GripVertical className="h-5 w-5 text-muted-foreground" />
                           </div>
                         )}
@@ -373,7 +373,7 @@ export function ScheduleView({
                         
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
-                                <div className='flex-1'>
+                                <div className='flex-1 render-header-align-fix'>
                                     <div className="flex items-baseline gap-2">
                                         <EditableField
                                             isMobile={isMobile}
@@ -416,7 +416,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : item.type === 'date' && item.date ? (
-                                <div className="flex items-baseline gap-2 flex-1">
+                                <div className="flex items-baseline gap-2 flex-1 render-header-align-fix">
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
@@ -442,7 +442,7 @@ export function ScheduleView({
                                     />
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full flex-1">
+                                <div className="w-full flex-1 render-header-align-fix">
                                     <div className='flex items-baseline gap-2'>
                                       <EditableField 
                                         isMobile={isMobile}
@@ -493,7 +493,7 @@ export function ScheduleView({
                             ) : (
                                 <div className="flex w-full items-baseline">
                                      {item.type === 'timed' && (
-                                        <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
+                                        <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem] render-header-align-fix">
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.time}
@@ -503,7 +503,7 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1 render-header-align-fix", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
@@ -659,6 +659,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
