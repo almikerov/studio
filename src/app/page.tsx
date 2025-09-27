@@ -295,6 +295,11 @@ export default function Home() {
     const footer = clone.querySelector('#card-footer');
     if (footer) footer.remove();
 
+    if (!imageUrl) {
+        const placeholder = clone.querySelector('[data-id="image-placeholder"]');
+        if (placeholder) placeholder.remove();
+    }
+
     clone.querySelectorAll('.truncate').forEach(el => {
       el.classList.remove('truncate');
     });

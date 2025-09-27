@@ -322,9 +322,9 @@ export function ScheduleView({
                         <Menu />
                     </Button>
                 )}
-                <div className="relative">
-                    <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? (open) => { if (!open) setIsMobileMenuOpen(false) } : undefined}>
-                        <div className="absolute inset-0 cursor-pointer" data-no-print="true" />
+                <div className="relative" data-id="schedule-image-wrapper">
+                    <ImageUploader onSetImageUrl={setImageUrl}>
+                       <div className="absolute inset-0 cursor-pointer" data-no-print="true" />
                     </ImageUploader>
                     {imageUrl ? (
                         <Image
@@ -336,7 +336,7 @@ export function ScheduleView({
                             crossOrigin="anonymous"
                         />
                     ) : (
-                         <div className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square cursor-pointer", isMobile ? "w-20 h-20" : "w-24 h-24")}>
+                         <div data-id="image-placeholder" className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square", isMobile ? "w-20 h-20" : "w-24 h-24")}>
                            <ImagePlus className="h-8 w-8 text-muted-foreground" />
                         </div>
                     )}
