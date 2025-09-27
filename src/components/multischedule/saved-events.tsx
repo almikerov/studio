@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,7 +116,7 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
 
     const isCreating = !event?.description;
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (event) {
             setDescription(event.description);
             setIcon(event.icon);
@@ -205,4 +205,3 @@ function EditSavedEventDialog({ event, onSave, onClose }: EditSavedEventDialogPr
         </DialogContent>
     );
 }
-
