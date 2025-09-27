@@ -147,7 +147,7 @@ export function ScheduleView({
     return (
         <div className="flex flex-col gap-4 p-1">
             <div className="flex items-center gap-2">
-                {editedType !== 'comment' && editedType !== 'date' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                {item.icon && editedType !== 'comment' && editedType !== 'date' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
                 {editedType !== 'date' && 
                     <Textarea
                         value={editedDescription}
@@ -248,29 +248,27 @@ export function ScheduleView({
             <div className="flex-1">
                 <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
-            <div className="flex items-center gap-2">
-                 <div data-id="schedule-image-wrapper">
-                    <ImageUploader onSetImageUrl={setImageUrl}>
-                        <DialogTrigger asChild>
-                           <div className="cursor-pointer">
-                             {imageUrl ? (
-                                <Image
-                                    src={imageUrl}
-                                    alt="Schedule image"
-                                    width={isMobile ? 80 : 96}
-                                    height={isMobile ? 80 : 96}
-                                    className="object-cover rounded-md aspect-square"
-                                    crossOrigin="anonymous"
-                                />
-                             ) : (
-                              <div data-id="image-placeholder" className="p-2" data-no-print="true">
-                                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                              </div>
-                            )}
-                           </div>
-                        </DialogTrigger>
-                    </ImageUploader>
-                 </div>
+             <div className="flex items-center gap-2" data-id="schedule-image-wrapper">
+                <ImageUploader onSetImageUrl={setImageUrl}>
+                  <DialogTrigger asChild>
+                     <div className="cursor-pointer">
+                       {imageUrl ? (
+                          <Image
+                              src={imageUrl}
+                              alt="Schedule image"
+                              width={isMobile ? 80 : 96}
+                              height={isMobile ? 80 : 96}
+                              className="object-cover rounded-md aspect-square"
+                              crossOrigin="anonymous"
+                          />
+                       ) : (
+                        <div data-id="image-placeholder" className="p-2" data-no-print="true">
+                            <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
+                     </div>
+                  </DialogTrigger>
+                </ImageUploader>
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -308,12 +306,12 @@ export function ScheduleView({
                          )}
 
                         <div className="w-8 h-8 flex items-center justify-center" {...(!item.icon && {'data-no-icon-placeholder': true})}>
-                            {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
-                                <IconDropdown
-                                    value={item.icon}
-                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                                />
-                            )}
+                           {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
+                               <IconDropdown
+                                   value={item.icon}
+                                   onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                               />
+                           )}
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
@@ -345,7 +343,6 @@ export function ScheduleView({
                                         value={item.description || ''}
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                         className="text-base font-normal text-muted-foreground"
-                                        placeholder='Описание (необязательно)'
                                     />
                                 </div>
                             ) : item.type === 'h1' ? (
@@ -362,18 +359,16 @@ export function ScheduleView({
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-2">
-                                    <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
-                                      {item.type === 'timed' ? (
-                                        <EditableField
-                                            value={item.time}
-                                            setValue={(val) => onUpdateEvent(item.id, { time: val })}
-                                            className="font-mono text-base font-semibold"
-                                            inputType="time"
-                                        />
-                                      ) : (
-                                        <div className="w-12" />
-                                      )}
-                                    </div>
+                                     {item.type === 'timed' && (
+                                        <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
+                                            <EditableField
+                                                value={item.time}
+                                                setValue={(val) => onUpdateEvent(item.id, { time: val })}
+                                                className="font-mono text-base font-semibold"
+                                                inputType="time"
+                                            />
+                                        </div>
+                                     )}
 
                                     <EditableField
                                         value={item.description}
