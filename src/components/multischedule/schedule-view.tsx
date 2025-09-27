@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent, TranslationDisplayMode } from '@/app/pag
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Wrench, CalendarIcon } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Type, CalendarIcon } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -376,7 +376,7 @@ export function ScheduleView({
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
                                 <div>
-                                    <div className='flex items-baseline gap-2'>
+                                    <div className='flex items-center gap-2'>
                                         <EditableField
                                             isMobile={isMobile}
                                             value={item.description}
@@ -386,7 +386,7 @@ export function ScheduleView({
                                             data-id="description"
                                         />
                                         {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                            <div className="flex items-baseline text-muted-foreground text-sm italic">
+                                            <div className="flex items-center text-muted-foreground text-sm italic">
                                                 ({Object.entries(item.translations).map(([lang, text], idx) => (
                                                   <EditableField
                                                       key={lang}
@@ -436,7 +436,7 @@ export function ScheduleView({
                                         </PopoverContent>
                                     </Popover>
                                     <div>
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-center gap-2">
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description || ''}
@@ -464,7 +464,7 @@ export function ScheduleView({
                                          {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                             <div className="text-sm text-muted-foreground mt-1">
                                                 {Object.entries(item.translations).map(([lang, text]) => (
-                                                    <div key={lang} className="flex items-center">
+                                                    <div key={lang}>
                                                         <EditableField
                                                             isMobile={isMobile}
                                                             value={text}
@@ -480,8 +480,8 @@ export function ScheduleView({
                                     </div>
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
-                                <div className="w-full">
-                                  <div className="flex items-baseline gap-2">
+                                <div>
+                                  <div className="flex items-center gap-2">
                                     <EditableField 
                                       isMobile={isMobile}
                                       as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
@@ -497,7 +497,7 @@ export function ScheduleView({
                                       isTextarea={true}
                                     />
                                     {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="flex items-baseline text-muted-foreground font-normal">
+                                        <div className="flex items-center text-muted-foreground font-normal">
                                             ({Object.entries(item.translations).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
@@ -542,56 +542,54 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1 flex items-center", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
                                         }}>
-                                        <div>
-                                            <div className="flex items-baseline gap-2">
-                                                <EditableField
-                                                    isMobile={isMobile}
-                                                    value={item.description}
-                                                    setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
-                                                    className="inline"
-                                                    as="span"
-                                                    data-id="description"
-                                                    isTextarea={true}
-                                                />
-                                                {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                                    <span className="text-muted-foreground">
-                                                        ({Object.entries(item.translations).map(([lang, text]) => (
-                                                            <EditableField
-                                                                key={lang}
-                                                                isMobile={isMobile}
-                                                                value={text}
-                                                                setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                                className="inline"
-                                                                as="span"
-                                                                isTextarea={true}
-                                                            />
-                                                        )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                                <div className="text-sm text-muted-foreground mt-1">
-                                                    {Object.entries(item.translations).map(([lang, text]) => (
-                                                        <div key={lang} className="flex items-center">
-                                                            <EditableField
-                                                                isMobile={isMobile}
-                                                                value={text}
-                                                                setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                                className="block"
-                                                                as="div"
-                                                                isTextarea={true}
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                        <div className='flex items-center gap-2'>
+                                            <EditableField
+                                                isMobile={isMobile}
+                                                value={item.description}
+                                                setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
+                                                className="inline"
+                                                as="span"
+                                                data-id="description"
+                                                isTextarea={true}
+                                            />
+                                            {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                                <span className="text-muted-foreground">
+                                                    ({Object.entries(item.translations).map(([lang, text]) => (
+                                                        <EditableField
+                                                            key={lang}
+                                                            isMobile={isMobile}
+                                                            value={text}
+                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                            className="inline"
+                                                            as="span"
+                                                            isTextarea={true}
+                                                        />
+                                                    )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                                </span>
                                             )}
                                         </div>
+
+                                        {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                            <div className="text-sm text-muted-foreground mt-1">
+                                                {Object.entries(item.translations).map(([lang, text]) => (
+                                                    <div key={lang} className="flex items-center">
+                                                        <EditableField
+                                                            isMobile={isMobile}
+                                                            value={text}
+                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                            className="block"
+                                                            as="div"
+                                                            isTextarea={true}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -600,7 +598,7 @@ export function ScheduleView({
                         <div data-no-print={isMobile ? "true" : undefined} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
                             <Popover>
                                 <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Wrench className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Type className="h-4 w-4" /></Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2">
                                     <div className="flex flex-col gap-1">
@@ -720,3 +718,4 @@ export function ScheduleView({
 
 
     
+
