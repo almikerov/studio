@@ -416,12 +416,12 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : item.type === 'date' && item.date ? (
-                                <div className="flex items-center gap-2 flex-1">
+                                <div className="flex items-baseline gap-2 flex-1">
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant="ghost" className="h-auto p-0 font-semibold text-lg text-muted-foreground hover:bg-transparent" disabled={isMobile}>
+                                            <span className="font-semibold text-lg text-muted-foreground cursor-pointer">
                                                 {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
-                                            </Button>
+                                            </span>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0">
                                             <Calendar
@@ -659,4 +659,5 @@ export function ScheduleView({
 }
 
     
+
 
