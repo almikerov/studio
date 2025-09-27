@@ -442,9 +442,7 @@ export function ScheduleView({
                                                 value={item.description || ''}
                                                 setValue={(val) => onUpdateEvent(item.id, { description: val })}
                                                 className="text-base font-normal text-muted-foreground"
-                                                placeholder="Описание (необязательно)"
                                                 isTextarea={true}
-                                                data-make-invisible={!item.description ? 'true' : undefined}
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <span className="text-muted-foreground text-base font-normal">
@@ -719,6 +717,7 @@ export function ScheduleView({
 
 
     
+
 
 
 
