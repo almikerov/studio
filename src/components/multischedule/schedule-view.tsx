@@ -54,7 +54,6 @@ export function ScheduleView({
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen
 }: ScheduleViewProps) {
-  const editRowRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -75,47 +74,10 @@ export function ScheduleView({
     }
   }, [editingEvent]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      
-      const popper = document.querySelector('[data-radix-popper-content-wrapper]');
-      if (popper && popper.contains(target)) {
-        return;
-      }
-
-      if (editRowRef.current && !editRowRef.current.contains(target)) {
-        if (editingId) {
-          handleSave(editingId);
-        }
-      }
-    };
-
-    if (editingId) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [editingId, editRowRef, editedTime, editedDescription, editedType, editedDate]);
-
+  
   const handleEdit = (item: ScheduleItem) => {
     if (isMobile) {
       handleOpenEditModal(item);
-    } else {
-      if (editingId) { // Save previous before editing new one
-        handleSave(editingId);
-      }
-      setEditingId(item.id);
-      setEditedTime(item.time);
-      setEditedDescription(item.description);
-      setEditedType(item.type);
-      if (item.type === 'date' && item.date) {
-        setEditedDate(new Date(item.date));
-      }
     }
   };
 
@@ -133,22 +95,7 @@ export function ScheduleView({
     }
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    if (isMobile) {
-      handleCloseEditModal();
-    }
-  };
   
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, id: string) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSave(id);
-    } else if (e.key === 'Escape') {
-      handleCancel();
-    }
-  }
-
   const handleIconChange = (id: string, icon: IconName | undefined) => {
     onUpdateEvent(id, { icon });
     if(isMobile) {
@@ -169,13 +116,8 @@ export function ScheduleView({
         updatePayload.date = new Date().toISOString();
     }
 
-    if (!isMobile && editingId === id) {
-        onUpdateEvent(id, { ...updatePayload, description: editedDescription });
-        setEditingId(null);
-    } else {
-        onUpdateEvent(id, updatePayload);
-    }
-
+    onUpdateEvent(id, updatePayload);
+    
     if (isMobile && editingEvent?.id === id) {
         setEditedType(type);
     }
@@ -187,17 +129,7 @@ export function ScheduleView({
     setLastAdded(newId);
   }
 
-  useEffect(() => {
-    if (lastAdded && !isMobile) {
-      const itemToEdit = schedule.find(item => item.id === lastAdded);
-      if (itemToEdit) {
-        handleEdit(itemToEdit);
-      }
-      setLastAdded(null);
-    }
-  }, [schedule, lastAdded, isMobile]);
-
-
+  
   const renderEditContent = (item: ScheduleItem) => {
     const handleSaveToPreset = () => {
         const eventToSave: Partial<ScheduleItem> = {
@@ -322,24 +254,25 @@ export function ScheduleView({
                         <Menu />
                     </Button>
                 )}
-                <div className="relative" data-id="schedule-image-wrapper">
+                <div data-id="schedule-image-wrapper">
                     <ImageUploader onSetImageUrl={setImageUrl}>
-                       <div className="absolute inset-0 cursor-pointer" data-no-print="true" />
-                    </ImageUploader>
-                    {imageUrl ? (
-                        <Image
-                            src={imageUrl}
-                            alt="Schedule image"
-                            width={isMobile ? 80 : 96}
-                            height={isMobile ? 80 : 96}
-                            className="object-cover rounded-md aspect-square"
-                            crossOrigin="anonymous"
-                        />
-                    ) : (
-                         <div data-id="image-placeholder" className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square", isMobile ? "w-20 h-20" : "w-24 h-24")}>
-                           <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                        <div className="relative cursor-pointer">
+                             {imageUrl ? (
+                                <Image
+                                    src={imageUrl}
+                                    alt="Schedule image"
+                                    width={isMobile ? 80 : 96}
+                                    height={isMobile ? 80 : 96}
+                                    className="object-cover rounded-md aspect-square"
+                                    crossOrigin="anonymous"
+                                />
+                            ) : (
+                                 <div data-id="image-placeholder" className={cn("bg-secondary rounded-md flex items-center justify-center aspect-square", isMobile ? "w-20 h-20" : "w-24 h-24")}>
+                                   <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </ImageUploader>
                 </div>
             </div>
         </div>
@@ -360,7 +293,7 @@ export function ScheduleView({
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color && !snapshot.isDragging && !['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
-                        onClick={() => editingId !== item.id && handleEdit(item)}
+                        onClick={() => handleEdit(item)}
                       >
                          <div {...provided.dragHandleProps} data-drag-handle="true" className={cn("cursor-grab active:cursor-grabbing p-2 flex")}>
                            <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -372,153 +305,101 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        {editingId === item.id && !isMobile ? (
-                          <div ref={editRowRef} className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(editedType) &&
-                                  <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} />
-                                }
-                            
-                                <Select value={editedType} onValueChange={(value) => handleTypeChange(item.id, value as ScheduleItem['type'])}>
-                                    <SelectTrigger className="w-[150px]">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="timed">Со временем</SelectItem>
-                                        <SelectItem value="untimed">Без времени</SelectItem>
-                                        <SelectItem value="date">Дата</SelectItem>
-                                        <SelectItem value="h1">Заголовок H1</SelectItem>
-                                        <SelectItem value="h2">Заголовок H2</SelectItem>
-                                        <SelectItem value="h3">Заголовок H3</SelectItem>
-                                        <SelectItem value="comment">Комментарий</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                {editedType === 'timed' &&
-                                    <Input
-                                    type="time"
-                                    value={editedTime}
-                                    onChange={(e) => setEditedTime(e.target.value)}
-                                    onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                    className="w-24"
-                                    autoFocus
-                                    />
-                                }
-
-                                {editedType === 'date' && editedDate &&
-                                  <div className="flex gap-2 items-center flex-1">
+                        
+                          <>
+                            {item.type === 'comment' ? (
+                                <EditableField
+                                    value={item.description}
+                                    setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                    className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
+                                    isTextarea={true}
+                                />
+                            ) : item.type === 'date' && item.date ? (
+                                <div className="flex items-center gap-2 flex-1 render-align-fix">
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant="outline">
-                                                {format(editedDate, 'PPP', { locale: ru })}
+                                            <Button variant="ghost" className="h-auto p-0 font-semibold text-lg text-muted-foreground hover:bg-transparent">
+                                                {format(new Date(item.date), 'PPP', { locale: ru })}
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-auto p-0">
                                             <Calendar
                                                 mode="single"
-                                                selected={editedDate}
-                                                onSelect={(date) => date && setEditedDate(date)}
+                                                selected={new Date(item.date)}
+                                                onSelect={(date) => date && onUpdateEvent(item.id, { date: date.toISOString() })}
                                                 initialFocus
                                             />
                                         </PopoverContent>
                                     </Popover>
-                                    <Input 
-                                      value={editedDescription}
-                                      onChange={(e) => setEditedDescription(e.target.value)}
-                                      onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                      placeholder="Описание (необязательно)"
-                                      className="flex-1"
+                                    <EditableField
+                                        value={item.description || ''}
+                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                        className="text-base font-normal text-muted-foreground"
+                                        placeholder='Описание (необязательно)'
                                     />
-                                  </div>
-                                }
-                            
-                                {['timed', 'untimed', 'h1', 'h2', 'h3', 'comment'].includes(editedType) &&
-                                    <Textarea
-                                        value={editedDescription}
-                                        onChange={(e) => setEditedDescription(e.target.value)}
-                                        onKeyDown={(e) => handleKeyDown(e, item.id)}
-                                        className="flex-1"
-                                        rows={1}
-                                        autoFocus
-                                    />
-                                }
-
-                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(editedType) &&
-                                    <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="ghost" size="icon"><Palette className="h-4 w-4" /></Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-2">
-                                        <div className="flex gap-1">
-                                        <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
-                                            <div className="h-4 w-4 rounded-full border" />
-                                        </Button>
-                                        {ITEM_COLORS.map(color => (
-                                            <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
-                                            <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
-                                            </Button>
-                                        ))}
-                                        </div>
-                                    </PopoverContent>
-                                    </Popover>
-                                }
-
-                                <Button onClick={(e) => { e.stopPropagation(); handleSave(item.id);}} size="sm">Сохранить</Button>
-                                <Button onClick={(e) => { e.stopPropagation(); handleCancel();}} size="sm" variant="ghost">Отмена</Button>
-                          </div>
-                        ) : (
-                          <>
-                            {item.type === 'comment' ? (
-                                <p 
-                                  className="flex-1 text-card-foreground text-sm italic text-muted-foreground p-2 rounded-md w-full"
-                                >
-                                  {item.description}
-                                </p>
-                            ) : item.type === 'date' && item.date ? (
-                                <div className="flex items-center gap-2 flex-1 render-align-fix">
-                                    <div className="flex flex-col">
-                                        <span className='font-semibold text-lg text-muted-foreground'>{format(new Date(item.date), 'PPP', { locale: ru })}</span>
-                                        {item.description && <span className="text-base font-normal text-muted-foreground -mt-1">{item.description}</span>}
-                                    </div>
                                 </div>
                             ) : item.type === 'h1' ? (
                                 <div className="w-full flex items-center render-header-align-fix">
-                                  <h2 className='text-xl font-bold'>{item.description}</h2>
+                                  <EditableField as='h2' className='text-xl font-bold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : item.type === 'h2' ? (
                                 <div className="w-full flex items-center render-header-align-fix">
-                                  <h3 className='text-lg font-semibold'>{item.description}</h3>
+                                  <EditableField as='h3' className='text-lg font-semibold' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : item.type === 'h3' ? (
                                 <div className="w-full flex items-center render-header-align-fix">
-                                  <h4 className='text-base font-medium'>{item.description}</h4>
+                                  <EditableField as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : (
                                 <>
-                                    <div className="w-8 h-8 flex items-center justify-center cursor-pointer">
-                                        {item.icon ? (
-                                            <ScheduleEventIcon icon={item.icon} className="h-5 w-5 text-muted-foreground" />
-                                        ) : (
-                                            <div className="w-5 h-5" />
-                                        )}
+                                    <div className="w-8 h-8 flex items-center justify-center">
+                                      <IconDropdown
+                                        value={item.icon}
+                                        onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                      />
                                     </div>
                                     
-                                    <div className="p-1 rounded-md cursor-pointer w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
+                                    <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                       {item.type === 'timed' ? (
-                                        <p className="font-mono text-base font-semibold">
-                                            {item.time}
-                                        </p>
+                                        <EditableField
+                                            value={item.time}
+                                            setValue={(val) => onUpdateEvent(item.id, { time: val })}
+                                            className="font-mono text-base font-semibold"
+                                            inputType="time"
+                                        />
                                       ) : (
                                         <div className="w-12" />
                                       )}
                                     </div>
 
-                                    <p className="flex-1 text-card-foreground cursor-pointer truncate">
-                                      {item.description}
-                                    </p>
+                                    <EditableField
+                                        value={item.description}
+                                        setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                        className="flex-1 text-card-foreground cursor-pointer truncate"
+                                    />
                                 </>
                             )}
                             
                             <div data-no-print={isMobile ? "true" : undefined} className={cn("items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100", isMobile ? "hidden" : "flex")}>
+                                {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><Palette className="h-4 w-4" /></Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-2">
+                                      <div className="flex gap-1">
+                                        <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
+                                          <div className="h-4 w-4 rounded-full border" />
+                                        </Button>
+                                        {ITEM_COLORS.map(color => (
+                                          <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                            <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
+                                          </Button>
+                                        ))}
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
                                 {!['comment', 'date', 'h1', 'h2', 'h3'].includes(item.type) && (
                                     <Button
                                     variant="ghost"
@@ -546,7 +427,7 @@ export function ScheduleView({
                                 </Button>
                             )}
                           </>
-                        )}
+                        
                       </div>
                     )}
                   </Draggable>
@@ -557,7 +438,7 @@ export function ScheduleView({
                     <Button
                       variant="ghost"
                       className="opacity-0 group-hover/list:opacity-100 transition-opacity w-full"
-                      onClick={() => handleAddNewEventAndEdit()}
+                      onClick={() => onAddNewEvent()}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -589,19 +470,3 @@ export function ScheduleView({
     </Card>
   );
 }
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-    

@@ -59,9 +59,9 @@ export function ImageUploader({ children, onSetImageUrl, onOpenChange }: ImageUp
   
   return (
     <Dialog open={dialogOpen} onOpenChange={handleOpen}>
-       <DialogTrigger asChild id="image-uploader-trigger" data-no-print="true">
-          <Trigger variant="ghost" size="icon">{children || <ImagePlus className="h-5 w-5" />}</Trigger>
-       </DialogTrigger>
+       <Trigger asChild id="image-uploader-trigger" data-no-print="true">
+          {children || <Button variant="ghost" size="icon"><ImagePlus className="h-5 w-5" /></Button>}
+       </Trigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Изменить изображение</DialogTitle>
@@ -98,4 +98,3 @@ export function ImageUploader({ children, onSetImageUrl, onOpenChange }: ImageUp
     </Dialog>
   );
 }
-
