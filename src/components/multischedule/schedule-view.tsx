@@ -162,15 +162,16 @@ export function ScheduleView({
                     <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />
                   )}
                   
-                  {editedType !== 'date' && (
-                      <Textarea
-                          value={editedDescription}
-                          onChange={(e) => setEditedDescription(e.target.value)}
-                          className="flex-1 text-base h-10"
-                          placeholder="Описание"
-                          rows={1}
-                      />
-                  )}
+                  <Textarea
+                      value={editedDescription}
+                      onChange={(e) => setEditedDescription(e.target.value)}
+                      className={cn(
+                          "flex-1 text-base h-10",
+                          editedType === 'date' && 'w-full'
+                      )}
+                      placeholder="Описание"
+                      rows={1}
+                  />
                 </div>
                 {isTranslatable && (
                     <Input
@@ -238,12 +239,6 @@ export function ScheduleView({
                         />
                     </PopoverContent>
                 </Popover>
-                <Input 
-                    value={editedDescription}
-                    onChange={(e) => setEditedDescription(e.target.value)}
-                    className="text-base"
-                    placeholder="Описание (необязательно)"
-                />
               </div>
             )}
 
@@ -418,63 +413,65 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : item.type === 'date' && item.date ? (
-                                <div className="flex items-center gap-2 w-full">
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                            <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
-                                                {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
-                                            </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0">
-                                            <Calendar
-                                                mode="single"
-                                                selected={new Date(item.date)}
-                                                onSelect={(date) => date && onUpdateEvent(item.id, { date: date.toISOString() })}
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <div className="flex-1 flex flex-col">
-                                        <div className="flex items-center gap-2 w-full">
-                                            <EditableField
-                                                isMobile={isMobile}
-                                                value={item.description || ''}
-                                                setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                                className="w-full text-base font-normal text-muted-foreground"
-                                                isTextarea={true}
-                                            />
-                                            {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                                <span className="text-muted-foreground text-base font-normal">
-                                                    ({Object.entries(item.translations).map(([lang, text]) => (
-                                                        <EditableField
-                                                            key={lang}
-                                                            isMobile={isMobile}
-                                                            value={text}
-                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                            className="inline"
-                                                            as="span"
-                                                            isTextarea={true}
-                                                        />
-                                                    )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
-                                                </span>
-                                            )}
-                                        </div>
-                                         {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                            <div className="text-sm text-muted-foreground mt-1">
-                                                {Object.entries(item.translations).map(([lang, text]) => (
-                                                  <EditableField
-                                                      key={lang}
-                                                      isMobile={isMobile}
-                                                      value={text}
-                                                      setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                      className="w-full"
-                                                      as="div"
-                                                      isTextarea={true}
-                                                  />
-                                                ))}
+                                <div className="flex flex-col flex-1">
+                                    <div className="flex items-center gap-2 w-full">
+                                        <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
+                                                    {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={new Date(item.date)}
+                                                    onSelect={(date) => date && onUpdateEvent(item.id, { date: date.toISOString() })}
+                                                    initialFocus
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                        <div className="flex-1 flex flex-col">
+                                            <div className="flex items-center gap-2 w-full">
+                                                <EditableField
+                                                    isMobile={isMobile}
+                                                    value={item.description || ''}
+                                                    setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                                    className="w-full text-base font-normal text-muted-foreground"
+                                                    isTextarea={true}
+                                                />
+                                                {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                                    <span className="text-muted-foreground text-base font-normal">
+                                                        ({Object.entries(item.translations).map(([lang, text]) => (
+                                                            <EditableField
+                                                                key={lang}
+                                                                isMobile={isMobile}
+                                                                value={text}
+                                                                setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                                className="inline"
+                                                                as="span"
+                                                                isTextarea={true}
+                                                            />
+                                                        )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
+                                                    </span>
+                                                )}
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
+                                    {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                        <div className="text-sm text-muted-foreground mt-1 pl-2">
+                                            {Object.entries(item.translations).map(([lang, text]) => (
+                                              <EditableField
+                                                  key={lang}
+                                                  isMobile={isMobile}
+                                                  value={text}
+                                                  setValue={(val) => handleTranslationChange(item.id, lang, val)}
+                                                  className="w-full"
+                                                  as="div"
+                                                  isTextarea={true}
+                                              />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
                                 <div className="flex-1 flex flex-col">
@@ -714,6 +711,7 @@ export function ScheduleView({
 
 
     
+
 
 
 
