@@ -7,7 +7,7 @@ import type { ScheduleItem, SavedEvent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Wrench } from 'lucide-react';
+import { Trash2, Plus, GripVertical, Bookmark, Palette, Save, ImagePlus, X, Check, ArrowUp, ArrowDown, Menu, ChevronDown, Wrench, CalendarIcon } from 'lucide-react';
 import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { EditableField } from './editable-field';
 import { ImageUploader } from './image-uploader';
@@ -66,7 +66,7 @@ export function ScheduleView({
   useEffect(() => {
     if (editingEvent) { // For mobile modal
         setEditedTime(editingEvent.time);
-        setEditedDescription(editingEvent.description);
+        setEditedDescription(editingEvent.description || '');
         setEditedType(editingEvent.type);
         if (editingEvent.type === 'date' && editingEvent.date) {
             setEditedDate(new Date(editingEvent.date));
@@ -144,20 +144,37 @@ export function ScheduleView({
         handleCloseEditModal();
     };
 
+    const isCommentLike = ['comment', 'h1', 'h2', 'h3'].includes(editedType);
+    const isRegularEvent = !isCommentLike && editedType !== 'date';
+
     return (
         <div className="flex flex-col gap-4 p-1">
+            
+            {/* Description/Icon input */}
             <div className="flex items-center gap-2">
-                {editedType !== 'comment' && editedType !== 'date' && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
-                {editedType !== 'date' && 
-                    <Textarea
-                        value={editedDescription}
-                        onChange={(e) => setEditedDescription(e.target.value)}
-                        className="flex-1 text-lg"
-                        rows={editedType === 'comment' ? 3 : 1}
-                    />
-                }
+                {isRegularEvent && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                
+                {editedType !== 'date' && (
+                    isCommentLike ? (
+                        <Textarea
+                            value={editedDescription}
+                            onChange={(e) => setEditedDescription(e.target.value)}
+                            className="flex-1 text-base"
+                            rows={3}
+                            placeholder="Комментарий или заголовок"
+                        />
+                    ) : (
+                        <Input
+                            value={editedDescription}
+                            onChange={(e) => setEditedDescription(e.target.value)}
+                            className="flex-1 text-base h-auto"
+                            placeholder="Описание события"
+                        />
+                    )
+                )}
             </div>
 
+            {/* Type selector */}
             <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
                 <Label htmlFor={`type-select-native-${item.id}`} className="text-base font-normal">Тип события</Label>
                 <div className="relative">
@@ -179,27 +196,46 @@ export function ScheduleView({
                 </div>
             </div>
             
+            {/* Date specific inputs */}
             {editedType === 'date' && (
-              <>
-                <Calendar
-                    mode="single"
-                    selected={editedDate}
-                    onSelect={(date) => {
-                        setEditedDate(date);
-                        if (date) {
-                            onUpdateEvent(item.id, { date: date.toISOString() });
-                        }
-                    }}
-                    className="rounded-md border"
-                    />
-                <Textarea 
+              <div className="space-y-2">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !editedDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {editedDate ? format(editedDate, "PPP", { locale: ru }) : <span>Выберите дату</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                         <Calendar
+                            mode="single"
+                            selected={editedDate}
+                            onSelect={(date) => {
+                                setEditedDate(date);
+                                if (date) {
+                                    onUpdateEvent(item.id, { date: date.toISOString() });
+                                }
+                            }}
+                            initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+                <Input 
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="text-base"
+                    placeholder="Описание (необязательно)"
                 />
-              </>
+              </div>
             )}
 
+            {/* Timed specific input */}
             { editedType === 'timed' && (
                 <Input
                 type="time"
@@ -209,7 +245,8 @@ export function ScheduleView({
                 />
             )}
         
-            { !['comment', 'date', 'h1', 'h2', 'h3'].includes(editedType) && (
+            {/* Color palette for regular events */}
+            { isRegularEvent && (
                 <div>
                     <Label className="text-xs text-muted-foreground ml-1 mb-2">Цвет</Label>
                     <div className="flex gap-2 justify-around">
@@ -225,6 +262,7 @@ export function ScheduleView({
                 </div>
             )}
 
+            {/* Action buttons */}
             <div className="flex gap-2 mt-4">
                 <Button onClick={handleSaveToPreset} variant="outline" className="w-full" size="lg"><Bookmark /></Button>
                 <Button onClick={() => { onDeleteEvent(item.id); handleCloseEditModal(); }} variant="destructive" className="w-full" size="lg"><Trash2 /></Button>
@@ -247,31 +285,29 @@ export function ScheduleView({
             <div className="flex-1">
                 <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
-             <div className="flex items-center gap-2" data-id="schedule-image-wrapper">
-                {imageUrl ? (
-                    <ImageUploader onSetImageUrl={setImageUrl}>
-                        <DialogTrigger asChild>
-                            <Image
-                                src={imageUrl}
-                                alt="Schedule image"
-                                width={isMobile ? 80 : 96}
-                                height={isMobile ? 80 : 96}
-                                className="object-cover rounded-md aspect-square cursor-pointer"
-                                crossOrigin="anonymous"
-                            />
-                        </DialogTrigger>
-                    </ImageUploader>
-                ) : (
-                    <div data-id="image-placeholder" className="p-2" data-no-print="true">
-                        <ImageUploader onSetImageUrl={setImageUrl}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                                </Button>
-                            </DialogTrigger>
-                        </ImageUploader>
-                    </div>
-                )}
+             <div className="flex items-center gap-2">
+                 <div data-id="schedule-image-wrapper">
+                  <ImageUploader onSetImageUrl={setImageUrl}>
+                      <DialogTrigger asChild>
+                          {imageUrl ? (
+                              <Image
+                                  src={imageUrl}
+                                  alt="Schedule image"
+                                  width={isMobile ? 80 : 96}
+                                  height={isMobile ? 80 : 96}
+                                  className="object-cover rounded-md aspect-square cursor-pointer"
+                                  crossOrigin="anonymous"
+                              />
+                          ) : (
+                               <div data-id="image-placeholder" className="p-2" data-no-print="true">
+                                   <Button variant="ghost" size="icon">
+                                       <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                                   </Button>
+                               </div>
+                          )}
+                      </DialogTrigger>
+                  </ImageUploader>
+                </div>
                  {isMobile && (
                     <Button variant="ghost" size="icon" id="mobile-menu-trigger" data-no-print="true" onClick={() => setIsMobileMenuOpen(true)}>
                         <Menu />
@@ -332,7 +368,7 @@ export function ScheduleView({
                                 <div className="flex items-center gap-2 flex-1 render-align-fix">
                                     <Popover>
                                         <PopoverTrigger asChild>
-                                            <Button variant="ghost" className="h-auto p-0 font-semibold text-lg text-muted-foreground hover:bg-transparent">
+                                            <Button variant="ghost" className="h-auto p-0 font-semibold text-lg text-muted-foreground hover:bg-transparent" disabled={isMobile}>
                                                 {format(new Date(item.date), 'PPP', { locale: ru })}
                                             </Button>
                                         </PopoverTrigger>
@@ -382,7 +418,7 @@ export function ScheduleView({
                                         isMobile={isMobile}
                                         value={item.description}
                                         setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                        className="flex-1 text-card-foreground cursor-pointer truncate"
+                                        className={cn("flex-1 text-card-foreground cursor-pointer truncate", item.type === 'untimed' && 'pl-1 sm:pl-0')}
                                     />
                                 </div>
                             )}
@@ -493,3 +529,5 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    
