@@ -28,9 +28,10 @@ import { Input } from '@/components/ui/input';
 import { ScheduleEventIcon } from '@/components/multischedule/schedule-event-icons';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
-const AVAILABLE_LANGUAGES = [
+export const AVAILABLE_LANGUAGES = [
   { code: 'ru', name: 'Русский' },
   { code: 'en', name: 'Английский' },
   { code: 'es', name: 'Испанский' },
@@ -49,7 +50,7 @@ export type ScheduleItem = {
   color?: string;
   type: 'timed' | 'untimed' | 'comment' | 'date' | 'h1' | 'h2' | 'h3';
   date?: string;
-  translation?: string;
+  translations?: Record<string, string>;
 };
 export type TranslatedSchedule = { lang: string; text: string };
 
@@ -69,6 +70,8 @@ export type ScheduleTemplate = {
   cardTitle: string;
   imageUrl: string | null;
 };
+
+export type TranslationDisplayMode = 'inline' | 'block';
 
 const defaultSchedule: ScheduleItem[] = [
     { id: `${Date.now()}-${Math.random()}`, time: '', description: '', date: new Date().toISOString(), icon: undefined, type: 'date' },
@@ -91,7 +94,8 @@ export default function Home() {
 
   const isMobile = useIsMobile();
 
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
+  const [translationDisplayMode, setTranslationDisplayMode] = useState<TranslationDisplayMode>('inline');
   const [isAiParserOpen, setIsAiParserOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
@@ -106,10 +110,11 @@ export default function Home() {
     try {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
-        const { schedule, cardTitle, imageUrl } = JSON.parse(storedState);
+        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode } = JSON.parse(storedState);
         setSchedule(schedule || []);
         if (cardTitle) setCardTitle(cardTitle);
         if (imageUrl) setImageUrl(imageUrl);
+        if (storedMode) setTranslationDisplayMode(storedMode);
       } else {
         setSchedule(defaultSchedule);
       }
@@ -137,12 +142,12 @@ export default function Home() {
         return;
     }
     try {
-        const stateToSave = { schedule, cardTitle, imageUrl };
+        const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
     } catch (error) {
         console.error("Failed to save state to localStorage", error);
     }
-  }, [schedule, cardTitle, imageUrl]);
+  }, [schedule, cardTitle, imageUrl, translationDisplayMode]);
   
   const updateSavedEvents = (newSavedEvents: SavedEvent[]) => {
     setSavedEvents(newSavedEvents);
@@ -203,7 +208,7 @@ export default function Home() {
         setSchedule(prev => [...prev, {
           id: `${Date.now()}-${Math.random()}`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          description: '',
+          description: 'Новое событие',
           type: 'timed',
         }]);
     }
@@ -242,7 +247,7 @@ export default function Home() {
 
   const handleTranslate = async () => {
     const itemsToTranslate = schedule.filter(item => item.description && !['date', 'comment'].includes(item.type));
-    if (itemsToTranslate.length === 0) return;
+    if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
 
     setIsLoading(true);
     setIsMobileMenuOpen(false);
@@ -255,14 +260,14 @@ export default function Home() {
 
     try {
       const descriptions = itemsToTranslate.map(item => item.description);
-      const result = await translateSchedule({ descriptions, targetLanguage: selectedLanguage }, apiKey);
+      const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages }, apiKey);
       
       const newSchedule = schedule.map(item => {
-        const translatedItem = result.translations.find(t => t.original === item.description);
+        const translatedItem = result.results.find(t => t.original === item.description);
         if (translatedItem) {
-          return { ...item, translation: translatedItem.translated };
+          return { ...item, translations: translatedItem.translations };
         }
-        return item;
+        return { ...item, translations: {} };
       });
 
       setSchedule(newSchedule);
@@ -557,6 +562,9 @@ export default function Home() {
     const config: Partial<ScheduleItem> = { type };
     if (type === 'date') {
       config.date = new Date().toISOString();
+      config.description = 'Новая дата';
+    } else {
+        config.description = 'Новое событие';
     }
     handleAddNewEvent(config);
   }
@@ -586,14 +594,16 @@ export default function Home() {
             isSavedEventsOpen={isSavedEventsOpen}
             setIsSavedEventsOpen={setIsSavedEventsOpen}
             onAiParse={handleAiParse}
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
+            selectedLanguages={selectedLanguages}
+            onLanguageChange={setSelectedLanguages}
             onTranslate={handleTranslate}
             isAiParserOpen={isAiParserOpen}
             setIsAiParserOpen={setIsAiParserOpen}
             setImageUrl={setImageUrl}
             onClearAll={handleClearAll}
             onSaveEvent={handleSaveEvent}
+            translationDisplayMode={translationDisplayMode}
+            setTranslationDisplayMode={setTranslationDisplayMode}
         />}
 
         
@@ -618,6 +628,7 @@ export default function Home() {
                 setIsMobileMenuOpen={setIsMobileMenuOpen}
                 isAddEventDialogOpen={isAddEventDialogOpen}
                 setIsAddEventDialogOpen={setIsAddEventDialogOpen}
+                translationDisplayMode={translationDisplayMode}
               />
             </DragDropContext>
           </div>
@@ -684,20 +695,50 @@ export default function Home() {
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>Перевод расписания</DialogTitle>
-                                <DialogDescription>Выберите язык для перевода.</DialogDescription>
+                                <DialogDescription>Выберите языки и стиль отображения.</DialogDescription>
                               </DialogHeader>
-                               <RadioGroup value={selectedLanguage} onValueChange={setSelectedLanguage} className="grid grid-cols-2 gap-4 py-4">
-                                {AVAILABLE_LANGUAGES.map(lang => (
-                                  <div key={lang.code} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={lang.code} id={`lang-mobile-${lang.code}`} />
-                                    <Label htmlFor={`lang-mobile-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                               <div className="py-4 space-y-6">
+                                 <div className="space-y-2">
+                                     <Label>Языки</Label>
+                                     <div className="grid grid-cols-2 gap-4">
+                                        {AVAILABLE_LANGUAGES.map(lang => (
+                                          <div key={`mobile-lang-${lang.code}`} className="flex items-center space-x-2">
+                                            <Checkbox
+                                              id={`mobile-lang-${lang.code}`}
+                                              checked={selectedLanguages.includes(lang.code)}
+                                              onCheckedChange={(checked) => {
+                                                setSelectedLanguages(prev => 
+                                                  checked ? [...prev, lang.code] : prev.filter(c => c !== lang.code)
+                                                )
+                                              }}
+                                            />
+                                            <Label htmlFor={`mobile-lang-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                                          </div>
+                                        ))}
+                                     </div>
+                                 </div>
+                                  <div className="space-y-3">
+                                      <Label>Стиль отображения</Label>
+                                       <RadioGroup value={translationDisplayMode} onValueChange={(val) => setTranslationDisplayMode(val as TranslationDisplayMode)} className="flex space-x-4">
+                                          <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="inline" id="mode-mobile-inline" />
+                                            <Label htmlFor="mode-mobile-inline" className="font-normal cursor-pointer">В скобках</Label>
+                                          </div>
+                                          <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="block" id="mode-mobile-block" />
+                                            <Label htmlFor="mode-mobile-block" className="font-normal cursor-pointer">Блоком</Label>
+                                          </div>
+                                        </RadioGroup>
                                   </div>
-                                ))}
-                              </RadioGroup>
-                              <Button onClick={handleTranslate} disabled={isLoading}>
-                                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                Перевести
-                              </Button>
+                               </div>
+                              <DialogFooter>
+                                <DialogClose asChild>
+                                  <Button onClick={handleTranslate} disabled={isLoading}>
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                    Перевести
+                                  </Button>
+                                </DialogClose>
+                              </DialogFooter>
                             </DialogContent>
                           </Dialog>
                           <Dialog open={isAiParserOpen} onOpenChange={setIsAiParserOpen}>

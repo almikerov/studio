@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
-import type { ScheduleItem, SavedEvent } from '@/app/page';
+import type { ScheduleItem, SavedEvent, TranslationDisplayMode } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,13 +46,15 @@ interface ScheduleViewProps {
   setIsMobileMenuOpen: (open: boolean) => void;
   isAddEventDialogOpen: boolean;
   setIsAddEventDialogOpen: (open: boolean) => void;
+  translationDisplayMode: TranslationDisplayMode;
 }
 
 export function ScheduleView({ 
   schedule, onUpdateEvent, onDeleteEvent, onAddNewEvent, cardTitle, setCardTitle, 
   imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
-  isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen
+  isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen,
+  translationDisplayMode
 }: ScheduleViewProps) {
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -401,7 +403,7 @@ export function ScheduleView({
                                   <EditableField isMobile={isMobile} as='h4' className='text-base font-medium' value={item.description} setValue={(val) => onUpdateEvent(item.id, {description: val})} />
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 w-full">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -413,8 +415,8 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className="flex-1 flex justify-between gap-4">
-                                        <p className={cn("flex-1 text-card-foreground cursor-pointer", item.type === 'untimed' && 'pl-1 sm:pl-0', !item.translation && 'truncate')} onClick={(e) => {
+                                     <div className="flex-1 flex-col justify-center">
+                                        <div className={cn("flex-1 text-card-foreground cursor-pointer", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
@@ -422,21 +424,25 @@ export function ScheduleView({
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description}
-                                                setValue={(val) => onUpdateEvent(item.id, { description: val })}
+                                                setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
                                                 className="inline"
                                                 as="span"
                                                 data-id="description"
                                             />
-                                            {item.translation && (
-                                                <EditableField
-                                                    isMobile={isMobile}
-                                                    value={`(${item.translation})`}
-                                                    setValue={(val) => onUpdateEvent(item.id, { translation: val.replace(/[()]/g, '') })}
-                                                    className="inline text-muted-foreground ml-2"
-                                                    as="span"
-                                                />
+                                            {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
+                                                 <span className="text-muted-foreground ml-2">
+                                                    ({Object.values(item.translations).join(', ')})
+                                                 </span>
                                             )}
-                                        </p>
+                                        </div>
+
+                                        {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
+                                            <div className="text-sm text-muted-foreground mt-1">
+                                                {Object.entries(item.translations).map(([lang, text]) => (
+                                                    <div key={lang}>{text}</div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { ScheduleTemplate, SavedEvent } from '@/app/page';
+import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -16,17 +16,9 @@ import { SavedEvents } from './saved-events';
 import { ImageUploader } from './image-uploader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { SavedTemplates } from './saved-templates';
+import { Checkbox } from '../ui/checkbox';
+import { AVAILABLE_LANGUAGES } from '@/app/page';
 
-
-const AVAILABLE_LANGUAGES = [
-  { code: 'ru', name: 'Русский' },
-  { code: 'en', name: 'Английский' },
-  { code: 'es', name: 'Испанский' },
-  { code: 'fr', name: 'Французский' },
-  { code: 'de', name: 'Немецкий' },
-  { code: 'ja', name: 'Японский' },
-  { code: 'zh', name: 'Китайский' },
-];
 
 interface DesktopNavbarProps {
   isLoading: boolean;
@@ -41,8 +33,8 @@ interface DesktopNavbarProps {
   onAddEventFromSaved: (event: SavedEvent) => void;
   updateSavedEvents: (events: SavedEvent[]) => void;
   onAiParse: (text: string) => Promise<void>;
-  selectedLanguage: string;
-  onLanguageChange: (code: string) => void;
+  selectedLanguages: string[];
+  onLanguageChange: (codes: string[]) => void;
   onTranslate: () => void;
   isAiParserOpen: boolean;
   setIsAiParserOpen: (open: boolean) => void;
@@ -51,6 +43,8 @@ interface DesktopNavbarProps {
   setImageUrl: (url: string | null) => void;
   onClearAll: () => void;
   onSaveEvent: (event: Partial<SavedEvent>) => void;
+  translationDisplayMode: TranslationDisplayMode;
+  setTranslationDisplayMode: (mode: TranslationDisplayMode) => void;
 }
 
 export function DesktopNavbar({
@@ -66,7 +60,7 @@ export function DesktopNavbar({
   onAddEventFromSaved,
   updateSavedEvents,
   onAiParse,
-  selectedLanguage,
+  selectedLanguages,
   onLanguageChange,
   onTranslate,
   isAiParserOpen,
@@ -76,6 +70,8 @@ export function DesktopNavbar({
   setImageUrl,
   onClearAll,
   onSaveEvent,
+  translationDisplayMode,
+  setTranslationDisplayMode,
 }: DesktopNavbarProps) {
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
@@ -141,16 +137,45 @@ export function DesktopNavbar({
                         <DialogContent className="sm:max-w-md">
                              <DialogHeader>
                                 <DialogTitle>Перевод расписания</DialogTitle>
-                                <DialogDescription>Выберите язык для перевода.</DialogDescription>
+                                <DialogDescription>Выберите языки и стиль отображения.</DialogDescription>
                             </DialogHeader>
-                            <RadioGroup value={selectedLanguage} onValueChange={onLanguageChange} className="grid grid-cols-2 gap-4 py-4">
-                                {AVAILABLE_LANGUAGES.map(lang => (
-                                <div key={lang.code} className="flex items-center space-x-2">
-                                    <RadioGroupItem value={lang.code} id={`lang-desktop-${lang.code}`} />
-                                    <Label htmlFor={`lang-desktop-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
-                                </div>
-                                ))}
-                            </RadioGroup>
+                             <div className="py-4 space-y-6">
+                                 <div className="space-y-2">
+                                     <Label>Языки</Label>
+                                     <div className="grid grid-cols-2 gap-4">
+                                        {AVAILABLE_LANGUAGES.map(lang => (
+                                        <div key={lang.code} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`lang-desktop-${lang.code}`}
+                                                checked={selectedLanguages.includes(lang.code)}
+                                                onCheckedChange={(checked) => {
+                                                    onLanguageChange(
+                                                        checked
+                                                        ? [...selectedLanguages, lang.code]
+                                                        : selectedLanguages.filter(c => c !== lang.code)
+                                                    )
+                                                }}
+                                            />
+                                            <Label htmlFor={`lang-desktop-${lang.code}`} className="font-normal cursor-pointer">{lang.name}</Label>
+                                        </div>
+                                        ))}
+                                     </div>
+                                 </div>
+                                  <div className="space-y-3">
+                                      <Label>Стиль отображения</Label>
+                                       <RadioGroup value={translationDisplayMode} onValueChange={(val) => setTranslationDisplayMode(val as TranslationDisplayMode)} className="flex space-x-4">
+                                          <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="inline" id="mode-desktop-inline" />
+                                            <Label htmlFor="mode-desktop-inline" className="font-normal cursor-pointer">В скобках</Label>
+                                          </div>
+                                          <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="block" id="mode-desktop-block" />
+                                            <Label htmlFor="mode-desktop-block" className="font-normal cursor-pointer">Блоком</Label>
+                                          </div>
+                                        </RadioGroup>
+                                  </div>
+                             </div>
+
                             <DialogFooter>
                                 <Button onClick={handleTranslateClick} disabled={isLoading}>
                                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -272,5 +297,6 @@ export function DesktopNavbar({
     
 
     
+
 
 
