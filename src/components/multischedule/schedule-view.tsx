@@ -343,7 +343,7 @@ export function ScheduleView({
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          'group/item flex items-center gap-2 p-2 rounded-md',
+                          'group/item flex items-baseline gap-2 p-2 rounded-md',
                           !isMobile && 'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
@@ -491,7 +491,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex w-full items-center">
+                                <div className="flex w-full items-baseline">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -659,5 +659,6 @@ export function ScheduleView({
 }
 
     
+
 
 
