@@ -54,6 +54,7 @@ Your task is to identify the schedule title, events, their times, types, and oth
 - 'h1', 'h2', 'h3': Header text. Use for section titles like "Morning", "Game Day". The 'time' field must be empty.
 - 'comment': A note or italicized text. The 'time' field must be empty.
 - If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'. Assign icons only to 'timed' and 'untimed' types.
+- For "Теория" (theory) or "Установка" (instructions), assign the 'camera' icon.
 - If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors only to 'timed' and 'untimed' types.
 - Ignore any text that isn't a schedule item.
 
