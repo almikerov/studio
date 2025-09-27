@@ -169,12 +169,20 @@ export function ScheduleView({
                   />
                 </div>
                 {isTranslatable && selectedLanguages.length > 0 && (
-                    <Input
-                        value={editedTranslations[selectedLanguages[0]] || ''}
-                        onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
-                        className="text-base h-10"
-                        placeholder={'Перевод'}
-                    />
+                   <div className="space-y-2">
+                    {selectedLanguages.map(lang => (
+                        <div key={lang} className="space-y-1">
+                             <Label htmlFor={`translation-input-${lang}`} className="text-xs text-muted-foreground pl-1">{lang.toUpperCase()}</Label>
+                             <Input
+                                id={`translation-input-${lang}`}
+                                value={editedTranslations[lang] || ''}
+                                onChange={(e) => setEditedTranslations(prev => ({...prev, [lang]: e.target.value}))}
+                                className="text-base h-10"
+                                placeholder={`Перевод (${lang})`}
+                            />
+                        </div>
+                    ))}
+                   </div>
                 )}
             </div>
 
