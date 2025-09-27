@@ -158,7 +158,9 @@ export function ScheduleView({
             {/* Description/Icon input */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />
+                  {['timed', 'untimed'].includes(item.type) && (
+                    <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />
+                  )}
                   
                   {editedType !== 'date' && (
                       <Textarea
@@ -292,7 +294,7 @@ export function ScheduleView({
 
       <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
-            <div className="flex-1 render-header-align-fix">
+            <div className="flex-1">
                 <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
              <div className="flex items-center gap-2">
@@ -360,11 +362,13 @@ export function ScheduleView({
                             </Button>
                          )}
 
-                        <div data-id="icon-container" data-has-icon={String(!!item.icon)} className="w-8 h-8 flex items-center justify-center shrink-0">
-                           <IconDropdown
+                        <div data-id="icon-container" data-has-icon={String(!!item.icon)} className={cn("w-8 h-8 flex items-center justify-center shrink-0", !['timed', 'untimed'].includes(item.type) && 'w-0 invisible')}>
+                           {['timed', 'untimed'].includes(item.type) && (
+                            <IconDropdown
                                 value={item.icon}
                                 onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
                            />
+                           )}
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
@@ -630,35 +634,6 @@ export function ScheduleView({
             )}
           </Droppable>
 
-          {(translationDisplayMode === 'text-block' && schedule.some(item => item.translations && Object.keys(item.translations).length > 0)) && (
-            <Card className="mt-4">
-                <CardContent className="p-4">
-                    <pre className="text-sm whitespace-pre-wrap font-sans">
-                        {schedule.map(item => {
-                            const translationText = Object.values(item.translations || {}).filter(Boolean).join(' / ');
-                            if (!translationText) return null;
-
-                            switch(item.type) {
-                                case 'timed':
-                                    return `${item.time} ${translationText}\n`;
-                                case 'untimed':
-                                    return `- ${translationText}\n`;
-                                case 'h1':
-                                case 'h2':
-                                case 'h3':
-                                    return `\n${translationText}\n`;
-                                case 'comment':
-                                    return `// ${translationText}\n`;
-                                case 'date':
-                                    return item.date ? `\n${format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}${translationText ? ` - ${translationText}`: ''}\n` : '';
-                                default:
-                                    return null;
-                            }
-                        }).join('')}
-                    </pre>
-                </CardContent>
-            </Card>
-        )}
         
         {schedule.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
@@ -684,3 +659,4 @@ export function ScheduleView({
 }
 
     
+
