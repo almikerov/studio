@@ -374,7 +374,7 @@ export function ScheduleView({
                         <div className="flex-1 w-full min-w-0">
                             {item.type === 'comment' ? (
                                 <div className='flex-1'>
-                                    <div className="flex items-baseline gap-2">
+                                    <div className="flex items-center gap-2">
                                         <EditableField
                                             isMobile={isMobile}
                                             value={item.description}
@@ -443,7 +443,7 @@ export function ScheduleView({
                                 </div>
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
                                 <div className="w-full flex-1">
-                                    <div className='flex items-baseline gap-2'>
+                                    <div className='flex items-center gap-2'>
                                       <EditableField 
                                         isMobile={isMobile}
                                         as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
@@ -508,7 +508,7 @@ export function ScheduleView({
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
                                         }}>
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-center gap-2">
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description}
@@ -659,6 +659,7 @@ export function ScheduleView({
 }
 
     
+
 
 
 
