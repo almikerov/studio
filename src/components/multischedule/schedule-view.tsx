@@ -635,23 +635,22 @@ export function ScheduleView({
                 <CardContent className="p-4">
                     <pre className="text-sm whitespace-pre-wrap font-sans">
                         {schedule.map(item => {
-                            if (!item.description && item.type !== 'date') return null;
-                            
-                            const translationText = Object.values(item.translations || {}).join(' / ');
+                            const translationText = Object.values(item.translations || {}).filter(Boolean).join(' / ');
+                            if (!translationText) return null;
 
                             switch(item.type) {
                                 case 'timed':
-                                    return `${item.time} ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                    return `${item.time} ${translationText}\n`;
                                 case 'untimed':
-                                    return `- ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                    return `- ${translationText}\n`;
                                 case 'h1':
                                 case 'h2':
                                 case 'h3':
-                                    return `\n${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                    return `\n${translationText}\n`;
                                 case 'comment':
-                                    return `// ${item.description}${translationText ? ` (${translationText})` : ''}\n`;
+                                    return `// ${translationText}\n`;
                                 case 'date':
-                                     return item.date ? `\n${format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}${item.description ? ` - ${item.description}`: ''}\n` : '';
+                                    return item.date ? `\n${format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}${translationText ? ` - ${translationText}`: ''}\n` : '';
                                 default:
                                     return null;
                             }
@@ -683,3 +682,5 @@ export function ScheduleView({
     </Card>
   );
 }
+
+    
