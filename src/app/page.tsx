@@ -134,7 +134,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (schedule.length === 0) return;
+    if (schedule.length === 0 && !localStorage.getItem('multiScheduleState')) {
+        return;
+    }
     try {
         const stateToSave = { schedule, cardTitle, imageUrl };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
@@ -462,8 +464,9 @@ export default function Home() {
       return;
     }
   
-    if (savedEvents.some(e => e.description === description)) {
-      return; // Avoid duplicates
+    // Do not save if an event with the same description already exists
+    if (savedEvents.some(e => e.description.toLowerCase() === description.toLowerCase())) {
+      return;
     }
   
     const newSavedEvent: SavedEvent = {
@@ -512,11 +515,12 @@ export default function Home() {
 
     try {
       const result = await parseScheduleFromText({ text }, apiKey);
-      const newScheduleItems = result.schedule.map(item => ({
+      const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
-        type: item.time ? 'timed' : 'untimed',
-      } as ScheduleItem));
+        time: item.time || '',
+        description: item.description || '',
+      }));
       setSchedule(newScheduleItems);
       setCardTitle(result.cardTitle);
       setTranslatedSchedules([]);
@@ -605,9 +609,7 @@ export default function Home() {
             onDeleteTemplate={handleDeleteTemplate}
             onSaveTemplate={handleSaveTemplate}
             savedEvents={savedEvents}
-            onAddEventFromSaved={(event) => {
-              handleAddNewEvent(event);
-            }}
+            onAddEventFromSaved={handleAddNewEvent}
             updateSavedEvents={updateSavedEvents}
             isSavedEventsOpen={isSavedEventsOpen}
             setIsSavedEventsOpen={setIsSavedEventsOpen}

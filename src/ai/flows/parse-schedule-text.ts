@@ -19,10 +19,12 @@ const ParseScheduleTextInputSchema = z.object({
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
 const ParsedScheduleItemSchema = z.object({
-    time: z.string().describe("The time of the event in HH:mm format. If the event has no specific time, this should be an empty string."),
+    time: z.string().describe("The time of the event in HH:mm format. Should be empty for non-timed events."),
     description: z.string().describe("The description of the schedule event."),
     icon: z.enum(['football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt']).optional().describe("An icon for the event."),
     color: z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray']).optional().describe('A color for the event row.'),
+    type: z.enum(['timed', 'untimed', 'comment', 'date', 'h1', 'h2', 'h3']).describe("The type of the schedule item."),
+    date: z.string().optional().describe("The date for 'date' type items in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)."),
 });
 
 const ParseScheduleTextOutputSchema = z.object({
@@ -41,14 +43,18 @@ export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKe
   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
-Your task is to identify the schedule title, events, their times, and relevant metadata from the provided text.
+Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text.
 
+- The user can provide schedule items of different types: timed events, untimed tasks, dates, comments, and headers (h1, h2, h3).
 - Extract or generate a main title for the schedule and put it in 'cardTitle'.
-- For each event, provide a 'time' and a 'description'.
-- The time should be in HH:mm format.
-- If an event doesn't have a specific time (e.g., it's just a task), the 'time' field should be an empty string.
-- If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'.
-- If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'.
+- For each item, determine its 'type'.
+- 'timed': An event with a specific time. The 'time' field should be in HH:mm format.
+- 'untimed': A task or event without a specific time. The 'time' field should be an empty string.
+- 'date': A specific date marker. The 'description' can be an optional annotation (like 'Day 1'). The 'date' field must be a valid ISO date string. The 'time' field must be empty.
+- 'h1', 'h2', 'h3': Header text. Use for section titles like "Morning", "Game Day". The 'time' field must be empty.
+- 'comment': A note or italicized text. The 'time' field must be empty.
+- If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'. Assign icons only to 'timed' and 'untimed' types.
+- If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors only to 'timed' and 'untimed' types.
 - Ignore any text that isn't a schedule item.
 
 Here is the text to parse:
@@ -56,14 +62,17 @@ ${input.text}
 
 Return a JSON object with a 'cardTitle' and a 'schedule' array. Do not wrap the JSON in markdown.
 Example:
-Input text: "My Match Day. 10am meeting in red room, then lunch at 13:00. also need to buy tickets for the trip."
+Input text: "My Match Day. Dec 25, 2024. Morning session. 10am meeting in red room. 13:00 lunch. // Don't be late. Then buy tickets for the trip."
 Output JSON:
 {
   "cardTitle": "My Match Day",
   "schedule": [
-    { "time": "10:00", "description": "meeting", "color": "red" },
-    { "time": "13:00", "description": "lunch", "icon": "utensils" },
-    { "time": "", "description": "buy tickets for the trip", "icon": "passport" }
+    { "type": "date", "date": "2024-12-25T00:00:00.000Z", "description": "", "time": "" },
+    { "type": "h1", "description": "Morning session", "time": "" },
+    { "type": "timed", "time": "10:00", "description": "meeting", "color": "red" },
+    { "type": "timed", "time": "13:00", "description": "lunch", "icon": "utensils" },
+    { "type": "comment", "description": "Don't be late", "time": "" },
+    { "type": "untimed", "time": "", "description": "buy tickets for the trip", "icon": "passport" }
   ]
 }
 
