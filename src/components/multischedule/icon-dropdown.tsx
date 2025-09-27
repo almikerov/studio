@@ -43,7 +43,7 @@ export function IconDropdown({ value, onChange, open, onOpenChange }: IconDropdo
           >
             <SquareDashed className="h-4 w-4 text-muted-foreground" />
           </Button>
-          {Object.keys(ICONS).map((icon) => (
+          {ICONS.map((icon) => (
             <Button
               key={icon}
               variant={value === icon ? 'secondary' : 'ghost'}
