@@ -92,13 +92,6 @@ body {
   .dark .cloned-for-rendering {
     background-color: black !important;
   }
-  .cloned-for-rendering .render-header-align-fix {
-    position: relative;
-    top: -2px;
-  }
-  .cloned-for-rendering .render-align-baseline {
-    align-items: baseline !important;
-  }
   .render-mobile-padding {
     padding-top: 48px;
   }
