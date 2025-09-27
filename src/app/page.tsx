@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush, Undo, Redo } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -34,6 +34,7 @@ import { ru } from 'date-fns/locale';
 import { Textarea } from '@/components/ui/textarea';
 import { EditableField } from '@/components/multischedule/editable-field';
 import { cn } from '@/lib/utils';
+import { useHistory } from '@/hooks/use-history';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -96,14 +97,28 @@ type TextBlockTranslation = {
     content: string;
 }
 
+export type ScheduleState = {
+  schedule: ScheduleItem[];
+  cardTitle: string;
+  imageUrl: string | null;
+};
+
 export default function Home() {
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [
+    state,
+    setState,
+    undo,
+    redo,
+    canUndo,
+    canRedo
+  ] = useHistory<ScheduleState>();
+
+  const { schedule, cardTitle, imageUrl } = state || {};
+
+
   const [isLoading, setIsLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
-
-  const [cardTitle, setCardTitle] = useState('Расписание на день');
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const [savedEvents, setSavedEvents] = useState<SavedEvent[]>([]);
   const [savedTemplates, setSavedTemplates] = useState<ScheduleTemplate[]>([]);
@@ -128,20 +143,41 @@ export default function Home() {
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
 
+  const setSchedule = (updater: (prev: ScheduleItem[]) => ScheduleItem[]) => {
+    const newSchedule = updater(schedule || []);
+    setState({ ...state!, schedule: newSchedule });
+  };
+  
+  const setCardTitle = (newTitle: string) => {
+    setState({ ...state!, cardTitle: newTitle });
+  };
+
+  const setImageUrl = (newUrl: string | null) => {
+    setState({ ...state!, imageUrl: newUrl });
+  };
+
+
   useEffect(() => {
     try {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
         const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode, selectedLanguages: storedLangs, textBlockTranslations: storedTextBlocks } = JSON.parse(storedState);
-        setSchedule(schedule || []);
-        if (cardTitle) setCardTitle(cardTitle);
-        if (imageUrl) setImageUrl(imageUrl);
+        setState({
+            schedule: schedule || defaultSchedule,
+            cardTitle: cardTitle || 'Расписание на день',
+            imageUrl: imageUrl || null
+        }, true);
+
         if (storedMode) setTranslationDisplayMode(storedMode);
         if (storedLangs) setSelectedLanguages(storedLangs);
         if (storedTextBlocks) setTextBlockTranslations(storedTextBlocks);
 
       } else {
-        setSchedule(defaultSchedule);
+        setState({
+            schedule: defaultSchedule,
+            cardTitle: 'Расписание на день',
+            imageUrl: null,
+        }, true);
       }
 
       const storedEvents = localStorage.getItem('savedEvents');
@@ -158,21 +194,45 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
-      setSchedule(defaultSchedule);
+      setState({
+          schedule: defaultSchedule,
+          cardTitle: 'Расписание на день',
+          imageUrl: null,
+      }, true);
     }
   }, []);
 
   useEffect(() => {
-    if (schedule.length === 0 && !localStorage.getItem('multiScheduleState')) {
-        return;
-    }
+    if (!state) return;
     try {
         const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages, textBlockTranslations };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
     } catch (error) {
         console.error("Failed to save state to localStorage", error);
     }
-  }, [schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages, textBlockTranslations]);
+  }, [state, translationDisplayMode, selectedLanguages, textBlockTranslations]);
+
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isUndo = (isMac ? event.metaKey : event.ctrlKey) && event.key === 'z' && !event.shiftKey;
+    const isRedo = (isMac ? event.metaKey && event.shiftKey : event.ctrlKey) && event.key === 'y' || (isMac && event.metaKey && event.shiftKey && event.key === 'z');
+
+    if (isUndo) {
+        event.preventDefault();
+        undo();
+    } else if (isRedo) {
+        event.preventDefault();
+        redo();
+    }
+  }, [undo, redo]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
   
   const updateSavedEvents = (newSavedEvents: SavedEvent[]) => {
     setSavedEvents(newSavedEvents);
@@ -194,8 +254,7 @@ export default function Home() {
 
 
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
-    const newSchedule = schedule.map(item => (item.id === id ? { ...item, ...updatedValues } : item));
-    setSchedule(newSchedule);
+    setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)));
     if (editingEvent?.id === id) {
       setEditingEvent(prev => prev ? { ...prev, ...updatedValues } : null);
     }
@@ -253,7 +312,8 @@ export default function Home() {
       const newIndex = direction === 'up' ? index - 1 : index + 1;
       
       if (newIndex < 0 || newIndex >= items.length + 1) {
-        return items; // out of bounds
+        items.splice(index, 0, movedItem); // put it back if out of bounds
+        return items;
       }
       
       items.splice(newIndex, 0, movedItem);
@@ -263,14 +323,17 @@ export default function Home() {
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    const items = Array.from(schedule);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    setSchedule(items);
+    setSchedule(prev => {
+        const items = Array.from(prev);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination!.index, 0, reorderedItem);
+        return items;
+    });
   };
 
 
   const handleTranslate = async () => {
+    if (!schedule) return;
     const itemsToTranslate = schedule.filter(item => item.description && ['timed', 'untimed', 'comment', 'h1', 'h2', 'h3', 'date'].includes(item.type));
     if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
 
@@ -287,18 +350,19 @@ export default function Home() {
       const descriptions = itemsToTranslate.map(item => item.description);
       const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages }, apiKeys.map(k => k.key));
       
-      const newSchedule = schedule.map(item => {
+      setSchedule(prev => prev.map(item => {
         const translatedItem = result.results.find(t => t.original === item.description);
         if (translatedItem) {
-          return { ...item, translations: translatedItem.translations };
+          // Preserve existing translations for other languages
+          const newTranslations = {...item.translations, ...translatedItem.translations};
+          return { ...item, translations: newTranslations };
         }
         return item; 
-      });
-      setSchedule(newSchedule);
+      }));
 
        // Update text-block translations
        if (translationDisplayMode === 'text-block') {
-         updateTextBlockTranslations(newSchedule);
+         updateTextBlockTranslations(schedule);
        }
 
     } catch (error: any) {
@@ -450,6 +514,7 @@ export default function Home() {
   };
 
   const handleSaveTemplate = (name: string) => {
+    if (!schedule || !cardTitle) return;
     const newTemplate: ScheduleTemplate = {
       id: `${Date.now()}-${Math.random()}`,
       name,
@@ -461,9 +526,11 @@ export default function Home() {
   };
   
   const handleLoadTemplate = (template: ScheduleTemplate) => {
-    setSchedule(template.schedule.map(item => ({...item, id: `${Date.now()}-${Math.random()}`}))); // new IDs
-    setCardTitle(template.cardTitle);
-    setImageUrl(template.imageUrl);
+    setState({
+        schedule: template.schedule.map(item => ({...item, id: `${Date.now()}-${Math.random()}`})), // new IDs
+        cardTitle: template.cardTitle,
+        imageUrl: template.imageUrl,
+    });
   };
   
   const handleDeleteTemplate = (id: string) => {
@@ -489,8 +556,11 @@ export default function Home() {
         time: item.time || '',
         description: item.description || '',
       }));
-      setSchedule(newScheduleItems);
-      setCardTitle(result.cardTitle);
+      setState({
+          schedule: newScheduleItems,
+          cardTitle: result.cardTitle,
+          imageUrl: state?.imageUrl ?? null,
+      });
     } catch (error: any) {
       console.error('AI parsing failed:', error);
     } finally {
@@ -544,9 +614,11 @@ export default function Home() {
   }
 
   const handleClearAll = () => {
-    setSchedule(defaultSchedule);
-    setCardTitle('Расписание на день');
-    setImageUrl(null);
+    setState({
+        schedule: defaultSchedule,
+        cardTitle: 'Расписание на день',
+        imageUrl: null
+    });
     setIsMobileMenuOpen(false);
   }
 
@@ -555,24 +627,25 @@ export default function Home() {
 
     switch (mode) {
         case 'single':
-            newSchedule = schedule.map(item => ({ ...item, color: color }));
+            newSchedule = schedule!.map(item => ({ ...item, color: color }));
             break;
         case 'rainbow':
-            newSchedule = schedule.map((item, index) => ({ ...item, color: ITEM_COLORS[index % ITEM_COLORS.length] }));
+            newSchedule = schedule!.map((item, index) => ({ ...item, color: ITEM_COLORS[index % ITEM_COLORS.length] }));
             break;
         case 'random':
-            newSchedule = schedule.map(item => ({ ...item, color: ITEM_COLORS[Math.floor(Math.random() * ITEM_COLORS.length)] }));
+            newSchedule = schedule!.map(item => ({ ...item, color: ITEM_COLORS[Math.floor(Math.random() * ITEM_COLORS.length)] }));
             break;
         default:
-            newSchedule = schedule;
+            newSchedule = schedule!;
             break;
     }
-    setSchedule(newSchedule);
+    setSchedule(() => newSchedule);
     setIsColorizeOpen(false);
     setIsMobileMenuOpen(false);
   };
   
   const renderTextTranslation = (lang: string, scheduleToRender: ScheduleItem[]) => {
+    if (!scheduleToRender) return '';
     const content = scheduleToRender.map(item => {
         const translatedDescription = item.translations?.[lang] ?? item.description;
 
@@ -616,7 +689,7 @@ const updateTextBlockTranslations = (currentSchedule: ScheduleItem[]) => {
 };
 
 useEffect(() => {
-    if (translationDisplayMode === 'text-block' && selectedLanguages.length > 0) {
+    if (translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule) {
         updateTextBlockTranslations(schedule);
     }
 }, [translationDisplayMode, selectedLanguages, schedule]);
@@ -639,6 +712,15 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
         return newBlocks;
     });
 };
+
+
+  if (!state) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
 
 
   return (
@@ -678,6 +760,10 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             setIsColorizeOpen={setIsColorizeOpen}
             onColorize={handleColorize}
             itemColors={ITEM_COLORS}
+            undo={undo}
+            redo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
         />}
 
         
@@ -784,6 +870,18 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                   <ScrollArea className="h-[calc(100%-4rem)]">
                     <div className="py-4 flex flex-col gap-4 px-3">
                       <div>
+                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Правка</h3>
+                        <Button onClick={() => { undo(); setIsMobileMenuOpen(false); }} variant="ghost" className="justify-start w-full" disabled={!canUndo}>
+                            <Undo className="mr-2" /> Отменить
+                        </Button>
+                         <Button onClick={() => { redo(); setIsMobileMenuOpen(false); }} variant="ghost" className="justify-start w-full" disabled={!canRedo}>
+                            <Redo className="mr-2" /> Повторить
+                        </Button>
+                      </div>
+
+                      <Separator />
+
+                      <div>
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
                         <Button onClick={() => openRenderOptions(handleShareImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                           {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
@@ -794,7 +892,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                       <Separator />
                        <div>
                          <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Изображение</h3>
-                         <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={(open) => { if (!open) setIsMobileMenuOpen(false) }}>
+                         <ImageUploader onSetImageUrl={(url) => setImageUrl(url)} onOpenChange={(open) => { if (!open) setIsMobileMenuOpen(false) }}>
                            <DialogTrigger asChild>
                               <Button variant="ghost" className="justify-start w-full">
                                  <ImagePlus className="mr-2" /> Изменить изображение
@@ -1098,11 +1196,3 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
-
-    
-
-    
-
-
-
-

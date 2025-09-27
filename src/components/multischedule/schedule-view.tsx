@@ -364,16 +364,15 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                          )}
 
                         <div
-                          data-id="icon-container"
-                          className="w-8 h-8 flex items-center justify-center shrink-0"
-                          {...(!['timed', 'untimed'].includes(item.type) && { 'data-make-invisible': true })}
+                            data-id="icon-container"
+                            className="w-8 h-8 flex items-center justify-center shrink-0"
                         >
-                          {['timed', 'untimed'].includes(item.type) && (
-                            <IconDropdown
-                              value={item.icon}
-                              onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
-                            />
-                          )}
+                            {['timed', 'untimed'].includes(item.type) ? (
+                                <IconDropdown
+                                    value={item.icon}
+                                    onChange={(icon) => onUpdateEvent(item.id, { icon: icon })}
+                                />
+                            ) : <div data-make-invisible className="w-8 h-8"/>}
                         </div>
                         
                         <div className="flex-1 w-full min-w-0">
@@ -545,12 +544,12 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0', !item.description && 'w-full')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
                                         }}>
-                                        <div className='flex items-center gap-2 w-full'>
+                                        <div className={cn('flex items-center gap-2', !item.description && "w-full")}>
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description}
@@ -702,4 +701,3 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
     </Card>
   );
 }
-

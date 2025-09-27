@@ -9,8 +9,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Plus, Paintbrush } from 'lucide-react';
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup, MenubarShortcut } from '@/components/ui/menubar';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Plus, Paintbrush, Undo, Redo } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
@@ -55,6 +55,10 @@ interface DesktopNavbarProps {
   setIsColorizeOpen: (open: boolean) => void;
   onColorize: (mode: 'single' | 'rainbow' | 'random', color?: string) => void;
   itemColors: string[];
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export function DesktopNavbar({
@@ -90,7 +94,11 @@ export function DesktopNavbar({
   isColorizeOpen,
   setIsColorizeOpen,
   onColorize,
-  itemColors
+  itemColors,
+  undo,
+  redo,
+  canUndo,
+  canRedo
 }: DesktopNavbarProps) {
     const [isTranslateDialogOpen, setIsTranslateDialogOpen] = useState(false);
     const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -109,6 +117,8 @@ export function DesktopNavbar({
         setIsTranslateDialogOpen(false);
     }
 
+  const isMac = typeof window !== 'undefined' ? navigator.platform.toUpperCase().indexOf('MAC') >= 0 : false;
+
   return (
     <div className="flex items-center justify-between rounded-lg border bg-card p-1 h-auto">
         <Menubar className="border-none bg-transparent p-0 h-auto">
@@ -120,6 +130,20 @@ export function DesktopNavbar({
                     </MenubarItem>
                     <MenubarItem onClick={onCopy} disabled={isDownloading || isLoading}>
                         <Copy className="mr-2" /> Копировать изображение
+                    </MenubarItem>
+                </MenubarContent>
+            </MenubarMenu>
+            
+            <MenubarMenu>
+                <MenubarTrigger>Правка</MenubarTrigger>
+                <MenubarContent>
+                    <MenubarItem onClick={undo} disabled={!canUndo}>
+                        <Undo className="mr-2" /> Отменить
+                        <MenubarShortcut>{isMac ? '⌘Z' : 'Ctrl+Z'}</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem onClick={redo} disabled={!canRedo}>
+                        <Redo className="mr-2" /> Повторить
+                        <MenubarShortcut>{isMac ? '⇧⌘Z' : 'Ctrl+Y'}</MenubarShortcut>
                     </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
@@ -296,5 +320,3 @@ export function DesktopNavbar({
     </div>
   );
 }
-
-    
