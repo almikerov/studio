@@ -157,42 +157,39 @@ export function ScheduleView({
         <div className="flex flex-col gap-4 p-1">
             
             {/* Description/Icon input */}
-            <div className="flex items-center gap-2">
-                {isRegularEvent && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
-                
-                {editedType !== 'date' && (
-                    isCommentLike ? (
-                        <Textarea
-                            value={editedDescription}
-                            onChange={(e) => setEditedDescription(e.target.value)}
-                            className="flex-1 text-base"
-                            rows={3}
-                            placeholder="Комментарий или заголовок"
-                        />
-                    ) : (
-                         <Input
-                            value={editedDescription}
-                            onChange={(e) => setEditedDescription(e.target.value)}
-                            className="flex-1 text-base h-10"
-                            placeholder="Описание события"
-                        />
-                    )
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  {isRegularEvent && <IconDropdown value={item.icon} onChange={(icon) => handleIconChange(item.id, icon)} open={isIconPopoverOpen} onOpenChange={setIsIconPopoverOpen} />}
+                  
+                  {editedType !== 'date' && (
+                      isCommentLike ? (
+                          <Textarea
+                              value={editedDescription}
+                              onChange={(e) => setEditedDescription(e.target.value)}
+                              className="flex-1 text-base"
+                              rows={3}
+                              placeholder="Комментарий или заголовок"
+                          />
+                      ) : (
+                           <Input
+                              value={editedDescription}
+                              onChange={(e) => setEditedDescription(e.target.value)}
+                              className="flex-1 text-base h-10"
+                              placeholder="Описание события"
+                          />
+                      )
+                  )}
+                </div>
+                {isTranslatable && (
+                    <Input
+                        value={editedTranslations[selectedLanguages[0]] || ''}
+                        onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
+                        className="text-base h-10"
+                        placeholder={`Перевод (${selectedLanguages.join(', ')})`}
+                    />
                 )}
             </div>
 
-            {isTranslatable && (
-                <div className="space-y-2">
-                    <Label htmlFor="translation-input" className="text-sm font-medium">Перевод</Label>
-                    <Textarea
-                        id="translation-input"
-                        value={editedTranslations[selectedLanguages[0]] || ''}
-                        onChange={(e) => setEditedTranslations(prev => ({...prev, [selectedLanguages[0]]: e.target.value}))}
-                        className="flex-1 text-base"
-                        rows={3}
-                        placeholder={`Перевод (${selectedLanguages.join(', ')})`}
-                    />
-                </div>
-            )}
 
             {/* Type selector */}
             <div className="flex items-center gap-4 justify-between p-2 rounded-lg bg-secondary/50">
@@ -413,7 +410,7 @@ export function ScheduleView({
                                         )}
                                     </div>
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
-                                        <div className="text-sm italic text-muted-foreground mt-1 pl-2">
+                                        <div className="text-sm italic text-muted-foreground mt-1 pl-0">
                                             {Object.entries(item.translations).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
@@ -514,7 +511,7 @@ export function ScheduleView({
                                         </div>
                                      )}
                                      <div className="flex-1 flex-col justify-center">
-                                        <div className={cn("flex-1 text-card-foreground cursor-pointer", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                        <div className={cn("flex-1 text-card-foreground cursor-pointer flex items-baseline gap-2", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
@@ -528,7 +525,7 @@ export function ScheduleView({
                                                 data-id="description"
                                             />
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
-                                                <span className="text-muted-foreground ml-2">
+                                                <span className="text-muted-foreground">
                                                     ({Object.entries(item.translations).map(([lang, text]) => (
                                                         <EditableField
                                                             key={lang}
@@ -702,5 +699,7 @@ export function ScheduleView({
 
     
 
+
+    
 
     
