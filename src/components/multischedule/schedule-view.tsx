@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -291,7 +292,7 @@ export function ScheduleView({
 
       <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
-            <div className="flex-1">
+            <div className="flex-1 render-header-align-fix">
                 <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
              <div className="flex items-center gap-2">
@@ -488,7 +489,7 @@ export function ScheduleView({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2 w-full">
+                                <div className="flex w-full">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem]">
                                             <EditableField
@@ -500,12 +501,12 @@ export function ScheduleView({
                                             />
                                         </div>
                                      )}
-                                     <div className="flex-1 flex-col justify-center">
-                                        <div className={cn("flex-1 text-card-foreground cursor-pointer flex items-baseline gap-2", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
+                                     <div className={cn("flex-1 text-card-foreground cursor-pointer flex flex-col justify-center", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
                                             if (isMobile) return;
                                             const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
                                             descEl?.click();
                                         }}>
+                                        <div className="flex items-baseline gap-2">
                                             <EditableField
                                                 isMobile={isMobile}
                                                 value={item.description}
