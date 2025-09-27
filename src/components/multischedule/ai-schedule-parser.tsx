@@ -6,7 +6,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Wand2, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface AiScheduleParserProps {
@@ -17,15 +16,10 @@ interface AiScheduleParserProps {
 
 export function AiScheduleParser({ onParse, isLoading, onClose }: AiScheduleParserProps) {
   const [text, setText] = useState('');
-  const { toast } = useToast();
 
   const handleParseClick = async () => {
     if (!text.trim()) {
-      toast({
-        title: 'Ошибка',
-        description: 'Пожалуйста, введите текст для анализа.',
-        variant: 'destructive',
-      });
+      console.error('Error: Please enter text to parse.');
       return;
     }
     await onParse(text);

@@ -1,10 +1,8 @@
 
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
-import { useToast } from '@/hooks/use-toast';
 import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import { TranslatedSchedulesView } from '@/components/multischedule/translated-schedules-view';
@@ -75,7 +73,6 @@ const defaultSchedule: ScheduleItem[] = [
 ];
 
 export default function Home() {
-  const { toast } = useToast();
   const [schedule, setSchedule] = useState<ScheduleItem[]>(defaultSchedule);
   const [translatedSchedules, setTranslatedSchedules] = useState<TranslatedSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -234,12 +231,12 @@ export default function Home() {
 
   const handleTranslate = async () => {
     if (schedule.length === 0) {
-      toast({ title: 'Ошибка', description: 'Ваше расписание пустое.', variant: 'destructive' });
+      console.error('Error: Your schedule is empty.');
       return;
     }
     
     if (selectedLanguages.length === 0) {
-      toast({ title: 'Перевод не требуется', description: 'Выберите хотя бы один язык для перевода.' });
+      console.log('No translation needed: No languages selected.');
       return;
     }
 
@@ -248,7 +245,7 @@ export default function Home() {
 
     const apiKey = localStorage.getItem('gemini-api-key');
     if (!apiKey) {
-      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+      console.error('Error: API key not found.');
       setIsLoading(false);
       return;
     }
@@ -275,11 +272,6 @@ export default function Home() {
 
     } catch (error: any) {
       console.error('Translation failed:', error);
-      toast({
-        title: 'Ошибка перевода',
-        description: error.message || 'Не удалось перевести расписание. Проверьте API ключ и попробуйте еще раз.',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
@@ -361,11 +353,6 @@ export default function Home() {
             imageElement.src = base64Url;
         } catch (error) {
             console.error(error);
-            toast({
-              title: "Ошибка загрузки изображения",
-              description: "Не удалось загрузить фоновое изображение для рендеринга. Проверьте URL.",
-              variant: "destructive"
-            });
         }
     }
 
@@ -381,11 +368,6 @@ export default function Home() {
       return canvas;
     } catch (err) {
       console.error("Error generating canvas: ", err);
-      toast({
-        title: "Ошибка рендеринга",
-        description: "Не удалось создать изображение расписания.",
-        variant: "destructive"
-      });
       return null;
     } finally {
       document.body.removeChild(clone);
@@ -417,18 +399,10 @@ export default function Home() {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        toast({
-          title: "Скопировано",
-          description: "Изображение скопировано в буфер обмена.",
-        });
+        console.log("Copied image to clipboard.");
       }, 'image/png');
     } catch (err) {
       console.error("Ошибка копирования в буфер обмена: ", err);
-      toast({
-        title: "Ошибка копирования",
-        description: "Ваш браузер может не поддерживать эту функцию, или было отказано в доступе.",
-        variant: "destructive"
-      });
     }
   }
 
@@ -438,7 +412,7 @@ export default function Home() {
 
     canvas.toBlob(async (blob) => {
       if (!blob) {
-        toast({ title: "Ошибка", description: "Не удалось создать изображение для отправки.", variant: "destructive" });
+        console.error("Error: Failed to create blob for sharing.");
         return;
       }
       const file = new File([blob], "multischedule.png", { type: "image/png" });
@@ -451,23 +425,15 @@ export default function Home() {
       if (navigator.canShare && navigator.canShare(data)) {
         try {
           await navigator.share(data);
-          toast({ title: "Отправлено!", description: "Ваше расписание было успешно отправлено." });
+          console.log("Shared successfully.");
         } catch (error) {
           console.error("Ошибка отправки: ", error);
           if ((error as Error).name !== 'AbortError') {
-            toast({
-              title: "Ошибка отправки",
-              description: "Не удалось поделиться изображением.",
-              variant: "destructive"
-            });
+            console.error("Share failed.");
           }
         }
       } else {
-        toast({
-          title: "Не поддерживается",
-          description: "Ваш браузер не поддерживает функцию 'Поделиться'.",
-          variant: "destructive"
-        });
+        console.error("Sharing not supported.");
       }
     }, 'image/png');
   };
@@ -484,12 +450,10 @@ export default function Home() {
     const { description, icon, time, type, color } = eventData;
 
     if (!description || !type || ['comment', 'date', 'h1', 'h2', 'h3'].includes(type)) {
-        toast({ title: 'Нельзя сохранить', description: 'Этот тип события нельзя сохранить как заготовку.', variant: 'default' });
         return;
     }
 
     if (savedEvents.some(e => e.description === description)) {
-      toast({ title: 'Уже сохранено', description: 'Событие с таким описанием уже есть в ваших заготовках.', variant: 'default' });
       return;
     }
 
@@ -502,7 +466,6 @@ export default function Home() {
       color,
     };
     updateSavedEvents([...savedEvents, newSavedEvent]);
-    toast({ title: 'Сохранено', description: 'Событие добавлено в заготовки.' });
   };
 
   const handleSaveTemplate = (name: string) => {
@@ -514,7 +477,6 @@ export default function Home() {
       imageUrl,
     };
     updateSavedTemplates([...savedTemplates, newTemplate]);
-    toast({ title: 'Шаблон сохранен', description: `Шаблон "${name}" был сохранен.` });
   };
   
   const handleLoadTemplate = (template: ScheduleTemplate) => {
@@ -522,7 +484,6 @@ export default function Home() {
     setCardTitle(template.cardTitle);
     setImageUrl(template.imageUrl);
     setTranslatedSchedules([]); // Clear translations
-    toast({ title: 'Шаблон загружен', description: `Загружен шаблон "${template.name}".` });
   };
   
   const handleDeleteTemplate = (id: string) => {
@@ -536,7 +497,7 @@ export default function Home() {
 
     const apiKey = localStorage.getItem('gemini-api-key');
     if (!apiKey) {
-      toast({ title: 'Ошибка', description: 'API ключ не найден. Введите его в меню.', variant: 'destructive' });
+      console.error('Error: API key not found.');
       setIsLoading(false);
       return;
     }
@@ -551,14 +512,8 @@ export default function Home() {
       setSchedule(newScheduleItems);
       setCardTitle(result.cardTitle);
       setTranslatedSchedules([]);
-      toast({ title: 'Расписание сгенерировано', description: 'ИИ проанализировал ваш текст и создал расписание.' });
     } catch (error: any) {
       console.error('AI parsing failed:', error);
-      toast({
-        title: 'Ошибка генерации',
-        description: error.message || 'Не удалось создать расписание из текста. Проверьте API ключ и попробуйте еще раз.',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
@@ -585,11 +540,9 @@ export default function Home() {
   const handleSaveApiConfig = () => {
     try {
       localStorage.setItem('gemini-api-key', apiKeyInput);
-      toast({ title: 'API ключ сохранен' });
       setIsApiKeyDialogOpen(false);
     } catch (error) {
       console.error("Failed to save to localStorage", error);
-      toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить ключ.', variant: 'destructive' });
     }
   };
   
@@ -643,7 +596,6 @@ export default function Home() {
     setCardTitle('Расписание на день');
     setImageUrl(null);
     setTranslatedSchedules([]);
-    toast({ title: 'Расписание очищено' });
     setIsMobileMenuOpen(false);
   }
 
@@ -755,7 +707,7 @@ export default function Home() {
                     <Separator />
                      <div>
                        <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Изображение</h3>
-                       <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={setIsMobileMenuOpen}>
+                       <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={(open) => { if (!open) setIsMobileMenuOpen(false) }}>
                          <Button variant="ghost" className="justify-start w-full">
                            <ImagePlus className="mr-2" /> Изменить изображение
                          </Button>

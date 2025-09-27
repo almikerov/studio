@@ -322,7 +322,7 @@ export function ScheduleView({
                         <Menu />
                     </Button>
                 )}
-                <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? setIsMobileMenuOpen : undefined}>
+                <ImageUploader onSetImageUrl={setImageUrl} onOpenChange={isMobile ? () => {} : undefined}>
                     {imageUrl ? (
                         <Image
                             src={imageUrl}
@@ -590,6 +590,7 @@ export function ScheduleView({
     
 
     
+
 
 
 

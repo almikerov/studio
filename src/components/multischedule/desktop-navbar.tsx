@@ -13,7 +13,6 @@ import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignat
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
-import { toast } from '@/hooks/use-toast';
 import { ImageUploader } from './image-uploader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from '@/components/ui/alert-dialog';
 
@@ -98,10 +97,6 @@ export function DesktopNavbar({
     
     const handleAddFromSaved = (event: SavedEvent) => {
         onAddEventFromSaved(event);
-        toast({
-            title: "Событие добавлено",
-            description: `"${event.description}" добавлено в расписание.`
-        })
     }
     
     const handleTranslateClick = () => {
@@ -112,11 +107,9 @@ export function DesktopNavbar({
     const handleSaveApiConfig = () => {
         try {
             localStorage.setItem('gemini-api-key', apiKeyInput);
-            toast({ title: 'API ключ сохранен' });
             setIsApiKeyDialogOpen(false);
         } catch (error) {
             console.error("Failed to save to localStorage", error);
-            toast({ title: 'Ошибка сохранения', description: 'Не удалось сохранить ключ.', variant: 'destructive' });
         }
     };
 
@@ -326,4 +319,3 @@ export function DesktopNavbar({
 
 
     
-
