@@ -302,7 +302,7 @@ export default function Home() {
         const isDarkMode = document.documentElement.classList.contains('dark');
         const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
         
-        const fontEmbedCss = await htmlToImage.getFontEmbedCss(element);
+        const fontEmbedCss = await htmlToImage.getFontEmbedCSS(element);
 
         // Create a clone to manipulate styles without affecting the UI
         const clone = element.cloneNode(true) as HTMLElement;
@@ -893,5 +893,6 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
     
 
     
+
 
 
