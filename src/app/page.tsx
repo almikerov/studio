@@ -137,7 +137,6 @@ export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
-  const [renderWithShadow, setRenderWithShadow] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
@@ -815,22 +814,18 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, fitContent: false }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, fitContent: false, withShadow: false }); setIsRenderOptionsOpen(false); } }}>
                             <Laptop className="h-8 w-8" />
                             <span>Десктоп (широкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, fitContent: false }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, fitContent: false, withShadow: false }); setIsRenderOptionsOpen(false); } }}>
                             <Smartphone className="h-8 w-8" />
                             <span>Мобильный (узкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, renderAsMobile: false }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, renderAsMobile: false, withShadow: false }); setIsRenderOptionsOpen(false); } }}>
                             <Ruler className="h-8 w-8" />
                             <span>По ширине текста</span>
                         </Button>
-                    </div>
-                     <div className="flex items-center space-x-2 pt-4">
-                        <Checkbox id="render-shadow" checked={renderWithShadow} onCheckedChange={(checked) => setRenderWithShadow(!!checked)} />
-                        <Label htmlFor="render-shadow">Отображать тени</Label>
                     </div>
                 </div>
             </DialogContent>
@@ -859,7 +854,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
 
                       <div>
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
-                        <Button onClick={() => openRenderOptions((options) => handleShareImage({ ...options, withShadow: renderWithShadow }))} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        <Button onClick={() => openRenderOptions((options) => handleShareImage({ ...options, withShadow: false }))} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                           {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
                           Поделиться...
                         </Button>
@@ -1172,3 +1167,5 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
