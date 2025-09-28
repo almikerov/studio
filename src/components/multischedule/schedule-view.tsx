@@ -220,9 +220,6 @@ export function ScheduleView({
                                 "w-full justify-start text-left font-normal",
                                 !editedDate && "text-muted-foreground"
                             )}
-                            onClick={(e) => {
-                                if (isMobile) e.preventDefault();
-                            }}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {editedDate ? format(editedDate, "dd.MM.yyyy", { locale: ru }) : <span>Выберите дату</span>}
