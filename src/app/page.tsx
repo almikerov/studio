@@ -258,11 +258,12 @@ export default function Home() {
     if (newEventConfig) { 
         if (newEventConfig.type === 'date') {
             newEvent.time = '';
-            newEvent.description = newEventConfig.description || '';
+            newEvent.description = newEventConfig.description || 'Новая дата';
             newEvent.date = newEventConfig.date || new Date().toISOString();
         }
         if (['h1', 'h2', 'h3', 'untimed', 'comment'].includes(newEvent.type)) {
             newEvent.time = '';
+            newEvent.description = 'Новое событие';
         }
         setSchedule(prev => [...prev, newEvent]);
         setIsAddEventDialogOpen(false); // Close dialog if it was open
@@ -581,12 +582,6 @@ export default function Home() {
 
   const addNewTypedEvent = (type: ScheduleItem['type']) => {
     const config: Partial<ScheduleItem> = { type };
-    if (type === 'date') {
-      config.date = new Date().toISOString();
-      config.description = 'Новая дата';
-    } else {
-        config.description = 'Новое событие';
-    }
     handleAddNewEvent(config);
   }
 
