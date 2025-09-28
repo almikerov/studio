@@ -561,10 +561,7 @@ export default function Home() {
   };
   
   const openRenderOptions = (action: (options: RenderOptions) => void) => {
-    setRenderAction(() => (options: RenderOptions) => {
-      action({...options, withShadow: renderWithShadow});
-      setIsRenderOptionsOpen(false);
-    });
+    setRenderAction(() => action);
     setIsRenderOptionsOpen(true);
     setIsMobileMenuOpen(false);
   };
@@ -817,15 +814,15 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false })}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false, withShadow: renderWithShadow })}>
                             <Laptop className="h-8 w-8" />
                             <span>Десктоп (широкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true })}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true, withShadow: renderWithShadow })}>
                             <Smartphone className="h-8 w-8" />
                             <span>Мобильный (узкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ fitContent: true })}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ fitContent: true, withShadow: renderWithShadow })}>
                             <Ruler className="h-8 w-8" />
                             <span>По ширине текста</span>
                         </Button>
