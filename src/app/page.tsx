@@ -138,7 +138,7 @@ export default function Home() {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderWithShadow, setRenderWithShadow] = useState(false);
-  const [renderAction, setRenderAction] = useState<((options: RenderOptions) => void) | null>(null);
+  const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
@@ -370,8 +370,12 @@ export default function Home() {
         const clone = element.cloneNode(true) as HTMLElement;
         clone.classList.add('cloned-for-rendering');
         
+        const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+
         if (options.withShadow) {
             clone.style.border = '20px solid transparent';
+        } else if (cardElement) {
+            cardElement.classList.add('hide-border-on-print');
         }
 
         if (options.renderAsMobile) {
@@ -563,8 +567,8 @@ export default function Home() {
     }
   };
   
-  const openRenderOptions = (action: (options: RenderOptions) => void) => {
-    setRenderAction(() => action);
+  const openRenderOptions = (action: (options: Omit<RenderOptions, 'withShadow'>) => void) => {
+    setRenderAction(() => action); // Store the action itself
     setIsRenderOptionsOpen(true);
     setIsMobileMenuOpen(false);
   };
@@ -811,15 +815,15 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, withShadow: renderWithShadow }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, fitContent: false }); setIsRenderOptionsOpen(false); } }}>
                             <Laptop className="h-8 w-8" />
                             <span>Десктоп (широкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, withShadow: renderWithShadow }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, fitContent: false }); setIsRenderOptionsOpen(false); } }}>
                             <Smartphone className="h-8 w-8" />
                             <span>Мобильный (узкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, withShadow: renderWithShadow }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, renderAsMobile: false }); setIsRenderOptionsOpen(false); } }}>
                             <Ruler className="h-8 w-8" />
                             <span>По ширине текста</span>
                         </Button>
@@ -855,7 +859,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
 
                       <div>
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
-                        <Button onClick={() => openRenderOptions(handleShareImage)} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        <Button onClick={() => openRenderOptions((options) => handleShareImage({ ...options, withShadow: renderWithShadow }))} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                           {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
                           Поделиться...
                         </Button>
