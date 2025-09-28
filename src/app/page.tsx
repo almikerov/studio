@@ -814,15 +814,15 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: false, withShadow: renderWithShadow })}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, withShadow: renderWithShadow }); setIsRenderOptionsOpen(false); } }}>
                             <Laptop className="h-8 w-8" />
                             <span>Десктоп (широкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ renderAsMobile: true, withShadow: renderWithShadow })}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, withShadow: renderWithShadow }); setIsRenderOptionsOpen(false); } }}>
                             <Smartphone className="h-8 w-8" />
                             <span>Мобильный (узкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => renderAction && renderAction({ fitContent: true, withShadow: renderWithShadow })}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, withShadow: renderWithShadow }); setIsRenderOptionsOpen(false); } }}>
                             <Ruler className="h-8 w-8" />
                             <span>По ширине текста</span>
                         </Button>
