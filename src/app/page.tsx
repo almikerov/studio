@@ -393,6 +393,8 @@ export default function Home() {
                 pixelRatio: 2,
                 backgroundColor: backgroundColor,
                 fontEmbedCss: fontEmbedCss,
+                imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                cacheBust: true,
                 fetchRequestInit: {
                     headers: new Headers(),
                     mode: 'cors',
