@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
@@ -212,33 +211,49 @@ export function ScheduleView({
             {/* Date specific inputs */}
             {editedType === 'date' && (
               <div className="space-y-2">
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                                "w-full justify-start text-left font-normal",
-                                !editedDate && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {editedDate ? format(editedDate, "dd.MM.yyyy", { locale: ru }) : <span>Выберите дату</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                         <Calendar
-                            mode="single"
-                            selected={editedDate}
-                            onSelect={(date) => {
-                                setEditedDate(date);
-                                if (date) {
-                                    onUpdateEvent(item.id, { date: date.toISOString() });
-                                }
-                            }}
-                            initialFocus
-                        />
-                    </PopoverContent>
-                </Popover>
+                {isMobile ? (
+                    <Input
+                        type="date"
+                        value={editedDate ? format(editedDate, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                            const newDate = new Date(e.target.value);
+                            // Adjust for timezone offset
+                            const timezoneOffset = newDate.getTimezoneOffset() * 60000;
+                            const adjustedDate = new Date(newDate.getTime() + timezoneOffset);
+                            setEditedDate(adjustedDate);
+                            onUpdateEvent(item.id, { date: adjustedDate.toISOString() });
+                        }}
+                        className="w-full text-lg h-12"
+                    />
+                ) : (
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !editedDate && "text-muted-foreground"
+                                )}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {editedDate ? format(editedDate, "dd.MM.yyyy", { locale: ru }) : <span>Выберите дату</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                             <Calendar
+                                mode="single"
+                                selected={editedDate}
+                                onSelect={(date) => {
+                                    setEditedDate(date);
+                                    if (date) {
+                                        onUpdateEvent(item.id, { date: date.toISOString() });
+                                    }
+                                }}
+                                initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                )}
               </div>
             )}
 
