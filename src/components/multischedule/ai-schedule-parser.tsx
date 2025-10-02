@@ -2,7 +2,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Wand2, Loader2 } from 'lucide-react';
@@ -19,11 +18,9 @@ export function AiScheduleParser({ onParse, isLoading, onClose }: AiSchedulePars
 
   const handleParseClick = async () => {
     if (!text.trim()) {
-      console.error('Error: Please enter text to parse.');
       return;
     }
     await onParse(text);
-    onClose();
   };
 
   return (
@@ -44,7 +41,7 @@ export function AiScheduleParser({ onParse, isLoading, onClose }: AiSchedulePars
       </div>
 
       <div className="p-6 border-t">
-        <Button onClick={handleParseClick} disabled={isLoading} className="w-full" size="lg">
+        <Button onClick={handleParseClick} disabled={isLoading || !text.trim()} className="w-full" size="lg">
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (

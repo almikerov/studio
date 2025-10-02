@@ -364,13 +364,6 @@ export default function Home() {
             // 1. Create a clone of the node
             const clone = element.cloneNode(true) as HTMLElement;
             clone.classList.add('cloned-for-rendering');
-
-            // Pass render options to the cloned ScheduleView via a temporary prop
-            // This is a bit of a hack, but necessary to control rendering of the clone
-            const scheduleViewClone = clone.querySelector('[data-id="schedule-view"]');
-            if (scheduleViewClone) {
-                (scheduleViewClone as any).__renderOptions = options;
-            }
             
             // 2. Apply styles for rendering
             if (options.withShadow) {
@@ -401,13 +394,9 @@ export default function Home() {
             requestAnimationFrame(() => {
                 setTimeout(async () => { // Additional timeout to ensure images are loaded
                     try {
-                        const fontEmbedCss = await htmlToImage.getFontEmbedCSS(clone);
                         const canvas = await htmlToImage.toCanvas(clone, {
                             pixelRatio: 2,
                             backgroundColor: backgroundColor,
-                            fontEmbedCss: fontEmbedCss,
-                            imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                            cacheBust: true,
                             fetchRequestInit: {
                                 mode: 'cors',
                                 cache: 'no-cache'
@@ -627,18 +616,20 @@ export default function Home() {
   const handleColorize = (mode: 'single' | 'rainbow' | 'random', color?: string) => {
     let newSchedule: ScheduleItem[];
 
+    if (!schedule) return;
+    
     switch (mode) {
         case 'single':
-            newSchedule = schedule!.map(item => ({ ...item, color: color }));
+            newSchedule = schedule.map(item => ({ ...item, color: color }));
             break;
         case 'rainbow':
-            newSchedule = schedule!.map((item, index) => ({ ...item, color: ITEM_COLORS[index % ITEM_COLORS.length] }));
+            newSchedule = schedule.map((item, index) => ({ ...item, color: ITEM_COLORS[index % ITEM_COLORS.length] }));
             break;
         case 'random':
-            newSchedule = schedule!.map(item => ({ ...item, color: ITEM_COLORS[Math.floor(Math.random() * ITEM_COLORS.length)] }));
+            newSchedule = schedule.map(item => ({ ...item, color: ITEM_COLORS[Math.floor(Math.random() * ITEM_COLORS.length)] }));
             break;
         default:
-            newSchedule = schedule!;
+            newSchedule = schedule;
             break;
     }
     setSchedule(() => newSchedule);
@@ -1198,4 +1189,5 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     
 
     
+
 

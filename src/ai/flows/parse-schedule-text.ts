@@ -33,7 +33,13 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
+const scheduleParserFlow = ai.defineFlow(
+  {
+    name: 'scheduleParserFlow',
+    inputSchema: ParseScheduleTextInputSchema,
+    outputSchema: ParseScheduleTextOutputSchema,
+  },
+  async (input) => {
     const prompt = ai.definePrompt({
         name: 'scheduleParserPrompt',
         model: 'gemini-1.5-flash',
@@ -63,11 +69,17 @@ ${input.text}
 `
     });
 
+    const { output } = await prompt(input);
+    return output!;
+  }
+);
+
+
+export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
     try {
-        const { output } = await prompt(input);
-        return output!;
+        return await scheduleParserFlow(input);
     } catch(e) {
-        console.error(e);
-        throw e;
+        console.error("AI parsing failed:", e);
+        throw new Error("Failed to parse schedule using AI.");
     }
 }
