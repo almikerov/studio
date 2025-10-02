@@ -9,8 +9,7 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
+import { ai, z } from '@/ai/genkit';
 
 const TranslateScheduleInputSchema = z.object({
   descriptions: z.array(z.string()).describe('The schedule item descriptions to translate.'),

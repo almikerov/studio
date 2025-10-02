@@ -9,9 +9,7 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-import { googleAI } from '@genkit-ai/google-genai';
+import { ai, z } from '@/ai/genkit';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),

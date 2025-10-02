@@ -1,5 +1,12 @@
 
-import { genkit as ai } from 'genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
-export { ai, z };
+export const ai = genkit({
+  plugins: [
+    googleAI(),
+  ],
+});
+
+export { z };
