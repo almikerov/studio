@@ -57,7 +57,7 @@ ${input.text}
 `;
 
     const { output } = await ai.generate({
-        model: 'googleai/gemini-pro',
+        model: 'googleai/gemini-2.5-pro',
         prompt: prompt,
         output: {
             format: 'json',
