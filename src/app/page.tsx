@@ -450,33 +450,50 @@ export default function Home() {
   }
 
   const handleShareImage = async (options: RenderOptions) => {
-    const canvas = await generateCanvas(options);
-    if (!canvas) return;
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        return;
+    try {
+      const canvas = await generateCanvas(options);
+      if (!canvas) {
+        throw new Error('Canvas generation failed');
       }
-      const file = new File([blob], "multischedule.png", { type: "image/png" });
-      const data = {
-        files: [file],
-        title: 'Мое расписание',
-        text: cardTitle,
-      };
 
-      if (navigator.canShare && navigator.canShare(data)) {
-        try {
-          await navigator.share(data);
-        } catch (error) {
-          if ((error as Error).name !== 'AbortError') {
-            console.error("Share failed.");
-          }
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          console.error('Не удалось создать blob из canvas');
+          return;
         }
-      } else {
-        console.error("Sharing not supported.");
-      }
-    }, 'image/png');
+
+        const file = new File([blob], "multischedule.png", { type: "image/png" });
+        const filesArray = [file];
+
+        if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+          try {
+            await navigator.share({
+              files: filesArray,
+              title: 'Мое расписание',
+              text: cardTitle,
+            });
+            console.log('Успешно отправлено!');
+          } catch (error) {
+            if ((error as Error).name !== 'AbortError') {
+              console.error('Не удалось отправить картинку:', error);
+            }
+          }
+        } else {
+          console.log("Этот браузер не поддерживает шаринг файлов.");
+          // Fallback: download the image
+          const link = document.createElement('a');
+          link.download = 'multischedule.png';
+          link.href = URL.createObjectURL(blob);
+          link.click();
+          URL.revokeObjectURL(link.href);
+        }
+      }, 'image/png');
+
+    } catch (error) {
+      console.error('Не удалось создать или отправить картинку:', error);
+    }
   };
+
 
   const handleSaveEvent = (eventData: Partial<ScheduleItem>) => {
     const { description, type } = eventData;
