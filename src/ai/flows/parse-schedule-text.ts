@@ -11,7 +11,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { googleAI } from '@genkit-ai/google-genai';
 
 
 const ParseScheduleTextInputSchema = z.object({
@@ -35,19 +34,12 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-const scheduleParserFlow = ai.defineFlow(
-  {
-    name: 'scheduleParserFlow',
-    inputSchema: ParseScheduleTextInputSchema,
-    outputSchema: ParseScheduleTextOutputSchema,
-  },
-  async (input) => {
-    const prompt = ai.definePrompt({
-        name: 'scheduleParserPrompt',
-        model: 'gemini-1.5-pro',
-        input: { schema: z.object({ text: z.string() }) },
-        output: { schema: ParseScheduleTextOutputSchema },
-        prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+const scheduleParserPrompt = ai.definePrompt({
+    name: 'scheduleParserPrompt',
+    model: 'gemini-1.5-pro',
+    input: { schema: ParseScheduleTextInputSchema },
+    output: { schema: ParseScheduleTextOutputSchema },
+    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 The output language must be the same as the input language.
 
 - Generate a main title for the schedule and put it in 'cardTitle'.
@@ -61,9 +53,16 @@ The output language must be the same as the input language.
 Parse the following text:
 {{{text}}}
 `
-    });
+});
 
-    const { output } = await prompt({ text: input.text });
+const scheduleParserFlow = ai.defineFlow(
+  {
+    name: 'scheduleParserFlow',
+    inputSchema: ParseScheduleTextInputSchema,
+    outputSchema: ParseScheduleTextOutputSchema,
+  },
+  async (input) => {
+    const { output } = await scheduleParserPrompt(input);
     return output!;
   }
 );

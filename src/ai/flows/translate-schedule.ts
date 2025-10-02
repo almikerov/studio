@@ -11,7 +11,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { googleAI } from '@genkit-ai/google-genai';
 
 
 const TranslateScheduleInputSchema = z.object({
@@ -31,21 +30,12 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-const translateScheduleFlow = ai.defineFlow(
-  {
-    name: 'translateScheduleFlow',
-    inputSchema: TranslateScheduleInputSchema,
-    outputSchema: TranslateScheduleOutputSchema,
-  },
-  async (input) => {
-    const languages = input.targetLanguages.join(', ');
-
-    const prompt = ai.definePrompt({
-        name: 'scheduleTranslatorPrompt',
-        model: 'gemini-1.5-pro',
-        input: { schema: z.object({ descriptions: z.array(z.string()) }) },
-        output: { schema: TranslateScheduleOutputSchema },
-        prompt: `Your task is to translate a list of schedule items into multiple languages.
+const scheduleTranslatorPrompt = ai.definePrompt({
+    name: 'scheduleTranslatorPrompt',
+    model: 'gemini-1.5-pro',
+    input: { schema: TranslateScheduleInputSchema },
+    output: { schema: TranslateScheduleOutputSchema },
+    prompt: `Your task is to translate a list of schedule items into multiple languages.
 
 **Key vocabulary for translation:**
 * \`зал\`, \`спортзал\` -> \`gym\`
@@ -57,8 +47,9 @@ const translateScheduleFlow = ai.defineFlow(
 * \`заезд\` -> \`base stay\`
 * \`установка\` -> \`instructions\`
 
-Based on these rules, translate the following list of descriptions into ${languages}:
-${input.descriptions.map(d => `- ${d}`).join('\n')}
+Based on these rules, translate the following list of descriptions into {{{targetLanguages}}}:
+{{#each descriptions}}- {{{this}}}
+{{/each}}
 
 Return a JSON object with a 'results' key. This key should hold an array of objects, where each object has 'original' and a 'translations' object (with language codes as keys). Do not wrap the JSON in markdown.
 Example response for target languages "es, fr":
@@ -82,9 +73,17 @@ Example response for target languages "es, fr":
 }
 
 Output JSON:`
-    });
-    
-    const { output } = await prompt({ descriptions: input.descriptions });
+});
+
+
+const translateScheduleFlow = ai.defineFlow(
+  {
+    name: 'translateScheduleFlow',
+    inputSchema: TranslateScheduleInputSchema,
+    outputSchema: TranslateScheduleOutputSchema,
+  },
+  async (input) => {
+    const { output } = await scheduleTranslatorPrompt(input);
     if (!output) {
       throw new Error("AI response was not valid JSON.");
     }
