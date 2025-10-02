@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode } from '@/app/page';
@@ -12,7 +13,7 @@ import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
 import { ImageUploader } from './image-uploader';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { SavedTemplates } from './saved-templates';
 import { Checkbox } from '../ui/checkbox';
 import { AVAILABLE_LANGUAGES } from '@/app/page';
@@ -321,3 +322,5 @@ export function DesktopNavbar({
     </div>
   );
 }
+
+    
