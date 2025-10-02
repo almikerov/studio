@@ -1,8 +1,9 @@
 
+
 'use client';
 
 import { useState, type ReactNode, useRef, useEffect } from 'react';
-import type { ScheduleItem, SavedEvent, TranslationDisplayMode } from '@/app/page';
+import type { ScheduleItem, SavedEvent, TranslationDisplayMode, RenderOptions } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ interface ScheduleViewProps {
   translationDisplayMode: TranslationDisplayMode;
   selectedLanguages: string[];
   itemColors: string[];
+  renderOptions?: RenderOptions;
 }
 
 export function ScheduleView({ 
@@ -54,7 +56,7 @@ export function ScheduleView({
   imageUrl, setImageUrl, onSaveEvent, 
   editingEvent, handleOpenEditModal, handleCloseEditModal,
   isMobile, onMoveEvent, setIsMobileMenuOpen, isAddEventDialogOpen, setIsAddEventDialogOpen,
-  translationDisplayMode, selectedLanguages, itemColors
+  translationDisplayMode, selectedLanguages, itemColors, renderOptions
 }: ScheduleViewProps) {
   const [editedTime, setEditedTime] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
@@ -63,6 +65,7 @@ export function ScheduleView({
   const [editedDate, setEditedDate] = useState<Date | undefined>(new Date());
   const [isIconPopoverOpen, setIsIconPopoverOpen] = useState(false);
 
+  const isRenderMobile = renderOptions?.renderAsMobile ?? isMobile;
 
   useEffect(() => {
     if (editingEvent) { // For mobile modal
@@ -300,7 +303,9 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
     <Card className={cn(
       "shadow-lg overflow-hidden sm:border sm:rounded-lg",
       showTextBlock && "rounded-b-none"
-      )}>
+      )}
+      data-id="schedule-view"
+    >
        {/* These are for tailwind to detect and generate dynamic classes */}
        <div className="hidden bg-red-100 dark:bg-red-900/30 bg-orange-100 dark:bg-orange-900/30 bg-yellow-100 dark:bg-yellow-900/30 bg-green-100 dark:bg-green-900/30 bg-blue-100 dark:bg-blue-900/30 bg-purple-100 dark:bg-purple-900/30 bg-gray-100 dark:bg-gray-900/30"></div>
        <div className="hidden bg-red-500 bg-orange-500 bg-yellow-500 bg-green-500 bg-blue-500 bg-purple-500 bg-gray-500"></div>
@@ -319,8 +324,8 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                     <Image
                                         src={imageUrl}
                                         alt="Schedule image"
-                                        width={isMobile ? 40 : 96}
-                                        height={isMobile ? 40 : 96}
+                                        width={isRenderMobile ? 40 : 96}
+                                        height={isRenderMobile ? 40 : 96}
                                         className="object-cover rounded-md aspect-square"
                                         crossOrigin="anonymous"
                                     />

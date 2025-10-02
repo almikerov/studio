@@ -355,100 +355,115 @@ export default function Home() {
     setTextBlockTranslations({});
   };
   
-    const generateCanvas = async (options: RenderOptions): Promise<HTMLCanvasElement | null> => {
-        const element = printableAreaRef.current;
-        if (!element) return null;
-
-        setIsDownloading(true);
-
-        const isDarkMode = document.documentElement.classList.contains('dark');
-        const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
-
-        // 1. Create a clone of the node
-        const clone = element.cloneNode(true) as HTMLElement;
-        clone.classList.add('cloned-for-rendering');
-        
-        // 2. Apply styles for rendering
-        if (options.withShadow) {
-            clone.style.border = '20px solid transparent';
-        } else {
-            const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
-            if (cardElement) {
-                cardElement.classList.add('hide-border-on-print');
+    const generateCanvas = (options: RenderOptions): Promise<HTMLCanvasElement> => {
+        return new Promise(async (resolve, reject) => {
+            const element = printableAreaRef.current;
+            if (!element) {
+                return reject(new Error("Printable area not found"));
             }
-        }
-        
-        if (options.renderAsMobile) {
-            clone.style.width = '420px'; 
-            clone.classList.add('render-mobile-padding');
-        } else if (options.fitContent) {
-            clone.style.width = 'auto';
-            clone.style.display = 'inline-block';
-        } else {
-            clone.style.width = `${element.offsetWidth}px`;
-        }
 
-        clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
-        clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
-        
-        document.body.appendChild(clone);
+            setIsDownloading(true);
 
-        return new Promise((resolve) => {
-            // 3. Wait for the next animation frame to let the browser apply styles
-            requestAnimationFrame(async () => {
-                try {
-                    const fontEmbedCss = await htmlToImage.getFontEmbedCSS(clone);
-                    const canvas = await htmlToImage.toCanvas(clone, {
-                        pixelRatio: 2,
-                        backgroundColor: backgroundColor,
-                        fontEmbedCss: fontEmbedCss,
-                        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                        cacheBust: true,
-                        fetchRequestInit: {
-                            mode: 'cors',
-                            cache: 'no-cache'
-                        }
-                    });
-                    resolve(canvas);
-                } catch (error) {
-                    console.error("Error generating canvas with html-to-image", error);
-                    resolve(null);
-                } finally {
-                    // 4. Clean up
-                    document.body.removeChild(clone);
-                    setIsDownloading(false);
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
+
+            // 1. Create a clone of the node
+            const clone = element.cloneNode(true) as HTMLElement;
+            clone.classList.add('cloned-for-rendering');
+
+            // Pass render options to the cloned ScheduleView via a temporary prop
+            // This is a bit of a hack, but necessary to control rendering of the clone
+            const scheduleViewClone = clone.querySelector('[data-id="schedule-view"]');
+            if (scheduleViewClone) {
+                (scheduleViewClone as any).__renderOptions = options;
+            }
+            
+            // 2. Apply styles for rendering
+            if (options.withShadow) {
+                clone.style.border = '20px solid transparent';
+            } else {
+                const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+                if (cardElement) {
+                    cardElement.classList.add('hide-border-on-print');
                 }
+            }
+            
+            if (options.renderAsMobile) {
+                clone.style.width = '420px'; 
+                clone.classList.add('render-mobile-padding');
+            } else if (options.fitContent) {
+                clone.style.width = 'auto';
+                clone.style.display = 'inline-block';
+            } else {
+                clone.style.width = `${element.offsetWidth}px`;
+            }
+
+            clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
+            clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
+            
+            document.body.appendChild(clone);
+
+            // 3. Wait for the next animation frame to let the browser apply styles
+            requestAnimationFrame(() => {
+                setTimeout(async () => { // Additional timeout to ensure images are loaded
+                    try {
+                        const fontEmbedCss = await htmlToImage.getFontEmbedCSS(clone);
+                        const canvas = await htmlToImage.toCanvas(clone, {
+                            pixelRatio: 2,
+                            backgroundColor: backgroundColor,
+                            fontEmbedCss: fontEmbedCss,
+                            imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                            cacheBust: true,
+                            fetchRequestInit: {
+                                mode: 'cors',
+                                cache: 'no-cache'
+                            }
+                        });
+                        resolve(canvas);
+                    } catch (error) {
+                        console.error("Error generating canvas with html-to-image", error);
+                        reject(error);
+                    } finally {
+                        // 4. Clean up
+                        document.body.removeChild(clone);
+                        setIsDownloading(false);
+                    }
+                }, 2000); // 2 second delay for images to load
             });
         });
     };
 
 
   const handleDownloadImage = async (options: RenderOptions) => {
-    const canvas = await generateCanvas(options);
-    if (!canvas) return;
-    
-    const link = document.createElement('a');
-    link.download = 'multischedule.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    try {
+        const canvas = await generateCanvas(options);
+        if (!canvas) return;
+        
+        const link = document.createElement('a');
+        link.download = 'multischedule.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (error) {
+        console.error("Download failed:", error);
+    }
   };
 
   const handleCopyImage = async (options: RenderOptions) => {
-    const canvas = await generateCanvas(options);
-    if (!canvas) return;
-
     try {
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          throw new Error('Не удалось создать blob из canvas');
-        }
-        window.focus(); // Ensure document is focused before clipboard write
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]);
-      }, 'image/png');
-    } catch (err) {
-      console.error("Ошибка копирования в буфер обмена: ", err);
+        const canvas = await generateCanvas(options);
+        if (!canvas) return;
+
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+            throw new Error('Не удалось создать blob из canvas');
+            }
+            window.focus(); // Ensure document is focused before clipboard write
+            await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+            ]);
+        }, 'image/png');
+    } catch (error) {
+        console.error("Ошибка копирования в буфер обмена: ", err);
     }
   }
 
@@ -838,15 +853,15 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, fitContent: false, withShadow: false }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: false, fitContent: false }); setIsRenderOptionsOpen(false); } }}>
                             <Laptop className="h-8 w-8" />
                             <span>Десктоп (широкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, fitContent: false, withShadow: false }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ renderAsMobile: true, fitContent: false }); setIsRenderOptionsOpen(false); } }}>
                             <Smartphone className="h-8 w-8" />
                             <span>Мобильный (узкий)</span>
                         </Button>
-                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, renderAsMobile: false, withShadow: false }); setIsRenderOptionsOpen(false); } }}>
+                        <Button variant="outline" className="h-24 flex-col gap-2" onClick={() => { if (renderAction) { renderAction({ fitContent: true, renderAsMobile: false }); setIsRenderOptionsOpen(false); } }}>
                             <Ruler className="h-8 w-8" />
                             <span>По ширине текста</span>
                         </Button>
