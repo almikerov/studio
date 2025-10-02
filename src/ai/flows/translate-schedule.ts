@@ -9,7 +9,7 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
 const TranslateScheduleInputSchema = z.object({
@@ -74,33 +74,26 @@ Example response for target languages "es, fr":
 
 Output JSON:`;
 
-  let lastError: any = null;
-
-  for (const apiKey of apiKeys) {
-    try {
-      if (!apiKey) continue;
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const rawText = response.text();
-
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("No JSON object found in the AI response.");
-      }
-      const jsonString = jsonMatch[0];
-      const parsedJson = JSON.parse(jsonString);
-      return TranslateScheduleOutputSchema.parse(parsedJson);
-
-    } catch (error) {
-      const keyIdentifier = apiKey ? `...${apiKey.slice(-4)}` : 'INVALID_KEY';
-      console.warn(`API key ${keyIdentifier} failed. Trying next one.`, error);
-      lastError = error;
+  try {
+    const response = await ai.generate({
+        model: 'gemini-1.5-flash',
+        prompt: prompt,
+        output: {
+            schema: TranslateScheduleOutputSchema
+        },
+        config: {
+            temperature: 0.1,
+        }
+    });
+    
+    if (!response.output) {
+      throw new Error("AI response was not valid JSON.");
     }
-  }
+    
+    return response.output;
 
-  console.error("All API keys failed.", lastError);
-  throw new Error("AI response was not valid JSON or all API keys failed.");
+  } catch (error) {
+    console.error("AI translation failed.", error);
+    throw new Error("AI translation failed.");
+  }
 }

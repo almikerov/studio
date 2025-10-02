@@ -39,16 +39,8 @@ export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKe
         throw new Error('API key is not provided');
     }
 
-    // Configure Genkit with the provided API keys.
-    // This will cycle through keys if some of them fail.
-    ai.configure({
-        plugins: [
-            googleAI({ apiKeys: apiKeys }),
-        ],
-        logLevel: 'debug',
-        enableTracing: true,
-    });
-
+    // This is now configured globally or at a higher level, so we don't call ai.configure here.
+    // The API keys are expected to be set in the environment.
 
     const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text. The output must be in the language of the input text.
