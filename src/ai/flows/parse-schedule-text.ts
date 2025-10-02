@@ -5,15 +5,17 @@
  * @fileOverview An AI agent for parsing schedule from raw text.
  *
  * - parseScheduleFromText - A function that parses a schedule from a string.
- * - ParseScheduleTextInput - The input type for the parseScheduleFrom-text function.
- * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
+ * - ParseScheduleTextInput - The input type for the parseScheduleFromText function.
+ * - ParseScheduleTextOutput - The return type for the parseScheduleFromText function.
  */
 
-import { ai } from '@/ai/genkit';
+import { genkit } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'zod';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
+  apiKey: z.string().describe('The API key for the AI service.'),
 });
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
@@ -33,12 +35,25 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-const scheduleParserPrompt = ai.definePrompt({
-    name: 'scheduleParserPrompt',
-    model: 'googleai/gemini-1.5-flash',
-    input: { schema: ParseScheduleTextInputSchema },
-    output: { schema: ParseScheduleTextOutputSchema },
-    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+const parseScheduleFlow = genkit({
+    plugins: [googleAI()],
+  }).defineFlow(
+    {
+        name: 'parseScheduleFlow',
+        inputSchema: ParseScheduleTextInputSchema,
+        outputSchema: ParseScheduleTextOutputSchema,
+    },
+    async (input) => {
+        const aiWithKey = genkit({
+            plugins: [googleAI({ apiKey: input.apiKey })],
+        });
+
+        const scheduleParserPrompt = aiWithKey.definePrompt({
+            name: 'scheduleParserPrompt',
+            model: 'googleai/gemini-1.5-flash',
+            input: { schema: z.object({ text: z.string() }) },
+            output: { schema: ParseScheduleTextOutputSchema },
+            prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 The output language must be the same as the input language.
 
 - Generate a main title for the schedule and put it in 'cardTitle'.
@@ -52,16 +67,9 @@ The output language must be the same as the input language.
 Parse the following text:
 {{{text}}}
 `
-});
-
-const parseScheduleFlow = ai.defineFlow(
-    {
-        name: 'parseScheduleFlow',
-        inputSchema: ParseScheduleTextInputSchema,
-        outputSchema: ParseScheduleTextOutputSchema,
-    },
-    async (input) => {
-        const { output } = await scheduleParserPrompt(input);
+        });
+        
+        const { output } = await scheduleParserPrompt({text: input.text});
         if (!output) {
             throw new Error("AI returned no output.");
         }

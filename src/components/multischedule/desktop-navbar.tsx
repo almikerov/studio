@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode } from '@/app/page';
+import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode, ApiKey } from '@/app/page';
 import { ApiKeyManagerDialogContent, ColorizeDialogContent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -236,11 +236,11 @@ export function DesktopNavbar({
                      <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <KeyRound className="mr-2" /> Gemini API Ключ
+                                <KeyRound className="mr-2" /> Gemini API Ключи
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
-                            <ApiKeyManagerDialogContent onClose={() => setIsApiKeyDialogOpen(false)} />
+                           {/* Content is in page.tsx to pass state */}
                         </DialogContent>
                     </Dialog>
                     <MenubarSeparator />
@@ -314,4 +314,3 @@ export function DesktopNavbar({
     </div>
   );
 }
-
