@@ -5,7 +5,7 @@
  * @fileOverview An AI agent for parsing schedule from raw text.
  *
  * - parseScheduleFromText - A function that parses a schedule from a string.
- * - ParseScheduleTextInput - The input type for the parseScheduleFromText function.
+ * - ParseScheduleTextInput - The input type for the parseScheduleFrom-text function.
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
@@ -35,7 +35,7 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 
 const scheduleParserPrompt = ai.definePrompt({
     name: 'scheduleParserPrompt',
-    model: 'googleai/gemini-1.5-flash-latest',
+    model: 'googleai/gemini-1.5-flash',
     input: { schema: ParseScheduleTextInputSchema },
     output: { schema: ParseScheduleTextOutputSchema },
     prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
