@@ -9,12 +9,13 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
+import { genkit, z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
+  apiKey: z.string().describe('The Gemini API key to use for the request.'),
 });
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
@@ -34,43 +35,39 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-const scheduleParserPrompt = ai.definePrompt({
-    name: 'scheduleParserPrompt',
-    model: 'gemini-1.5-pro',
-    input: { schema: ParseScheduleTextInputSchema },
-    output: { schema: ParseScheduleTextOutputSchema },
-    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
-The output language must be the same as the input language.
-
-- Generate a main title for the schedule and put it in 'cardTitle'.
-- For each item, determine its 'type': 'timed', 'untimed', 'date', 'h1', 'h2', 'h3', 'comment'.
-- For 'timed' events, the 'time' field MUST be in HH:mm format.
-- For ALL OTHER types ('untimed', 'date', 'h1', 'h2', 'h3', 'comment'), the 'time' field MUST be an empty string: "".
-- For 'date' items, the 'date' field must be a valid ISO date string.
-- The 'description' for each item should start with a capital letter.
-- Assign 'icon' and 'color' only if they are clearly suggested in the text.
-
-Parse the following text:
-{{{text}}}
-`
-});
-
-const scheduleParserFlow = ai.defineFlow(
-  {
-    name: 'scheduleParserFlow',
-    inputSchema: ParseScheduleTextInputSchema,
-    outputSchema: ParseScheduleTextOutputSchema,
-  },
-  async (input) => {
-    const { output } = await scheduleParserPrompt(input);
-    return output!;
-  }
-);
-
-
 export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
     try {
-        return await scheduleParserFlow(input);
+        const ai = genkit({
+            plugins: [googleAI({ apiKey: input.apiKey })],
+        });
+
+        const scheduleParserPrompt = ai.definePrompt({
+            name: 'scheduleParserPrompt',
+            model: 'gemini-1.5-pro',
+            input: { schema: ParseScheduleTextInputSchema },
+            output: { schema: ParseScheduleTextOutputSchema },
+            prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+        The output language must be the same as the input language.
+
+        - Generate a main title for the schedule and put it in 'cardTitle'.
+        - For each item, determine its 'type': 'timed', 'untimed', 'date', 'h1', 'h2', 'h3', 'comment'.
+        - For 'timed' events, the 'time' field MUST be in HH:mm format.
+        - For ALL OTHER types ('untimed', 'date', 'h1', 'h2', 'h3', 'comment'), the 'time' field MUST be an empty string: "".
+        - For 'date' items, the 'date' field must be a valid ISO date string.
+        - The 'description' for each item should start with a capital letter.
+        - Assign 'icon' and 'color' only if they are clearly suggested in the text.
+
+        Parse the following text:
+        {{{text}}}
+        `
+        });
+
+        const { output } = await scheduleParserPrompt(input);
+        if (!output) {
+            throw new Error("AI returned no output.");
+        }
+        return output;
+
     } catch(e) {
         console.error("AI parsing failed:", e);
         throw new Error("Failed to parse schedule using AI.");

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush, Undo, Redo } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush, Undo, Redo, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -84,6 +84,7 @@ export type ScheduleTemplate = {
 export type ApiKey = {
   id: string;
   key: string;
+  isActive: boolean;
 };
 
 export type TranslationDisplayMode = 'inline' | 'block' | 'text-block';
@@ -188,7 +189,7 @@ export default function Home() {
       if (storedTemplates) {
         setSavedTemplates(JSON.parse(storedTemplates));
       }
-      const storedApiKeys = localStorage.getItem('gemini-api-keys');
+      const storedApiKeys = localStorage.getItem('geminiApiKeys');
       if (storedApiKeys) {
         setApiKeys(JSON.parse(storedApiKeys));
       }
@@ -315,6 +316,12 @@ export default function Home() {
     if (!schedule) return;
     const itemsToTranslate = schedule.filter(item => item.description && ['timed', 'untimed', 'comment', 'h1', 'h2', 'h3', 'date'].includes(item.type));
     if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
+    
+    const activeApiKey = apiKeys.find(k => k.isActive)?.key;
+    if (!activeApiKey) {
+        alert("Пожалуйста, выберите активный API ключ в настройках.");
+        return;
+    }
 
     setIsLoading(true);
     setIsMobileMenuOpen(false);
@@ -324,6 +331,7 @@ export default function Home() {
       const result = await translateSchedule({ 
         descriptions, 
         targetLanguages: selectedLanguages,
+        apiKey: activeApiKey
       });
       
       setSchedule(prev => prev.map(item => {
@@ -343,6 +351,7 @@ export default function Home() {
 
     } catch (error: any) {
       console.error('Translation failed:', error);
+      alert('Перевод не удался. Проверьте ваш API ключ и консоль на наличие ошибок.');
     } finally {
       setIsLoading(false);
     }
@@ -548,12 +557,18 @@ export default function Home() {
   };
 
   const handleAiParse = async (text: string) => {
+    const activeApiKey = apiKeys.find(k => k.isActive)?.key;
+    if (!activeApiKey) {
+        alert("Пожалуйста, выберите активный API ключ в настройках.");
+        return;
+    }
+
     setIsLoading(true);
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
 
     try {
-      const result = await parseScheduleFromText({ text });
+      const result = await parseScheduleFromText({ text, apiKey: activeApiKey });
       const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
@@ -565,6 +580,7 @@ export default function Home() {
       const translatedTitle = await translateText({
         text: newCardTitle,
         targetLanguages: ['ru'],
+        apiKey: activeApiKey
       });
 
       setState({
@@ -575,6 +591,7 @@ export default function Home() {
 
     } catch (error: any) {
       console.error('AI parsing failed:', error);
+      alert('Разбор текста не удался. Проверьте ваш API ключ и консоль на наличие ошибок.');
     } finally {
       setIsLoading(false);
     }
@@ -588,7 +605,7 @@ export default function Home() {
   const updateApiKeys = (newApiKeys: ApiKey[]) => {
     setApiKeys(newApiKeys);
     try {
-        localStorage.setItem('gemini-api-keys', JSON.stringify(newApiKeys));
+        localStorage.setItem('geminiApiKeys', JSON.stringify(newApiKeys));
     } catch (error) {
         console.error("Failed to save API keys to localStorage", error);
     }
@@ -1108,7 +1125,7 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
 
     const handleAddKey = () => {
         if (newApiKey.trim()) {
-            const newKey = { id: `${Date.now()}`, key: newApiKey.trim() };
+            const newKey = { id: `${Date.now()}`, key: newApiKey.trim(), isActive: apiKeys.length === 0 };
             updateApiKeys([...apiKeys, newKey]);
             setNewApiKey('');
         }
@@ -1118,17 +1135,45 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
         updateApiKeys(apiKeys.filter(k => k.id !== id));
     };
 
+    const handleToggleActive = (id: string) => {
+        updateApiKeys(apiKeys.map(k => ({ ...k, isActive: k.id === id })));
+    };
+
     return (
         <>
             <DialogHeader>
-                <DialogTitle>Конфигурация Gemini API</DialogTitle>
+                <DialogTitle>Управление API-ключами Gemini</DialogTitle>
                 <DialogDescription>
-                  Для использования AI-функций необходим ключ Gemini API. Genkit будет автоматически использовать ключ, заданный в переменной окружения `GEMINI_API_KEY`.
-                  <br /><br />
-                  Пожалуйста, создайте файл `.env` в корневой директории вашего проекта и добавьте в него ваш ключ:
-                  <pre className="mt-2 p-2 bg-muted rounded-md text-sm"><code>GEMINI_API_KEY=ВАШ_API_КЛЮЧ</code></pre>
+                    Добавьте ваши API-ключи Gemini. Выберите один ключ для использования в приложении. 
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">Получить ключ</a>
                 </DialogDescription>
             </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="flex gap-2">
+                    <Input
+                        placeholder="Введите ваш API ключ"
+                        value={newApiKey}
+                        onChange={(e) => setNewApiKey(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddKey()}
+                    />
+                    <Button onClick={handleAddKey}>Добавить</Button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {apiKeys.map(apiKey => (
+                        <div key={apiKey.id} className="flex items-center justify-between p-2 border rounded-md">
+                           <div className="flex items-center gap-2">
+                                <RadioGroup value={apiKey.isActive ? apiKey.id : ''} onValueChange={() => handleToggleActive(apiKey.id)}>
+                                    <RadioGroupItem value={apiKey.id} id={apiKey.id} />
+                                </RadioGroup>
+                                <Label htmlFor={apiKey.id} className="font-mono break-all">{`...${apiKey.key.slice(-4)}`}</Label>
+                            </div>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            </div>
             <DialogFooter>
                 <Button onClick={onClose}>Закрыть</Button>
             </DialogFooter>
