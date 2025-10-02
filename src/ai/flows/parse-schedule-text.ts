@@ -24,7 +24,6 @@ const ParsedScheduleItemSchema = z.object({
     time: z.string().describe("The time of the event in HH:mm format. Must be an empty string '' for all types except 'timed'.").optional(),
     description: z.string().describe("The description of the schedule event."),
     icon: z.enum(['football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt']).optional().describe("An icon for the event."),
-    color: z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray']).optional().describe('A color for the event row.'),
     type: z.enum(['timed', 'untimed', 'comment', 'date', 'h1', 'h2', 'h3']).describe("The type of the schedule item."),
     date: z.string().optional().describe("The date for 'date' type items in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)."),
 });
@@ -47,13 +46,13 @@ export async function parseScheduleFromText(input: ParseScheduleTextInput): Prom
 The output language must be the same as the input language. Your output MUST be a valid JSON object matching the requested schema.
 
 - Generate a main title for the schedule and put it in 'cardTitle'.
-- If the text contains only one distinct date, use it either for the 'cardTitle' (e.g., "Schedule for June 5th") OR create a 'date' type item, but not both. Prefer using it in the 'cardTitle'.
+- If the text contains only one distinct date, use it for the 'cardTitle' (e.g., "Schedule for June 5th"). Do not create a 'date' type item in this case.
 - For each item, determine its 'type': 'timed', 'untimed', 'date', 'h1', 'h2', 'h3', 'comment'.
 - For 'timed' events, the 'time' field MUST be in HH:mm format.
 - For ALL OTHER types ('untimed', 'date', 'h1', 'h2', 'h3', 'comment'), the 'time' field MUST be an empty string: "".
 - For 'date' items, the 'date' field must be a valid ISO date string.
 - The 'description' for each item should start with a capital letter.
-- Assign 'icon' and 'color' only if they are clearly suggested in the text.
+- Assign 'icon' only if it is clearly suggested in the text. Do not assign colors.
 
 Parse the following text:
 ${text}
