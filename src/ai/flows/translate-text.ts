@@ -13,6 +13,7 @@ const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to translate.'),
   targetLangs: z.array(z.string()).describe('An array of ISO 639-1 language codes to translate the text into.'),
   apiKey: z.string().describe('The API key for the AI service.'),
+  model: z.string().describe('The AI model to use for translation.'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
@@ -21,14 +22,14 @@ const TranslateTextOutputSchema = z.record(z.string());
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
 export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
-  const { text, targetLangs, apiKey } = input;
+  const { text, targetLangs, apiKey, model } = input;
 
   if (!text.trim() || targetLangs.length === 0) {
     return {};
   }
 
   const ai = genkit({
-    plugins: [googleAI({ apiKey: input.apiKey })],
+    plugins: [googleAI({ apiKey })],
   });
 
   const dynamicOutputSchema = z.object(
@@ -48,7 +49,7 @@ Target languages: ${targetLangs.join(', ')}
 `;
 
   const { output } = await ai.generate({
-    model: 'googleai/gemini-2.5-pro',
+    model: model,
     prompt: prompt,
     output: {
       format: 'json',

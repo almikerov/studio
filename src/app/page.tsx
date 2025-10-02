@@ -1,8 +1,6 @@
-
-
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
@@ -13,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush, Undo, Redo, X, Check } from 'lucide-react';
+import { Download, Languages, Loader2, Copy, BookOpen, Wand2, Save, Construction, ArrowDown, ArrowUp, Menu, Share, ImagePlus, GripVertical, KeyRound, Smartphone, Laptop, Plus, Trash, Ruler, Paintbrush, Undo, Redo, X, Check, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { SavedTemplates } from '@/components/multischedule/saved-templates';
 import { AiScheduleParser } from '@/components/multischedule/ai-schedule-parser';
@@ -36,6 +34,8 @@ import { EditableField } from '@/components/multischedule/editable-field';
 import { cn } from '@/lib/utils';
 import { useHistory } from '@/hooks/use-history';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { type AiConfig, type ApiKey, getAiConfig, saveAiConfig, AVAILABLE_MODELS } from '@/ai/config';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -79,12 +79,6 @@ export type ScheduleTemplate = {
   schedule: ScheduleItem[];
   cardTitle: string;
   imageUrl: string | null;
-};
-
-export type ApiKey = {
-  id: string;
-  key: string;
-  isActive: boolean;
 };
 
 export type TranslationDisplayMode = 'inline' | 'block' | 'text-block';
@@ -138,10 +132,10 @@ export default function Home() {
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isSavedEventsOpen, setIsSavedEventsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [isAiSettingsDialogOpen, setIsAiSettingsDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: AVAILABLE_MODELS[0] });
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
 
@@ -190,10 +184,7 @@ export default function Home() {
       if (storedTemplates) {
         setSavedTemplates(JSON.parse(storedTemplates));
       }
-      const storedApiKeys = localStorage.getItem('geminiApiKeys');
-      if (storedApiKeys) {
-        setApiKeys(JSON.parse(storedApiKeys));
-      }
+      setAiConfig(getAiConfig());
     } catch (error) {
       console.error("Failed to load from localStorage", error);
       setState({
@@ -234,18 +225,10 @@ export default function Home() {
 
 
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
-    const itemToUpdate = schedule?.find(item => item.id === id);
-    const hasTranslations = itemToUpdate && itemToUpdate.translations && Object.keys(itemToUpdate.translations).length > 0;
-    const descriptionChanged = updatedValues.description !== undefined && updatedValues.description !== itemToUpdate?.description;
-
     setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)));
 
     if (editingEvent?.id === id) {
       setEditingEvent(prev => prev ? { ...prev, ...updatedValues } : null);
-    }
-
-    if (descriptionChanged && hasTranslations) {
-        handleTranslate(id); // Re-translate only this item
     }
   };
 
@@ -322,20 +305,20 @@ export default function Home() {
   };
 
 
-  const handleTranslate = async (itemId?: string) => {
-      const activeKey = apiKeys.find(k => k.isActive)?.key;
+  const handleTranslate = async () => {
+      const activeKey = aiConfig.apiKeys.find(k => k.isActive)?.key;
       if (!activeKey) {
-          setIsApiKeyDialogOpen(true);
+          setIsAiSettingsDialogOpen(true);
           return;
       }
       if (selectedLanguages.length === 0) return;
 
       setIsTranslating(true);
 
-      const itemsToTranslate = itemId ? schedule.filter(item => item.id === itemId) : schedule;
+      const itemsToTranslate = schedule;
 
       const translationPromises = itemsToTranslate.map(async (item) => {
-          if (!item.description) {
+          if (!item.description || item.type === 'comment') { // Don't translate comments
               return { id: item.id, translations: item.translations || {} };
           }
           try {
@@ -343,6 +326,7 @@ export default function Home() {
                   text: item.description,
                   targetLangs: selectedLanguages,
                   apiKey: activeKey,
+                  model: aiConfig.model,
               });
               return { id: item.id, translations: result };
           } catch (e) {
@@ -577,9 +561,9 @@ export default function Home() {
   };
 
   const handleAiParse = async (text: string) => {
-    const activeKey = apiKeys.find(k => k.isActive)?.key;
+    const activeKey = aiConfig.apiKeys.find(k => k.isActive)?.key;
     if (!activeKey) {
-        setIsApiKeyDialogOpen(true);
+        setIsAiSettingsDialogOpen(true);
         return;
     }
     
@@ -588,7 +572,7 @@ export default function Home() {
     setIsMobileMenuOpen(false);
 
     try {
-        const result = await parseScheduleFromText({ text, apiKey: activeKey });
+        const result = await parseScheduleFromText({ text, apiKey: activeKey, model: aiConfig.model });
         if (result) {
             const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
                 ...item,
@@ -616,13 +600,9 @@ export default function Home() {
     updateSavedEvents(newEvents);
   }
 
-  const updateApiKeys = (newApiKeys: ApiKey[]) => {
-    setApiKeys(newApiKeys);
-    try {
-        localStorage.setItem('geminiApiKeys', JSON.stringify(newApiKeys));
-    } catch (error) {
-        console.error("Failed to save API keys to localStorage", error);
-    }
+  const updateAiConfig = (newConfig: AiConfig) => {
+    setAiConfig(newConfig);
+    saveAiConfig(newConfig);
   };
   
   const openRenderOptions = (action: (options: Omit<RenderOptions, 'withShadow'>) => void) => {
@@ -790,10 +770,10 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             onSaveEvent={handleSaveEvent}
             translationDisplayMode={translationDisplayMode}
             setTranslationDisplayMode={setTranslationDisplayMode}
-            isApiKeyDialogOpen={isApiKeyDialogOpen}
-            setIsApiKeyDialogOpen={setIsApiKeyDialogOpen}
-            apiKeys={apiKeys}
-            updateApiKeys={updateApiKeys}
+            isAiSettingsDialogOpen={isAiSettingsDialogOpen}
+            setIsAiSettingsDialogOpen={setIsAiSettingsDialogOpen}
+            aiConfig={aiConfig}
+            updateAiConfig={updateAiConfig}
             isColorizeOpen={isColorizeOpen}
             setIsColorizeOpen={setIsColorizeOpen}
             onColorize={handleColorize}
@@ -1026,17 +1006,17 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                               />
                             </DialogContent>
                           </Dialog>
-                          <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                          <Dialog open={isAiSettingsDialogOpen} onOpenChange={setIsAiSettingsDialogOpen}>
                             <DialogTrigger asChild>
                               <Button variant="ghost" className="justify-start w-full">
-                                <KeyRound className="mr-2" /> Gemini API Ключи
+                                <Settings className="mr-2" /> Настройки ИИ
                               </Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <ApiKeyManagerDialogContent 
-                                    apiKeys={apiKeys} 
-                                    updateApiKeys={updateApiKeys} 
-                                    onClose={() => setIsApiKeyDialogOpen(false)} 
+                                <AiSettingsDialogContent 
+                                    aiConfig={aiConfig} 
+                                    updateAiConfig={updateAiConfig}
+                                    onClose={() => setIsAiSettingsDialogOpen(false)} 
                                 />
                             </DialogContent>
                           </Dialog>
@@ -1140,72 +1120,93 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
 }
 
 
-export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: { apiKeys: ApiKey[], updateApiKeys: (keys: ApiKey[]) => void, onClose: () => void }) {
+export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: { aiConfig: AiConfig, updateAiConfig: (config: AiConfig) => void, onClose: () => void }) {
     const [newKey, setNewKey] = useState('');
 
     const addKey = () => {
-        if (newKey && !apiKeys.some(k => k.key === newKey)) {
-            const newApiKeys = [...apiKeys, { id: `key-${Date.now()}`, key: newKey, isActive: apiKeys.length === 0 }];
-            updateApiKeys(newApiKeys);
+        if (newKey && !aiConfig.apiKeys.some(k => k.key === newKey)) {
+            const newApiKeys = [...aiConfig.apiKeys, { id: `key-${Date.now()}`, key: newKey, isActive: aiConfig.apiKeys.length === 0 }];
+            updateAiConfig({ ...aiConfig, apiKeys: newApiKeys });
             setNewKey('');
         }
     };
 
     const deleteKey = (id: string) => {
-        const keyToDelete = apiKeys.find(k => k.id === id);
-        let newApiKeys = apiKeys.filter(k => k.id !== id);
-        // If the deleted key was active, make the first one active
+        const keyToDelete = aiConfig.apiKeys.find(k => k.id === id);
+        let newApiKeys = aiConfig.apiKeys.filter(k => k.id !== id);
         if (keyToDelete?.isActive && newApiKeys.length > 0) {
             newApiKeys[0].isActive = true;
         }
-        updateApiKeys(newApiKeys);
+        updateAiConfig({ ...aiConfig, apiKeys: newApiKeys });
     };
 
     const setActiveKey = (id: string) => {
-        const newApiKeys = apiKeys.map(k => ({ ...k, isActive: k.id === id }));
-        updateApiKeys(newApiKeys);
+        const newApiKeys = aiConfig.apiKeys.map(k => ({ ...k, isActive: k.id === id }));
+        updateAiConfig({ ...aiConfig, apiKeys: newApiKeys });
     };
 
+    const setModel = (model: string) => {
+        updateAiConfig({ ...aiConfig, model });
+    };
 
     return (
         <>
             <DialogHeader>
-                <DialogTitle>Настройка Gemini API Ключей</DialogTitle>
+                <DialogTitle>Настройки ИИ</DialogTitle>
                 <DialogDescription>
-                    Добавьте и управляйте вашими Gemini API ключами. Вы можете <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">получить ключ здесь</a>.
+                    Управляйте вашими Gemini API ключами и выберите модель. Вы можете <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">получить ключ здесь</a>.
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4 space-y-4">
-                <div className="flex gap-2">
-                    <Input
-                        value={newKey}
-                        onChange={(e) => setNewKey(e.target.value)}
-                        placeholder="Вставьте новый API ключ"
-                        onKeyDown={(e) => e.key === 'Enter' && addKey()}
-                    />
-                    <Button onClick={addKey}><Plus /></Button>
+            <div className="py-4 space-y-6">
+                <div className="space-y-2">
+                    <Label>Модель ИИ</Label>
+                    <Select value={aiConfig.model} onValueChange={setModel}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Выберите модель" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {AVAILABLE_MODELS.map(model => (
+                                <SelectItem key={model} value={model}>{model}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
 
-                <div className="space-y-2">
-                    {apiKeys.length > 0 ? (
-                        apiKeys.map((apiKey) => (
-                            <div key={apiKey.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                                <Switch
-                                    checked={apiKey.isActive}
-                                    onCheckedChange={() => setActiveKey(apiKey.id)}
-                                    id={`switch-${apiKey.id}`}
-                                />
-                                <Label htmlFor={`switch-${apiKey.id}`} className="flex-1 truncate cursor-pointer">
-                                    {`...${apiKey.key.slice(-4)}`}
-                                </Label>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteKey(apiKey.id)}>
-                                    <Trash className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center">У вас еще нет ключей.</p>
-                    )}
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>API Ключи</Label>
+                        <div className="flex gap-2">
+                            <Input
+                                value={newKey}
+                                onChange={(e) => setNewKey(e.target.value)}
+                                placeholder="Вставьте новый API ключ"
+                                onKeyDown={(e) => e.key === 'Enter' && addKey()}
+                            />
+                            <Button onClick={addKey}><Plus /></Button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        {aiConfig.apiKeys.length > 0 ? (
+                            aiConfig.apiKeys.map((apiKey) => (
+                                <div key={apiKey.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                                    <Switch
+                                        checked={apiKey.isActive}
+                                        onCheckedChange={() => setActiveKey(apiKey.id)}
+                                        id={`switch-${apiKey.id}`}
+                                    />
+                                    <Label htmlFor={`switch-${apiKey.id}`} className="flex-1 truncate cursor-pointer">
+                                        {`...${apiKey.key.slice(-4)}`}
+                                    </Label>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteKey(apiKey.id)}>
+                                        <Trash className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center">У вас еще нет ключей.</p>
+                        )}
+                    </div>
                 </div>
             </div>
             <DialogFooter>

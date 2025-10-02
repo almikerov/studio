@@ -16,6 +16,7 @@ import { z } from 'zod';
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
   apiKey: z.string().describe('The API key for the AI service.'),
+  model: z.string().describe('The AI model to use for parsing.'),
 });
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
@@ -58,7 +59,7 @@ ${input.text}
 `;
 
     const { output } = await ai.generate({
-        model: 'googleai/gemini-2.5-pro',
+        model: input.model,
         prompt: prompt,
         output: {
             format: 'json',

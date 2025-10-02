@@ -1,24 +1,23 @@
-
-
 'use client';
 
-import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode, ApiKey } from '@/app/page';
-import { ApiKeyManagerDialogContent, ColorizeDialogContent } from '@/app/page';
+import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode } from '@/app/page';
+import { AiSettingsDialogContent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup, MenubarShortcut } from '@/components/ui/menubar';
-import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, KeyRound, Trash2, Trash, Plus, Paintbrush, Undo, Redo } from 'lucide-react';
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, MenubarGroup } from '@/components/ui/menubar';
+import { Copy, Download, Languages, Loader2, Save, Wand2, FolderDown, FileSignature, ImagePlus, Trash, Plus, Paintbrush, Undo, Redo, Settings } from 'lucide-react';
 import React, { useState } from 'react';
 import { AiScheduleParser } from './ai-schedule-parser';
 import { SavedEvents } from './saved-events';
 import { ImageUploader } from './image-uploader';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { SavedTemplates } from './saved-templates';
 import { Checkbox } from '../ui/checkbox';
 import { AVAILABLE_LANGUAGES } from '@/app/page';
+import { ColorizeDialogContent } from '@/app/page';
+import { type AiConfig } from '@/ai/config';
 
 
 interface DesktopNavbarProps {
@@ -48,10 +47,10 @@ interface DesktopNavbarProps {
   onSaveEvent: (event: Partial<SavedEvent>) => void;
   translationDisplayMode: TranslationDisplayMode;
   setTranslationDisplayMode: (mode: TranslationDisplayMode) => void;
-  isApiKeyDialogOpen: boolean;
-  setIsApiKeyDialogOpen: (open: boolean) => void;
-  apiKeys: ApiKey[];
-  updateApiKeys: (keys: ApiKey[]) => void;
+  isAiSettingsDialogOpen: boolean;
+  setIsAiSettingsDialogOpen: (open: boolean) => void;
+  aiConfig: AiConfig;
+  updateAiConfig: (config: AiConfig) => void;
   isColorizeOpen: boolean;
   setIsColorizeOpen: (open: boolean) => void;
   onColorize: (mode: 'single' | 'rainbow' | 'random', color?: string) => void;
@@ -89,10 +88,10 @@ export function DesktopNavbar({
   onSaveEvent,
   translationDisplayMode,
   setTranslationDisplayMode,
-  isApiKeyDialogOpen,
-  setIsApiKeyDialogOpen,
-  apiKeys,
-  updateApiKeys,
+  isAiSettingsDialogOpen,
+  setIsAiSettingsDialogOpen,
+  aiConfig,
+  updateAiConfig,
   isColorizeOpen,
   setIsColorizeOpen,
   onColorize,
@@ -118,8 +117,6 @@ export function DesktopNavbar({
         onClearTranslations();
         setIsTranslateDialogOpen(false);
     }
-
-  const isMac = typeof window !== 'undefined' ? navigator.platform.toUpperCase().indexOf('MAC') >= 0 : false;
 
   return (
     <div className="flex items-center justify-between rounded-lg border bg-card p-1 h-auto">
@@ -239,17 +236,17 @@ export function DesktopNavbar({
                             <AiScheduleParser onParse={onAiParse} isLoading={isLoading} onClose={() => setIsAiParserOpen(false)} />
                         </DialogContent>
                     </Dialog>
-                     <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
+                     <Dialog open={isAiSettingsDialogOpen} onOpenChange={setIsAiSettingsDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <KeyRound className="mr-2" /> Gemini API Ключи
+                                <Settings className="mr-2" /> Настройки ИИ
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
-                           <ApiKeyManagerDialogContent 
-                                apiKeys={apiKeys} 
-                                updateApiKeys={updateApiKeys} 
-                                onClose={() => setIsApiKeyDialogOpen(false)} 
+                           <AiSettingsDialogContent 
+                                aiConfig={aiConfig}
+                                updateAiConfig={updateAiConfig}
+                                onClose={() => setIsAiSettingsDialogOpen(false)} 
                             />
                         </DialogContent>
                     </Dialog>
