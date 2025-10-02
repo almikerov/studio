@@ -49,6 +49,8 @@ interface DesktopNavbarProps {
   setTranslationDisplayMode: (mode: TranslationDisplayMode) => void;
   isApiKeyDialogOpen: boolean;
   setIsApiKeyDialogOpen: (open: boolean) => void;
+  apiKeys: ApiKey[];
+  updateApiKeys: (keys: ApiKey[]) => void;
   isColorizeOpen: boolean;
   setIsColorizeOpen: (open: boolean) => void;
   onColorize: (mode: 'single' | 'rainbow' | 'random', color?: string) => void;
@@ -87,6 +89,8 @@ export function DesktopNavbar({
   setTranslationDisplayMode,
   isApiKeyDialogOpen,
   setIsApiKeyDialogOpen,
+  apiKeys,
+  updateApiKeys,
   isColorizeOpen,
   setIsColorizeOpen,
   onColorize,
@@ -240,7 +244,11 @@ export function DesktopNavbar({
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
-                           {/* Content is in page.tsx to pass state */}
+                           <ApiKeyManagerDialogContent 
+                                apiKeys={apiKeys} 
+                                updateApiKeys={updateApiKeys} 
+                                onClose={() => setIsApiKeyDialogOpen(false)} 
+                            />
                         </DialogContent>
                     </Dialog>
                     <MenubarSeparator />

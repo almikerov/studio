@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -727,6 +728,8 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             setTranslationDisplayMode={setTranslationDisplayMode}
             isApiKeyDialogOpen={isApiKeyDialogOpen}
             setIsApiKeyDialogOpen={setIsApiKeyDialogOpen}
+            apiKeys={apiKeys}
+            updateApiKeys={updateApiKeys}
             isColorizeOpen={isColorizeOpen}
             setIsColorizeOpen={setIsColorizeOpen}
             onColorize={handleColorize}
