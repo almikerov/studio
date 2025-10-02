@@ -53,6 +53,16 @@ export async function translateText(input: TranslateTextInput): Promise<Translat
 
   const prompt = `You are a translation expert. Translate the list of items provided in the JSON below.
 The original text is in Russian.
+
+When translating to English, use the following glossary for football-related terms:
+- 'зал', 'спортзал' -> 'gym'
+- 'тренировка' -> 'training'
+- 'разминка' -> 'warm-up'
+- 'поле' -> 'pitch'
+- 'теория' -> 'analysis'
+- 'сбор' -> 'gathering'
+- 'заезд' -> 'base stay'
+
 Your output MUST be a valid JSON object matching the requested schema. The keys of the output object must be the 'id's from the input items. Each value must be an object containing the translations for the specified target languages. Do not include any other text or markdown formatting.
 
 Target languages: ${targetLangs.join(', ')}
