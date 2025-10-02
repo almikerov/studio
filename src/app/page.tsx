@@ -364,55 +364,59 @@ export default function Home() {
         const isDarkMode = document.documentElement.classList.contains('dark');
         const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
         
-        const fontEmbedCss = await htmlToImage.getFontEmbedCSS(element);
+        return new Promise(async (resolve) => {
+            setTimeout(async () => {
+                const fontEmbedCss = await htmlToImage.getFontEmbedCSS(element);
 
-        const clone = element.cloneNode(true) as HTMLElement;
-        clone.classList.add('cloned-for-rendering');
-        
-        const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+                const clone = element.cloneNode(true) as HTMLElement;
+                clone.classList.add('cloned-for-rendering');
+                
+                const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
 
-        if (options.withShadow) {
-            clone.style.border = '20px solid transparent';
-        } else if (cardElement) {
-            cardElement.classList.add('hide-border-on-print');
-        }
-
-        if (options.renderAsMobile) {
-            clone.style.width = '420px'; 
-            clone.classList.add('render-mobile-padding');
-        } else if (options.fitContent) {
-            clone.style.width = 'auto';
-            clone.style.display = 'inline-block';
-        } else {
-            clone.style.width = `${element.offsetWidth}px`;
-        }
-
-        clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
-        clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
-        
-        document.body.appendChild(clone);
-        
-        try {
-            const canvas = await htmlToImage.toCanvas(clone, {
-                pixelRatio: 2,
-                backgroundColor: backgroundColor,
-                fontEmbedCss: fontEmbedCss,
-                imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-                cacheBust: true,
-                fetchRequestInit: {
-                    headers: new Headers(),
-                    mode: 'cors',
-                    cache: 'no-cache'
+                if (options.withShadow) {
+                    clone.style.border = '20px solid transparent';
+                } else if (cardElement) {
+                    cardElement.classList.add('hide-border-on-print');
                 }
-            });
-            return canvas;
-        } catch (error) {
-            console.error("Error generating canvas with html-to-image", error);
-            return null;
-        } finally {
-            document.body.removeChild(clone);
-            setIsDownloading(false);
-        }
+
+                if (options.renderAsMobile) {
+                    clone.style.width = '420px'; 
+                    clone.classList.add('render-mobile-padding');
+                } else if (options.fitContent) {
+                    clone.style.width = 'auto';
+                    clone.style.display = 'inline-block';
+                } else {
+                    clone.style.width = `${element.offsetWidth}px`;
+                }
+
+                clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
+                clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
+                
+                document.body.appendChild(clone);
+                
+                try {
+                    const canvas = await htmlToImage.toCanvas(clone, {
+                        pixelRatio: 2,
+                        backgroundColor: backgroundColor,
+                        fontEmbedCss: fontEmbedCss,
+                        imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                        cacheBust: true,
+                        fetchRequestInit: {
+                            headers: new Headers(),
+                            mode: 'cors',
+                            cache: 'no-cache'
+                        }
+                    });
+                    resolve(canvas);
+                } catch (error) {
+                    console.error("Error generating canvas with html-to-image", error);
+                    resolve(null);
+                } finally {
+                    document.body.removeChild(clone);
+                    setIsDownloading(false);
+                }
+            }, 2000);
+        });
     };
 
 
