@@ -35,27 +35,14 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-const parseScheduleFlow = genkit({
-    plugins: [], // Plugins are configured dynamically below
-}).defineFlow(
-    {
-        name: 'parseScheduleFlow',
-        inputSchema: ParseScheduleTextInputSchema,
-        outputSchema: ParseScheduleTextOutputSchema,
-    },
-    async (input) => {
-        // Create a local Genkit instance with the provided API key for this specific call.
-        const aiWithKey = genkit({
-            plugins: [googleAI({ apiKey: input.apiKey })],
-        });
+export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
+    // Local, per-request Genkit instance with user's API key
+    const ai = genkit({
+        plugins: [googleAI({ apiKey: input.apiKey })],
+    });
 
-        const scheduleParserPrompt = aiWithKey.definePrompt({
-            name: 'scheduleParserPrompt',
-            model: 'googleai/gemini-pro',
-            input: { schema: z.object({ text: z.string() }) },
-            output: { schema: ParseScheduleTextOutputSchema },
-            prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
-The output language must be the same as the input language.
+    const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
+The output language must be the same as the input language. Your output MUST be a valid JSON object matching the requested schema.
 
 - Generate a main title for the schedule and put it in 'cardTitle'.
 - For each item, determine its 'type': 'timed', 'untimed', 'date', 'h1', 'h2', 'h3', 'comment'.
@@ -66,20 +53,21 @@ The output language must be the same as the input language.
 - Assign 'icon' and 'color' only if they are clearly suggested in the text.
 
 Parse the following text:
-{{{text}}}
-`
-        });
-        
-        const { output } = await scheduleParserPrompt({text: input.text});
-        if (!output) {
-            throw new Error("AI returned no output.");
-        }
-        return output;
+${input.text}
+`;
+
+    const { output } = await ai.generate({
+        model: 'googleai/gemini-pro',
+        prompt: prompt,
+        output: {
+            format: 'json',
+            schema: ParseScheduleTextOutputSchema,
+        },
+    });
+    
+    if (!output) {
+        throw new Error("AI returned no output.");
     }
-);
-
-
-export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
-    const result = await parseScheduleFlow(input);
-    return result;
+    
+    return output;
 }
