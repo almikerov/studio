@@ -35,6 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { EditableField } from '@/components/multischedule/editable-field';
 import { cn } from '@/lib/utils';
 import { useHistory } from '@/hooks/use-history';
+import { translateText } from '@/ai/flows/translate-text';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -320,7 +321,11 @@ export default function Home() {
 
     try {
       const descriptions = itemsToTranslate.map(item => item.description);
-      const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages });
+      const result = await translateSchedule({ 
+        descriptions, 
+        targetLanguages: selectedLanguages,
+        apiKeys: apiKeys.map(k => k.key),
+      });
       
       setSchedule(prev => prev.map(item => {
         const translatedItem = result.results.find(t => t.original === item.description);
@@ -549,18 +554,27 @@ export default function Home() {
     setIsMobileMenuOpen(false);
 
     try {
-      const result = await parseScheduleFromText({ text });
+      const result = await parseScheduleFromText({ text, apiKeys: apiKeys.map(k => k.key) });
       const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
         time: item.time || '',
         description: item.description || '',
       }));
+      
+      const newCardTitle = result.cardTitle;
+      const translatedTitle = await translateText({
+        text: newCardTitle,
+        targetLanguages: ['ru'],
+        apiKeys: apiKeys.map(k => k.key),
+      });
+
       setState({
           schedule: newScheduleItems,
-          cardTitle: result.cardTitle,
+          cardTitle: translatedTitle.translations['ru'] || newCardTitle,
           imageUrl: state?.imageUrl ?? null,
       });
+
     } catch (error: any) {
       console.error('AI parsing failed:', error);
     } finally {
@@ -1185,9 +1199,3 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
-
-    
-
-    
-
-

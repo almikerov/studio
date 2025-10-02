@@ -11,9 +11,12 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { googleAI } from '@genkit-ai/google-genai';
+
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
+  apiKeys: z.array(z.string()).optional().describe('An array of Gemini API keys to use for the request.'),
 });
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
@@ -33,17 +36,27 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-const prompt = ai.definePrompt({
-    name: 'scheduleParserPrompt',
-    model: 'gemini-1.5-flash',
-    input: { schema: ParseScheduleTextInputSchema },
-    output: { schema: ParseScheduleTextOutputSchema },
-    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+const scheduleParserFlow = ai.defineFlow(
+  {
+    name: 'scheduleParserFlow',
+    inputSchema: ParseScheduleTextInputSchema,
+    outputSchema: ParseScheduleTextOutputSchema,
+  },
+  async (input) => {
+    const prompt = ai.definePrompt({
+        name: 'scheduleParserPrompt',
+        model: 'gemini-1.5-flash',
+        input: { schema: z.object({ text: z.string() }) },
+        output: { schema: ParseScheduleTextOutputSchema },
+        config: {
+            // Use user-provided API keys if available
+            plugins: input.apiKeys && input.apiKeys.length > 0 ? [googleAI({ apiKeys: input.apiKeys })] : undefined,
+        },
+        prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text. The output must be in the language of the input text.
 
 - The user can provide schedule items of different types: timed events, untimed tasks, dates, comments, and headers (h1, h2, h3).
 - Extract or generate a main title for the schedule and put it in 'cardTitle'.
-- If the text contains a specific date, you can either include it in the 'cardTitle' or create a separate 'date' item for it, but avoid doing both to prevent redundancy.
 - For each item, determine its 'type'.
 - 'timed': An event with a specific time. The 'time' field should be in HH:mm format.
 - 'untimed': A task or event without a specific time. The 'time' field should be an empty string.
@@ -52,24 +65,15 @@ Your task is to identify the schedule title, events, their times, types, and oth
 - 'comment': A note or italicized text. The 'time' field must be empty.
 - Ensure the 'description' for each schedule item starts with a capital letter.
 - If the text suggests an icon, choose one from the available options: 'football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt'. Assign icons only to 'timed' and 'untimed' types.
-- For "Теория" (theory) or "Установка" (instructions), assign the 'camera' icon.
-- For a generic 'тренировка' (training), assign the 'football-field' icon. If the training is specified to be in a gym (e.g., 'тренировка в зале', 'тренажерный зал'), assign the 'dumbbell' icon.
 - If the text suggests a color, choose one from the available options: 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'. Assign colors to all item types.
 - Ignore any text that isn't a schedule item.
 
 Here is the text to parse:
 {{{text}}}
 `
-});
+    });
 
-const scheduleParserFlow = ai.defineFlow(
-  {
-    name: 'scheduleParserFlow',
-    inputSchema: ParseScheduleTextInputSchema,
-    outputSchema: ParseScheduleTextOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
+    const { output } = await prompt({ text: input.text });
     return output!;
   }
 );

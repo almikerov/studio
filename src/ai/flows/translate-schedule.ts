@@ -11,10 +11,13 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { googleAI } from '@genkit-ai/google-genai';
+
 
 const TranslateScheduleInputSchema = z.object({
   descriptions: z.array(z.string()).describe('The schedule item descriptions to translate.'),
   targetLanguages: z.array(z.string()).describe('The target languages to translate the schedule into.'),
+  apiKeys: z.array(z.string()).optional().describe('An array of Gemini API keys to use for the request.'),
 });
 export type TranslateScheduleInput = z.infer<typeof TranslateScheduleInputSchema>;
 
@@ -29,15 +32,24 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput): Promise<TranslateScheduleOutput> {
-  const languages = input.targetLanguages.join(', ');
+const translateScheduleFlow = ai.defineFlow(
+  {
+    name: 'translateScheduleFlow',
+    inputSchema: TranslateScheduleInputSchema,
+    outputSchema: TranslateScheduleOutputSchema,
+  },
+  async (input) => {
+    const languages = input.targetLanguages.join(', ');
 
-  const prompt = ai.definePrompt({
-      name: 'scheduleTranslatorPrompt',
-      model: 'gemini-1.5-flash',
-      input: { schema: TranslateScheduleInputSchema },
-      output: { schema: TranslateScheduleOutputSchema },
-      prompt: `Your task is to translate a list of schedule items into multiple languages.
+    const prompt = ai.definePrompt({
+        name: 'scheduleTranslatorPrompt',
+        model: 'gemini-1.5-flash',
+        input: { schema: z.object({ descriptions: z.array(z.string()) }) },
+        output: { schema: TranslateScheduleOutputSchema },
+        config: {
+            plugins: input.apiKeys && input.apiKeys.length > 0 ? [googleAI({ apiKeys: input.apiKeys })] : undefined,
+        },
+        prompt: `Your task is to translate a list of schedule items into multiple languages.
 
 **Key vocabulary for translation:**
 * \`зал\`, \`спортзал\` -> \`gym\`
@@ -74,15 +86,20 @@ Example response for target languages "es, fr":
 }
 
 Output JSON:`
-  });
-  
-  try {
-    const { output } = await prompt(input);
+    });
+    
+    const { output } = await prompt({ descriptions: input.descriptions });
     if (!output) {
       throw new Error("AI response was not valid JSON.");
     }
     return output;
+  }
+);
 
+
+export async function translateSchedule(input: TranslateScheduleInput): Promise<TranslateScheduleOutput> {
+  try {
+    return await translateScheduleFlow(input);
   } catch (error) {
     console.error("AI translation failed.", error);
     throw new Error("AI translation failed.");
