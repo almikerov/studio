@@ -1,9 +1,7 @@
 
-
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { translateSchedule } from '@/ai/flows/translate-schedule';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
@@ -35,7 +33,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { EditableField } from '@/components/multischedule/editable-field';
 import { cn } from '@/lib/utils';
 import { useHistory } from '@/hooks/use-history';
-import { translateText } from '@/ai/flows/translate-text';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -313,48 +310,7 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-    if (!schedule) return;
-    const itemsToTranslate = schedule.filter(item => item.description && ['timed', 'untimed', 'comment', 'h1', 'h2', 'h3', 'date'].includes(item.type));
-    if (itemsToTranslate.length === 0 || selectedLanguages.length === 0) return;
-    
-    const activeApiKey = apiKeys.find(k => k.isActive)?.key;
-    if (!activeApiKey) {
-        alert("Пожалуйста, выберите активный API ключ в настройках.");
-        return;
-    }
-
-    setIsLoading(true);
-    setIsMobileMenuOpen(false);
-
-    try {
-      const descriptions = itemsToTranslate.map(item => item.description);
-      const result = await translateSchedule({ 
-        descriptions, 
-        targetLanguages: selectedLanguages,
-        apiKey: activeApiKey
-      });
-      
-      setSchedule(prev => prev.map(item => {
-        const translatedItem = result.results.find(t => t.original === item.description);
-        if (translatedItem) {
-          // Preserve existing translations for other languages
-          const newTranslations = {...item.translations, ...translatedItem.translations};
-          return { ...item, translations: newTranslations };
-        }
-        return item; 
-      }));
-
-       // Update text-block translations
-       if (translationDisplayMode === 'text-block') {
-         updateTextBlockTranslations(schedule);
-       }
-
-    } catch (error: any) {
-      console.error('Translation failed:', error);
-      alert('Перевод не удался. Проверьте ваш API ключ и консоль на наличие ошибок.');
-    } finally {
-      setIsLoading(false);
-    }
+    // This functionality is currently disabled.
   };
 
   const handleClearTranslations = () => {
@@ -557,18 +513,12 @@ export default function Home() {
   };
 
   const handleAiParse = async (text: string) => {
-    const activeApiKey = apiKeys.find(k => k.isActive)?.key;
-    if (!activeApiKey) {
-        alert("Пожалуйста, выберите активный API ключ в настройках.");
-        return;
-    }
-
     setIsLoading(true);
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
 
     try {
-      const result = await parseScheduleFromText({ text, apiKey: activeApiKey });
+      const result = await parseScheduleFromText({ text });
       const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
@@ -576,22 +526,15 @@ export default function Home() {
         description: item.description || '',
       }));
       
-      const newCardTitle = result.cardTitle;
-      const translatedTitle = await translateText({
-        text: newCardTitle,
-        targetLanguages: ['ru'],
-        apiKey: activeApiKey
-      });
-
       setState({
           schedule: newScheduleItems,
-          cardTitle: translatedTitle.translations['ru'] || newCardTitle,
+          cardTitle: result.cardTitle,
           imageUrl: state?.imageUrl ?? null,
       });
 
     } catch (error: any) {
       console.error('AI parsing failed:', error);
-      alert('Разбор текста не удался. Проверьте ваш API ключ и консоль на наличие ошибок.');
+      alert('Разбор текста не удался. Проверьте, что вы добавили свой Gemini API ключ в файл .env и перезапустили приложение.');
     } finally {
       setIsLoading(false);
     }
@@ -774,8 +717,6 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             onSaveEvent={handleSaveEvent}
             translationDisplayMode={translationDisplayMode}
             setTranslationDisplayMode={setTranslationDisplayMode}
-            apiKeys={apiKeys}
-            updateApiKeys={updateApiKeys}
             isApiKeyDialogOpen={isApiKeyDialogOpen}
             setIsApiKeyDialogOpen={setIsApiKeyDialogOpen}
             isColorizeOpen={isColorizeOpen}
@@ -925,7 +866,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Инструменты</h3>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" className="justify-start w-full">
+                              <Button variant="ghost" className="justify-start w-full" disabled>
                                 <Languages className="mr-2" /> Перевести
                               </Button>
                             </DialogTrigger>
@@ -1013,11 +954,11 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                           <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                             <DialogTrigger asChild>
                               <Button variant="ghost" className="justify-start w-full">
-                                <KeyRound className="mr-2" /> Gemini API Keys
+                                <KeyRound className="mr-2" /> Gemini API Ключ
                               </Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <ApiKeyManagerDialogContent apiKeys={apiKeys} updateApiKeys={updateApiKeys} onClose={() => setIsApiKeyDialogOpen(false)} />
+                                <ApiKeyManagerDialogContent onClose={() => setIsApiKeyDialogOpen(false)} />
                             </DialogContent>
                           </Dialog>
                            <AlertDialog>
@@ -1120,62 +1061,26 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
 }
 
 
-export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: { apiKeys: ApiKey[], updateApiKeys: (keys: ApiKey[]) => void, onClose: () => void }) {
-    const [newApiKey, setNewApiKey] = useState('');
-
-    const handleAddKey = () => {
-        if (newApiKey.trim()) {
-            const newKey = { id: `${Date.now()}`, key: newApiKey.trim(), isActive: apiKeys.length === 0 };
-            updateApiKeys([...apiKeys, newKey]);
-            setNewApiKey('');
-        }
-    };
-
-    const handleDeleteKey = (id: string) => {
-        updateApiKeys(apiKeys.filter(k => k.id !== id));
-    };
-
-    const handleToggleActive = (id: string) => {
-        updateApiKeys(apiKeys.map(k => ({ ...k, isActive: k.id === id })));
-    };
-
+export function ApiKeyManagerDialogContent({ onClose }: { onClose: () => void }) {
     return (
         <>
             <DialogHeader>
-                <DialogTitle>Управление API-ключами Gemini</DialogTitle>
+                <DialogTitle>Настройка Gemini API Ключа</DialogTitle>
                 <DialogDescription>
-                    Добавьте ваши API-ключи Gemini. Выберите один ключ для использования в приложении. 
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1">Получить ключ</a>
+                    Чтобы использовать AI-функции, вам необходимо добавить ваш Gemini API ключ в переменные окружения.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
-                <div className="flex gap-2">
-                    <Input
-                        placeholder="Введите ваш API ключ"
-                        value={newApiKey}
-                        onChange={(e) => setNewApiKey(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddKey()}
-                    />
-                    <Button onClick={handleAddKey}>Добавить</Button>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {apiKeys.map(apiKey => (
-                        <div key={apiKey.id} className="flex items-center justify-between p-2 border rounded-md">
-                           <div className="flex items-center gap-2">
-                                <RadioGroup value={apiKey.isActive ? apiKey.id : ''} onValueChange={() => handleToggleActive(apiKey.id)}>
-                                    <RadioGroupItem value={apiKey.id} id={apiKey.id} />
-                                </RadioGroup>
-                                <Label htmlFor={apiKey.id} className="font-mono break-all">{`...${apiKey.key.slice(-4)}`}</Label>
-                            </div>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
+                <p>1. Создайте файл с именем <code className="bg-muted px-2 py-1 rounded">.env</code> в корневой папке вашего проекта.</p>
+                <p>2. Добавьте в этот файл следующую строку, заменив <code className="bg-muted px-2 py-1 rounded">ВАШ_КЛЮЧ</code> на ваш настоящий API ключ:</p>
+                <pre className="bg-muted p-4 rounded-md text-sm">
+                    <code>GEMINI_API_KEY=ВАШ_КЛЮЧ</code>
+                </pre>
+                <p>3. <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Получить ключ можно здесь.</a></p>
+                <p>4. После сохранения файла перезапустите приложение, чтобы изменения вступили в силу.</p>
             </div>
             <DialogFooter>
-                <Button onClick={onClose}>Закрыть</Button>
+                <Button onClick={onClose}>Понятно</Button>
             </DialogFooter>
         </>
     );
@@ -1218,3 +1123,4 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+

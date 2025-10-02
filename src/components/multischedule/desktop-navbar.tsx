@@ -2,7 +2,7 @@
 
 'use client';
 
-import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode, ApiKey } from '@/app/page';
+import type { ScheduleTemplate, SavedEvent, TranslationDisplayMode } from '@/app/page';
 import { ApiKeyManagerDialogContent, ColorizeDialogContent } from '@/app/page';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -47,8 +47,6 @@ interface DesktopNavbarProps {
   onSaveEvent: (event: Partial<SavedEvent>) => void;
   translationDisplayMode: TranslationDisplayMode;
   setTranslationDisplayMode: (mode: TranslationDisplayMode) => void;
-  apiKeys: ApiKey[];
-  updateApiKeys: (keys: ApiKey[]) => void;
   isApiKeyDialogOpen: boolean;
   setIsApiKeyDialogOpen: (open: boolean) => void;
   isColorizeOpen: boolean;
@@ -87,8 +85,6 @@ export function DesktopNavbar({
   onSaveEvent,
   translationDisplayMode,
   setTranslationDisplayMode,
-  apiKeys,
-  updateApiKeys,
   isApiKeyDialogOpen,
   setIsApiKeyDialogOpen,
   isColorizeOpen,
@@ -158,7 +154,7 @@ export function DesktopNavbar({
                     </ImageUploader>
                     <Dialog open={isTranslateDialogOpen} onOpenChange={setIsTranslateDialogOpen}>
                         <DialogTrigger asChild>
-                            <MenubarItem onSelect={(e) => e.preventDefault()}>
+                            <MenubarItem onSelect={(e) => e.preventDefault()} disabled>
                                 <Languages className="mr-2" /> Перевести
                             </MenubarItem>
                         </DialogTrigger>
@@ -240,11 +236,11 @@ export function DesktopNavbar({
                      <Dialog open={isApiKeyDialogOpen} onOpenChange={setIsApiKeyDialogOpen}>
                         <DialogTrigger asChild>
                             <MenubarItem onSelect={(e) => e.preventDefault()}>
-                                <KeyRound className="mr-2" /> Gemini API Keys
+                                <KeyRound className="mr-2" /> Gemini API Ключ
                             </MenubarItem>
                         </DialogTrigger>
                         <DialogContent>
-                            <ApiKeyManagerDialogContent apiKeys={apiKeys} updateApiKeys={updateApiKeys} onClose={() => setIsApiKeyDialogOpen(false)} />
+                            <ApiKeyManagerDialogContent onClose={() => setIsApiKeyDialogOpen(false)} />
                         </DialogContent>
                     </Dialog>
                     <MenubarSeparator />
@@ -318,3 +314,4 @@ export function DesktopNavbar({
     </div>
   );
 }
+
