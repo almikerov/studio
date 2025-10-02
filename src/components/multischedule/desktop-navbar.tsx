@@ -23,6 +23,7 @@ import { AVAILABLE_LANGUAGES } from '@/app/page';
 
 interface DesktopNavbarProps {
   isLoading: boolean;
+  isTranslating: boolean;
   isDownloading: boolean;
   onDownload: () => void;
   onCopy: () => void;
@@ -63,6 +64,7 @@ interface DesktopNavbarProps {
 
 export function DesktopNavbar({
   isLoading,
+  isTranslating,
   isDownloading,
   onDownload,
   onCopy,
@@ -158,7 +160,7 @@ export function DesktopNavbar({
                     </ImageUploader>
                     <Dialog open={isTranslateDialogOpen} onOpenChange={setIsTranslateDialogOpen}>
                         <DialogTrigger asChild>
-                            <MenubarItem onSelect={(e) => e.preventDefault()} disabled>
+                            <MenubarItem onSelect={(e) => e.preventDefault()}>
                                 <Languages className="mr-2" /> Перевести
                             </MenubarItem>
                         </DialogTrigger>
@@ -210,8 +212,8 @@ export function DesktopNavbar({
 
                             <DialogFooter>
                                 <Button variant="destructive" onClick={handleClearTranslationsClick}>Очистить переводы</Button>
-                                <Button onClick={handleTranslateClick} disabled={isLoading}>
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                <Button onClick={handleTranslateClick} disabled={isTranslating}>
+                                    {isTranslating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Перевести
                                 </Button>
                             </DialogFooter>

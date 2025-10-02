@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { ScheduleView } from '@/components/multischedule/schedule-view';
 import type { IconName } from '@/components/multischedule/schedule-event-icons';
 import { parseScheduleFromText } from '@/ai/flows/parse-schedule-text';
+import { translateText } from '@/ai/flows/translate-text';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DesktopNavbar } from '@/components/multischedule/desktop-navbar';
 import { Button } from '@/components/ui/button';
@@ -118,6 +119,7 @@ export default function Home() {
 
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const printableAreaRef = useRef<HTMLDivElement>(null);
 
@@ -143,9 +145,9 @@ export default function Home() {
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
 
-  const setSchedule = (updater: (prev: ScheduleItem[]) => ScheduleItem[]) => {
+  const setSchedule = (updater: (prev: ScheduleItem[]) => ScheduleItem[], overwriteHistory = false) => {
     const newSchedule = updater(schedule || []);
-    setState({ ...state!, schedule: newSchedule });
+    setState({ ...state!, schedule: newSchedule }, overwriteHistory);
   };
   
   const setCardTitle = (newTitle: string) => {
@@ -232,9 +234,18 @@ export default function Home() {
 
 
   const handleUpdateEvent = (id: string, updatedValues: Partial<Omit<ScheduleItem, 'id'>>) => {
+    const itemToUpdate = schedule?.find(item => item.id === id);
+    const hasTranslations = itemToUpdate && itemToUpdate.translations && Object.keys(itemToUpdate.translations).length > 0;
+    const descriptionChanged = updatedValues.description !== undefined && updatedValues.description !== itemToUpdate?.description;
+
     setSchedule(prev => prev.map(item => (item.id === id ? { ...item, ...updatedValues } : item)));
+
     if (editingEvent?.id === id) {
       setEditingEvent(prev => prev ? { ...prev, ...updatedValues } : null);
+    }
+
+    if (descriptionChanged && hasTranslations) {
+        handleTranslate(id); // Re-translate only this item
     }
   };
 
@@ -311,12 +322,63 @@ export default function Home() {
   };
 
 
-  const handleTranslate = async () => {
-    // This functionality is currently disabled.
+  const handleTranslate = async (itemId?: string) => {
+      const activeKey = apiKeys.find(k => k.isActive)?.key;
+      if (!activeKey) {
+          setIsApiKeyDialogOpen(true);
+          return;
+      }
+      if (selectedLanguages.length === 0) return;
+
+      setIsTranslating(true);
+
+      const itemsToTranslate = itemId ? schedule.filter(item => item.id === itemId) : schedule;
+
+      const translationPromises = itemsToTranslate.map(async (item) => {
+          if (!item.description) {
+              return { id: item.id, translations: item.translations || {} };
+          }
+          try {
+              const result = await translateText({
+                  text: item.description,
+                  targetLangs: selectedLanguages,
+                  apiKey: activeKey,
+              });
+              return { id: item.id, translations: result };
+          } catch (e) {
+              console.error(`Failed to translate item ${item.id}:`, e);
+              return { id: item.id, translations: item.translations || {} }; // Keep old translations on error
+          }
+      });
+
+      try {
+          const results = await Promise.all(translationPromises);
+          
+          setSchedule(prev => {
+              const newSchedule = [...prev];
+              results.forEach(result => {
+                  const itemIndex = newSchedule.findIndex(item => item.id === result.id);
+                  if (itemIndex > -1) {
+                      // Merge new translations with existing ones
+                      const existingTranslations = newSchedule[itemIndex].translations || {};
+                      newSchedule[itemIndex] = {
+                          ...newSchedule[itemIndex],
+                          translations: { ...existingTranslations, ...result.translations },
+                      };
+                  }
+              });
+              return newSchedule;
+          }, true); // Overwrite history for translation to avoid many small steps
+
+      } catch (e) {
+          console.error("An error occurred during translation:", e);
+      } finally {
+          setIsTranslating(false);
+      }
   };
 
   const handleClearTranslations = () => {
-    setSchedule(prev => prev.map(item => ({...item, translations: {}})))
+    setSchedule(prev => prev.map(item => ({...item, translations: {}})));
     setTextBlockTranslations({});
   };
   
@@ -649,24 +711,25 @@ export default function Home() {
     return content.trim();
 };
 
-const updateTextBlockTranslations = (currentSchedule: ScheduleItem[]) => {
+const updateTextBlockTranslations = () => {
+    if (!schedule) return;
     const newTextBlocks: Record<string, TextBlockTranslation> = {};
     selectedLanguages.forEach(lang => {
         const langInfo = AVAILABLE_LANGUAGES.find(l => l.code === lang);
         const langName = langInfo?.nativeName || langInfo?.name || lang;
         newTextBlocks[lang] = {
             title: textBlockTranslations[lang]?.title || langName,
-            content: renderTextTranslation(lang, currentSchedule),
+            content: renderTextTranslation(lang, schedule),
         }
     });
     setTextBlockTranslations(newTextBlocks);
 };
 
 useEffect(() => {
-    if (translationDisplayMode === 'text-block' && selectedLanguages.length > 0 && schedule) {
-        updateTextBlockTranslations(schedule);
+    if (translationDisplayMode === 'text-block' && selectedLanguages.length > 0) {
+        updateTextBlockTranslations();
     }
-}, [translationDisplayMode, selectedLanguages, schedule]);
+}, [translationDisplayMode, selectedLanguages, schedule, cardTitle]);
 
 const handleTextBlockChange = (lang: string, field: 'title' | 'content', value: string) => {
     setTextBlockTranslations(prev => ({
@@ -702,6 +765,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
       <div className="max-w-4xl mx-auto space-y-4">
         {!isMobile && <DesktopNavbar 
             isLoading={isLoading}
+            isTranslating={isTranslating}
             isDownloading={isDownloading}
             onDownload={() => openRenderOptions(handleDownloadImage)}
             onCopy={() => openRenderOptions(handleCopyImage)}
@@ -717,7 +781,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             onAiParse={handleAiParse}
             selectedLanguages={selectedLanguages}
             onLanguageChange={setSelectedLanguages}
-            onTranslate={handleTranslate}
+            onTranslate={() => handleTranslate()}
             onClearTranslations={handleClearTranslations}
             isAiParserOpen={isAiParserOpen}
             setIsAiParserOpen={setIsAiParserOpen}
@@ -877,7 +941,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Инструменты</h3>
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" className="justify-start w-full" disabled>
+                              <Button variant="ghost" className="justify-start w-full">
                                 <Languages className="mr-2" /> Перевести
                               </Button>
                             </DialogTrigger>
@@ -927,8 +991,8 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                               <DialogFooter className='gap-2 sm:gap-0'>
                                 <Button variant="destructive" onClick={handleClearTranslations}>Очистить переводы</Button>
                                 <DialogClose asChild>
-                                  <Button onClick={handleTranslate} disabled={isLoading}>
-                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  <Button onClick={() => handleTranslate()} disabled={isTranslating}>
+                                    {isTranslating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Перевести
                                   </Button>
                                 </DialogClose>
