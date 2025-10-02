@@ -45,6 +45,7 @@ export async function parseScheduleFromText(input: ParseScheduleTextInput): Prom
 The output language must be the same as the input language. Your output MUST be a valid JSON object matching the requested schema.
 
 - Generate a main title for the schedule and put it in 'cardTitle'.
+- If the text contains only one distinct date, use it either for the 'cardTitle' (e.g., "Schedule for June 5th") OR create a 'date' type item, but not both. Prefer creating a 'date' item.
 - For each item, determine its 'type': 'timed', 'untimed', 'date', 'h1', 'h2', 'h3', 'comment'.
 - For 'timed' events, the 'time' field MUST be in HH:mm format.
 - For ALL OTHER types ('untimed', 'date', 'h1', 'h2', 'h3', 'comment'), the 'time' field MUST be an empty string: "".
