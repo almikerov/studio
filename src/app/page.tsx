@@ -314,7 +314,7 @@ export default function Home() {
   };
 
   const handleClearTranslations = () => {
-    setSchedule(prev => prev.map(item => ({...item, translations: {}})));
+    setSchedule(prev => prev.map(item => ({...item, translations: {}})))
     setTextBlockTranslations({});
   };
   
@@ -516,28 +516,23 @@ export default function Home() {
     setIsLoading(true);
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
-
-    try {
-      const result = await parseScheduleFromText({ text });
-      const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
-        ...item,
-        id: `${Date.now()}-${Math.random()}`,
-        time: item.time || '',
-        description: item.description || '',
-      }));
-      
-      setState({
-          schedule: newScheduleItems,
-          cardTitle: result.cardTitle,
-          imageUrl: state?.imageUrl ?? null,
-      });
-
-    } catch (error: any) {
-      console.error('AI parsing failed:', error);
-      alert('Разбор текста не удался. Проверьте, что вы добавили свой Gemini API ключ в файл .env и перезапустили приложение.');
-    } finally {
-      setIsLoading(false);
+    
+    const result = await parseScheduleFromText({ text });
+    if (result) {
+        const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
+            ...item,
+            id: `${Date.now()}-${Math.random()}`,
+            time: item.time || '',
+            description: item.description || '',
+        }));
+        
+        setState({
+            schedule: newScheduleItems,
+            cardTitle: result.cardTitle,
+            imageUrl: state?.imageUrl ?? null,
+        });
     }
+    setIsLoading(false);
   };
 
   const handleUpdateSavedEvent = (updatedEvent: SavedEvent) => {
@@ -1124,3 +1119,6 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     );
 }
 
+
+
+    

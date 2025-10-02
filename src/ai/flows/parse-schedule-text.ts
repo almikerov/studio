@@ -18,7 +18,7 @@ const ParseScheduleTextInputSchema = z.object({
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
 const ParsedScheduleItemSchema = z.object({
-    time: z.string().describe("The time of the event in HH:mm format. Must be an empty string '' for all types except 'timed'."),
+    time: z.string().describe("The time of the event in HH:mm format. Must be an empty string '' for all types except 'timed'.").optional(),
     description: z.string().describe("The description of the schedule event."),
     icon: z.enum(['football-field', 'dumbbell', 'passport', 'plane-takeoff', 'plane-landing', 'camera', 'utensils', 'bed', 'stadium', 'document', 'home', 'bus', 'soccer-ball', 'lock', 'moon', 'cake', 'shirt']).optional().describe("An icon for the event."),
     color: z.enum(['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray']).optional().describe('A color for the event row.'),
@@ -71,11 +71,6 @@ const parseScheduleFlow = ai.defineFlow(
 
 
 export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
-    try {
-        const result = await parseScheduleFlow(input);
-        return result;
-    } catch(e) {
-        console.error("AI parsing failed:", e);
-        throw new Error("Failed to parse schedule using AI.");
-    }
+    const result = await parseScheduleFlow(input);
+    return result;
 }
