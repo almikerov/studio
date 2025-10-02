@@ -1,8 +1,5 @@
 
-import { genkit } from 'genkit';
-import { z } from 'genkit/zod';
+import { genkit as ai } from 'genkit';
+import { z } from 'zod';
 
-export { genkit, z };
-
-// Most Genkit APIs can be accessed through the `generation` namespace.
-export * as generation from 'genkit/generation';
+export { ai, z };

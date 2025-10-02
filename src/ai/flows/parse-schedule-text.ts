@@ -9,7 +9,8 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import { genkit, generation, z } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 import { googleAI } from '@genkit-ai/google-genai';
 
 const ParseScheduleTextInputSchema = z.object({
@@ -40,7 +41,7 @@ export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKe
 
     // Configure Genkit with the provided API keys.
     // This will cycle through keys if some of them fail.
-    genkit.config({
+    ai.configure({
         plugins: [
             googleAI({ apiKeys: apiKeys }),
         ],
@@ -73,7 +74,7 @@ ${input.text}
 `;
 
     try {
-        const llmResponse = await generation.generate({
+        const response = await ai.generate({
             model: 'gemini-1.5-flash',
             prompt: prompt,
             output: {
@@ -84,7 +85,7 @@ ${input.text}
             }
         });
     
-        return llmResponse.output() as ParseScheduleTextOutput;
+        return response.output as ParseScheduleTextOutput;
     } catch(e) {
         console.error(e);
         throw e;
