@@ -318,15 +318,9 @@ export default function Home() {
     setIsLoading(true);
     setIsMobileMenuOpen(false);
 
-    if (apiKeys.length === 0) {
-      console.error("No API keys found.");
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const descriptions = itemsToTranslate.map(item => item.description);
-      const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages }, apiKeys.map(k => k.key));
+      const result = await translateSchedule({ descriptions, targetLanguages: selectedLanguages });
       
       setSchedule(prev => prev.map(item => {
         const translatedItem = result.results.find(t => t.original === item.description);
@@ -565,14 +559,8 @@ export default function Home() {
     setIsAiParserOpen(false);
     setIsMobileMenuOpen(false);
 
-    if (apiKeys.length === 0) {
-      console.error("No API keys found.");
-      setIsLoading(false);
-      return;
-    }
-    
     try {
-      const result = await parseScheduleFromText({ text }, apiKeys.map(k => k.key));
+      const result = await parseScheduleFromText({ text });
       const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
@@ -1210,3 +1198,4 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     
 
     
+

@@ -29,14 +29,14 @@ const TranslateScheduleOutputSchema = z.object({
 });
 export type TranslateScheduleOutput = z.infer<typeof TranslateScheduleOutputSchema>;
 
-export async function translateSchedule(input: TranslateScheduleInput, apiKeys: string[]): Promise<TranslateScheduleOutput> {
-  if (!apiKeys || apiKeys.length === 0) {
-    throw new Error('API key is not provided');
-  }
-
+export async function translateSchedule(input: TranslateScheduleInput): Promise<TranslateScheduleOutput> {
   const languages = input.targetLanguages.join(', ');
 
-  const prompt = `Your task is to translate a list of schedule items into multiple languages.
+  const prompt = ai.definePrompt({
+      name: 'scheduleTranslatorPrompt',
+      input: { schema: TranslateScheduleInputSchema },
+      output: { schema: TranslateScheduleOutputSchema },
+      prompt: `Your task is to translate a list of schedule items into multiple languages.
 
 **Key vocabulary for translation:**
 * \`зал\`, \`спортзал\` -> \`gym\`
@@ -72,25 +72,15 @@ Example response for target languages "es, fr":
   ]
 }
 
-Output JSON:`;
-
+Output JSON:`
+  });
+  
   try {
-    const response = await ai.generate({
-        model: 'gemini-1.5-flash',
-        prompt: prompt,
-        output: {
-            schema: TranslateScheduleOutputSchema
-        },
-        config: {
-            temperature: 0.1,
-        }
-    });
-    
-    if (!response.output) {
+    const { output } = await prompt(input);
+    if (!output) {
       throw new Error("AI response was not valid JSON.");
     }
-    
-    return response.output;
+    return output;
 
   } catch (error) {
     console.error("AI translation failed.", error);

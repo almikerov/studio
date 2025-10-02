@@ -34,15 +34,12 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKeys: string[]): Promise<ParseScheduleTextOutput> {
-    if (!apiKeys || apiKeys.length === 0) {
-        throw new Error('API key is not provided');
-    }
-
-    // This is now configured globally or at a higher level, so we don't call ai.configure here.
-    // The API keys are expected to be set in the environment.
-
-    const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
+export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
+    const prompt = ai.definePrompt({
+        name: 'scheduleParserPrompt',
+        input: { schema: ParseScheduleTextInputSchema },
+        output: { schema: ParseScheduleTextOutputSchema },
+        prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text. The output must be in the language of the input text.
 
 - The user can provide schedule items of different types: timed events, untimed tasks, dates, comments, and headers (h1, h2, h3).
@@ -63,24 +60,14 @@ Your task is to identify the schedule title, events, their times, types, and oth
 
 Here is the text to parse:
 ${input.text}
-`;
+`
+    });
 
     try {
-        const response = await ai.generate({
-            model: 'gemini-1.5-flash',
-            prompt: prompt,
-            output: {
-                schema: ParseScheduleTextOutputSchema,
-            },
-            config: {
-                temperature: 0,
-            }
-        });
-    
-        return response.output as ParseScheduleTextOutput;
+        const { output } = await prompt(input);
+        return output!;
     } catch(e) {
         console.error(e);
         throw e;
     }
-
 }

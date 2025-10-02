@@ -24,14 +24,14 @@ const TranslateTextOutputSchema = z.object({
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
 
-export async function translateText(input: TranslateTextInput, apiKeys: string[]): Promise<TranslateTextOutput> {
-  if (!apiKeys || apiKeys.length === 0) {
-    throw new Error('API key is not provided');
-  }
-
+export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
   const languages = input.targetLanguages.join(', ');
 
-  const prompt = `You are a translation expert. You will be given a text and a list of target languages.
+  const prompt = ai.definePrompt({
+      name: 'textTranslatorPrompt',
+      input: { schema: TranslateTextInputSchema },
+      output: { schema: TranslateTextOutputSchema },
+      prompt: `You are a translation expert. You will be given a text and a list of target languages.
 Your job is to translate the text into each of the target languages.
 Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values. Do not wrap the JSON in markdown.
 
@@ -41,25 +41,17 @@ Text:
 Target Languages:
 ${languages}
 
-Output JSON:`;
+Output JSON:`
+  });
   
   try {
-    const response = await ai.generate({
-        model: 'gemini-1.5-flash',
-        prompt: prompt,
-        output: {
-            schema: TranslateTextOutputSchema
-        },
-        config: {
-            temperature: 0.1
-        }
-    });
+    const { output } = await prompt(input);
 
-    if (!response.output) {
+    if (!output) {
       throw new Error("AI response was not valid JSON.");
     }
     
-    return response.output;
+    return output;
 
   } catch (error) {
     console.error("AI translation failed.", error);
