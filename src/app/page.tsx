@@ -402,7 +402,6 @@ export default function Home() {
                         imagePlaceholder: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
                         cacheBust: true,
                         fetchRequestInit: {
-                            headers: new Headers(),
                             mode: 'cors',
                             cache: 'no-cache'
                         }
@@ -1188,5 +1187,7 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
 
     
