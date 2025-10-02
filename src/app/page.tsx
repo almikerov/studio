@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -1194,16 +1195,34 @@ export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: {
 export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: (mode: 'single' | 'rainbow' | 'random', color?: string) => void, itemColors: string[] }) {
     const [selectedColor, setSelectedColor] = useState(itemColors[0]);
 
+    const handleApplySingleColor = () => {
+        onColorize('single', selectedColor);
+    };
+
+    const handleClearColor = () => {
+        onColorize('single', undefined);
+    };
+
+
     return (
         <>
             <DialogHeader>
-                <DialogTitle>Раскрасить расписание</DialogTitle>                <DialogDescription>Примените цвет к элементам вашего расписания.</DialogDescription>
+                <DialogTitle>Раскрасить расписание</DialogTitle>
+                <DialogDescription>Примените цвет к элементам вашего расписания.</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
                 <div className="space-y-2">
                     <Label>Один цвет</Label>
                     <div className="flex items-center gap-2">
                         <div className="grid grid-cols-4 gap-2 flex-1">
+                             <Button
+                                variant={selectedColor === 'none' ? 'secondary' : 'ghost'}
+                                size="icon"
+                                className="h-10 w-10 rounded-full"
+                                onClick={() => { setSelectedColor('none'); onColorize('single', undefined); }}
+                            >
+                                <div className="h-6 w-6 rounded-full border-2 border-dashed" />
+                            </Button>
                             {itemColors.map(color => (
                                 <Button
                                     key={color}
@@ -1216,7 +1235,7 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
                                 </Button>
                             ))}
                         </div>
-                        <Button onClick={() => onColorize('single', selectedColor)} className="h-24 flex-1">Применить</Button>
+                        <Button onClick={handleApplySingleColor} className="h-24 flex-1">Применить</Button>
                     </div>
                 </div>
                 <Separator />
