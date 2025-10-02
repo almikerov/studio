@@ -363,38 +363,41 @@ export default function Home() {
 
         const isDarkMode = document.documentElement.classList.contains('dark');
         const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
+
+        // 1. Create a clone of the node
+        const clone = element.cloneNode(true) as HTMLElement;
+        clone.classList.add('cloned-for-rendering');
         
-        return new Promise(async (resolve) => {
-            setTimeout(async () => {
-                const fontEmbedCss = await htmlToImage.getFontEmbedCSS(element);
+        // 2. Apply styles for rendering
+        if (options.withShadow) {
+            clone.style.border = '20px solid transparent';
+        } else {
+            const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+            if (cardElement) {
+                cardElement.classList.add('hide-border-on-print');
+            }
+        }
+        
+        if (options.renderAsMobile) {
+            clone.style.width = '420px'; 
+            clone.classList.add('render-mobile-padding');
+        } else if (options.fitContent) {
+            clone.style.width = 'auto';
+            clone.style.display = 'inline-block';
+        } else {
+            clone.style.width = `${element.offsetWidth}px`;
+        }
 
-                const clone = element.cloneNode(true) as HTMLElement;
-                clone.classList.add('cloned-for-rendering');
-                
-                const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+        clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
+        clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
+        
+        document.body.appendChild(clone);
 
-                if (options.withShadow) {
-                    clone.style.border = '20px solid transparent';
-                } else if (cardElement) {
-                    cardElement.classList.add('hide-border-on-print');
-                }
-
-                if (options.renderAsMobile) {
-                    clone.style.width = '420px'; 
-                    clone.classList.add('render-mobile-padding');
-                } else if (options.fitContent) {
-                    clone.style.width = 'auto';
-                    clone.style.display = 'inline-block';
-                } else {
-                    clone.style.width = `${element.offsetWidth}px`;
-                }
-
-                clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
-                clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
-                
-                document.body.appendChild(clone);
-                
+        return new Promise((resolve) => {
+            // 3. Wait for the next animation frame to let the browser apply styles
+            requestAnimationFrame(async () => {
                 try {
+                    const fontEmbedCss = await htmlToImage.getFontEmbedCSS(clone);
                     const canvas = await htmlToImage.toCanvas(clone, {
                         pixelRatio: 2,
                         backgroundColor: backgroundColor,
@@ -411,10 +414,11 @@ export default function Home() {
                     console.error("Error generating canvas with html-to-image", error);
                     resolve(null);
                 } finally {
+                    // 4. Clean up
                     document.body.removeChild(clone);
                     setIsDownloading(false);
                 }
-            }, 2000);
+            });
         });
     };
 
