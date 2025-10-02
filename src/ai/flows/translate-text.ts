@@ -37,7 +37,7 @@ const translateTextFlow = ai.defineFlow(
 
         const prompt = ai.definePrompt({
             name: 'textTranslatorPrompt',
-            model: 'gemini-1.5-flash',
+            model: 'gemini-1.5-pro',
             input: { schema: z.object({ text: z.string() }) },
             output: { schema: TranslateTextOutputSchema },
             config: {

@@ -45,7 +45,7 @@ const scheduleParserFlow = ai.defineFlow(
   async (input) => {
     const prompt = ai.definePrompt({
         name: 'scheduleParserPrompt',
-        model: 'gemini-1.5-flash',
+        model: 'gemini-1.5-pro',
         input: { schema: z.object({ text: z.string() }) },
         output: { schema: ParseScheduleTextOutputSchema },
         config: {
