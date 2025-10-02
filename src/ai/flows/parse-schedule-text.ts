@@ -36,7 +36,7 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 
 
 const parseScheduleFlow = genkit({
-    plugins: [googleAI()],
+    plugins: [], // Plugins will be provided dynamically
   }).defineFlow(
     {
         name: 'parseScheduleFlow',
@@ -50,7 +50,7 @@ const parseScheduleFlow = genkit({
 
         const scheduleParserPrompt = aiWithKey.definePrompt({
             name: 'scheduleParserPrompt',
-            model: 'googleai/gemini-1.5-flash',
+            model: 'googleai/gemini-pro',
             input: { schema: z.object({ text: z.string() }) },
             output: { schema: ParseScheduleTextOutputSchema },
             prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
