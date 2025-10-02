@@ -49,7 +49,6 @@ const scheduleParserFlow = ai.defineFlow(
         input: { schema: z.object({ text: z.string() }) },
         output: { schema: ParseScheduleTextOutputSchema },
         config: {
-            // Use user-provided API keys if available
             plugins: input.apiKeys && input.apiKeys.length > 0 ? [googleAI({ apiKeys: input.apiKeys })] : undefined,
         },
         prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.

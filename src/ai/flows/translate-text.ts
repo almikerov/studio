@@ -19,7 +19,7 @@ const TranslateTextInputSchema = z.object({
   targetLanguages: z.array(z.string()).describe('The list of target languages to translate the text into.'),
   apiKeys: z.array(z.string()).optional().describe('An array of Gemini API keys to use for the request.'),
 });
-export type TranslateTextInput = zİnfer<typeof TranslateTextInputSchema>;
+export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
 const TranslateTextOutputSchema = z.object({
   translations: z.record(z.string()).describe('An object where keys are the language codes and values are the translated texts.')
