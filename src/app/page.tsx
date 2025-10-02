@@ -307,60 +307,53 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-      const apiKeys = aiConfig.apiKeys.map(k => k.key);
-      if (apiKeys.length === 0) {
-          setIsAiSettingsDialogOpen(true);
-          return;
-      }
-      if (selectedLanguages.length === 0) return;
+    const apiKeys = aiConfig.apiKeys.map(k => k.key);
+    if (apiKeys.length === 0) {
+        setIsAiSettingsDialogOpen(true);
+        return;
+    }
+    if (selectedLanguages.length === 0) return;
 
-      setIsTranslating(true);
+    setIsTranslating(true);
 
-      const itemsToTranslate = schedule;
+    const itemsToTranslate = schedule
+        .filter(item => item.description && item.type !== 'comment')
+        .map(item => ({ id: item.id, text: item.description }));
 
-      const translationPromises = itemsToTranslate.map(async (item) => {
-          if (!item.description || item.type === 'comment') { // Don't translate comments
-              return { id: item.id, translations: item.translations || {} };
-          }
-          try {
-              const result = await translateText({
-                  text: item.description,
-                  targetLangs: selectedLanguages,
-                  apiKeys: apiKeys,
-                  model: aiConfig.model,
-              });
-              return { id: item.id, translations: result };
-          } catch (e) {
-              console.error(`Failed to translate item ${item.id}:`, e);
-              return { id: item.id, translations: item.translations || {} }; // Keep old translations on error
-          }
-      });
+    if (itemsToTranslate.length === 0) {
+        setIsTranslating(false);
+        return;
+    }
+    
+    try {
+        const results = await translateText({
+            items: itemsToTranslate,
+            targetLangs: selectedLanguages,
+            apiKeys: apiKeys,
+            model: aiConfig.model,
+        });
 
-      try {
-          const results = await Promise.all(translationPromises);
-          
-          setSchedule(prev => {
-              const newSchedule = [...prev];
-              results.forEach(result => {
-                  const itemIndex = newSchedule.findIndex(item => item.id === result.id);
-                  if (itemIndex > -1) {
-                      // Merge new translations with existing ones
-                      const existingTranslations = newSchedule[itemIndex].translations || {};
-                      newSchedule[itemIndex] = {
-                          ...newSchedule[itemIndex],
-                          translations: { ...existingTranslations, ...result.translations },
-                      };
-                  }
-              });
-              return newSchedule;
-          }, true); // Overwrite history for translation to avoid many small steps
+        setSchedule(prev => {
+            const newSchedule = [...prev];
+            Object.entries(results).forEach(([itemId, translations]) => {
+                const itemIndex = newSchedule.findIndex(item => item.id === itemId);
+                if (itemIndex > -1) {
+                    const existingTranslations = newSchedule[itemIndex].translations || {};
+                    newSchedule[itemIndex] = {
+                        ...newSchedule[itemIndex],
+                        translations: { ...existingTranslations, ...translations },
+                    };
+                }
+            });
+            return newSchedule;
+        }, true); // Overwrite history for translation to avoid many small steps
 
-      } catch (e) {
-          console.error("An error occurred during translation:", e);
-      } finally {
-          setIsTranslating(false);
-      }
-  };
+    } catch (e) {
+        console.error("An error occurred during translation:", e);
+    } finally {
+        setIsTranslating(false);
+    }
+};
 
   const handleClearTranslations = () => {
     setSchedule(prev => prev.map(item => ({...item, translations: {}})));
