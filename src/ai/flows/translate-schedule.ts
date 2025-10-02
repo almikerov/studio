@@ -9,7 +9,8 @@
  * - TranslateScheduleOutput - The return type for the translateSchedule function.
  */
 
-import { ai, z } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const TranslateScheduleInputSchema = z.object({
   descriptions: z.array(z.string()).describe('The schedule item descriptions to translate.'),
@@ -33,6 +34,7 @@ export async function translateSchedule(input: TranslateScheduleInput): Promise<
 
   const prompt = ai.definePrompt({
       name: 'scheduleTranslatorPrompt',
+      model: 'gemini-1.5-flash',
       input: { schema: TranslateScheduleInputSchema },
       output: { schema: TranslateScheduleOutputSchema },
       prompt: `Your task is to translate a list of schedule items into multiple languages.

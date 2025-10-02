@@ -9,7 +9,8 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import { ai, z } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
@@ -35,6 +36,7 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
     const prompt = ai.definePrompt({
         name: 'scheduleParserPrompt',
+        model: 'gemini-1.5-flash',
         input: { schema: ParseScheduleTextInputSchema },
         output: { schema: ParseScheduleTextOutputSchema },
         prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.

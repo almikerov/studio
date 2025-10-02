@@ -9,7 +9,8 @@
  * - TranslateTextOutput - The return type for the translateText function.
  */
 
-import { ai, z } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to translate.'),
@@ -28,6 +29,7 @@ export async function translateText(input: TranslateTextInput): Promise<Translat
 
   const prompt = ai.definePrompt({
       name: 'textTranslatorPrompt',
+      model: 'gemini-1.5-flash',
       input: { schema: TranslateTextInputSchema },
       output: { schema: TranslateTextOutputSchema },
       prompt: `You are a translation expert. You will be given a text and a list of target languages.
