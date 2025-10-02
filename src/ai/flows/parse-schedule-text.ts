@@ -36,14 +36,15 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 
 
 const parseScheduleFlow = genkit({
-    plugins: [], // Plugins will be provided dynamically
-  }).defineFlow(
+    plugins: [], // Plugins are configured dynamically below
+}).defineFlow(
     {
         name: 'parseScheduleFlow',
         inputSchema: ParseScheduleTextInputSchema,
         outputSchema: ParseScheduleTextOutputSchema,
     },
     async (input) => {
+        // Create a local Genkit instance with the provided API key for this specific call.
         const aiWithKey = genkit({
             plugins: [googleAI({ apiKey: input.apiKey })],
         });
