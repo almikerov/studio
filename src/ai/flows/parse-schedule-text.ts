@@ -9,9 +9,8 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { z } from 'zod';
-
+import { genkit, generation, z } from '@/ai/genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
@@ -35,12 +34,23 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 
 
 export async function parseScheduleFromText(input: ParseScheduleTextInput, apiKeys: string[]): Promise<ParseScheduleTextOutput> {
-  if (!apiKeys || apiKeys.length === 0) {
-    throw new Error('API key is not provided');
-  }
+    if (!apiKeys || apiKeys.length === 0) {
+        throw new Error('API key is not provided');
+    }
 
-  const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
-Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text.
+    // Configure Genkit with the provided API keys.
+    // This will cycle through keys if some of them fail.
+    genkit.config({
+        plugins: [
+            googleAI({ apiKeys: apiKeys }),
+        ],
+        logLevel: 'debug',
+        enableTracing: true,
+    });
+
+
+    const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
+Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text. The output must be in the language of the input text.
 
 - The user can provide schedule items of different types: timed events, untimed tasks, dates, comments, and headers (h1, h2, h3).
 - Extract or generate a main title for the schedule and put it in 'cardTitle'.
@@ -60,51 +70,24 @@ Your task is to identify the schedule title, events, their times, types, and oth
 
 Here is the text to parse:
 ${input.text}
+`;
 
-Return a JSON object with a 'cardTitle' and a 'schedule' array. Do not wrap the JSON in markdown.
-Example:
-Input text: "My Match Day. Dec 25, 2024. Morning session. 10am meeting in red room. 13:00 lunch. // Don't be late. Then buy tickets for the trip."
-Output JSON:
-{
-  "cardTitle": "My Match Day - Dec 25, 2024",
-  "schedule": [
-    { "type": "h1", "description": "Morning session", "time": "" },
-    { "type": "timed", "time": "10:00", "description": "Meeting", "color": "red" },
-    { "type": "timed", "time": "13:00", "description": "Lunch", "icon": "utensils" },
-    { "type": "comment", "description": "Don't be late", "time": "" },
-    { "type": "untimed", "time": "", "description": "Buy tickets for the trip", "icon": "passport" }
-  ]
-}
-
-Output JSON:`;
-
-  let lastError: any = null;
-
-  for (const apiKey of apiKeys) {
     try {
-      if (!apiKey) continue;
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const rawText = response.text();
-      
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("No JSON object found in the AI response.");
-      }
-      const jsonString = jsonMatch[0];
-      const parsedJson = JSON.parse(jsonString);
-      return ParseScheduleTextOutputSchema.parse(parsedJson);
-
-    } catch (error) {
-      const keyIdentifier = apiKey ? `...${apiKey.slice(-4)}` : 'INVALID_KEY';
-      console.warn(`API key ${keyIdentifier} failed. Trying next one.`, error);
-      lastError = error;
+        const llmResponse = await generation.generate({
+            model: 'gemini-1.5-flash',
+            prompt: prompt,
+            output: {
+                schema: ParseScheduleTextOutputSchema,
+            },
+            config: {
+                temperature: 0,
+            }
+        });
+    
+        return llmResponse.output() as ParseScheduleTextOutput;
+    } catch(e) {
+        console.error(e);
+        throw e;
     }
-  }
 
-  console.error("All API keys failed.", lastError);
-  throw new Error("AI response was not valid JSON or all API keys failed.");
 }

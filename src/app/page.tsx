@@ -462,7 +462,7 @@ export default function Home() {
             new ClipboardItem({ 'image/png': blob })
             ]);
         }, 'image/png');
-    } catch (error) {
+    } catch (err) {
         console.error("Ошибка копирования в буфер обмена: ", err);
     }
   }
