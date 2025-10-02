@@ -2,7 +2,6 @@
 export type ApiKey = {
   id: string;
   key: string;
-  isActive: boolean;
 };
 
 export type AiConfig = {
@@ -16,7 +15,12 @@ export function getAiConfig(): AiConfig {
   try {
     const stored = localStorage.getItem(AI_CONFIG_KEY);
     if (stored) {
-      return JSON.parse(stored) as AiConfig;
+      // Migration: Remove isActive property if it exists
+      const parsed = JSON.parse(stored) as AiConfig & { apiKeys: (ApiKey & { isActive?: boolean })[] };
+      if (parsed.apiKeys.some(k => 'isActive' in k)) {
+        parsed.apiKeys.forEach(k => delete k.isActive);
+      }
+      return parsed;
     }
   } catch (error) {
     console.error("Failed to load AI config from localStorage", error);
@@ -24,7 +28,7 @@ export function getAiConfig(): AiConfig {
   // Return default config
   return {
     apiKeys: [],
-    model: 'googleai/gemini-2.5-pro',
+    model: 'gemini-2.5-pro',
   };
 }
 

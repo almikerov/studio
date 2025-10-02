@@ -15,7 +15,7 @@ import { z } from 'zod';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
-  apiKey: z.string().describe('The API key for the AI service.'),
+  apiKeys: z.array(z.string()).describe('A list of API keys for the AI service to try.'),
   model: z.string().describe('The AI model to use for parsing.'),
 });
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
@@ -37,11 +37,12 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 
 
 export async function parseScheduleFromText(input: ParseScheduleTextInput): Promise<ParseScheduleTextOutput> {
-    // Local, per-request Genkit instance with user's API key
-    const ai = genkit({
-        plugins: [googleAI({ apiKey: input.apiKey })],
-    });
+    const { text, apiKeys, model } = input;
 
+    if (!apiKeys || apiKeys.length === 0) {
+        throw new Error("No API keys provided.");
+    }
+    
     const prompt = `You are an expert assistant for parsing unstructured text into a structured schedule.
 The output language must be the same as the input language. Your output MUST be a valid JSON object matching the requested schema.
 
@@ -55,21 +56,38 @@ The output language must be the same as the input language. Your output MUST be 
 - Assign 'icon' and 'color' only if they are clearly suggested in the text.
 
 Parse the following text:
-${input.text}
+${text}
 `;
-
-    const { output } = await ai.generate({
-        model: input.model,
-        prompt: prompt,
-        output: {
-            format: 'json',
-            schema: ParseScheduleTextOutputSchema,
-        },
-    });
     
-    if (!output) {
-        throw new Error("AI returned no output.");
+    let lastError: any = null;
+
+    for (const apiKey of apiKeys) {
+        try {
+            const ai = genkit({
+                plugins: [googleAI({ apiKey })],
+            });
+
+            const { output } = await ai.generate({
+                model: `googleai/${model}`,
+                prompt: prompt,
+                output: {
+                    format: 'json',
+                    schema: ParseScheduleTextOutputSchema,
+                },
+            });
+            
+            if (output) {
+                return output;
+            }
+        } catch (e) {
+            lastError = e;
+            console.warn(`API key ending in ...${apiKey.slice(-4)} failed. Trying next key.`);
+        }
     }
     
-    return output;
+    if (lastError) {
+        throw lastError;
+    }
+
+    throw new Error("AI returned no output after trying all API keys.");
 }

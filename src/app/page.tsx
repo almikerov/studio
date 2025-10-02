@@ -136,7 +136,7 @@ export default function Home() {
   const [isAiSettingsDialogOpen, setIsAiSettingsDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
-  const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: 'googleai/gemini-2.5-pro' });
+  const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: 'gemini-2.5-pro' });
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
 
@@ -307,8 +307,8 @@ export default function Home() {
 
 
   const handleTranslate = async () => {
-      const activeKey = aiConfig.apiKeys.find(k => k.isActive)?.key;
-      if (!activeKey) {
+      const apiKeys = aiConfig.apiKeys.map(k => k.key);
+      if (apiKeys.length === 0) {
           setIsAiSettingsDialogOpen(true);
           return;
       }
@@ -326,7 +326,7 @@ export default function Home() {
               const result = await translateText({
                   text: item.description,
                   targetLangs: selectedLanguages,
-                  apiKey: activeKey,
+                  apiKeys: apiKeys,
                   model: aiConfig.model,
               });
               return { id: item.id, translations: result };
@@ -562,8 +562,8 @@ export default function Home() {
   };
 
   const handleAiParse = async (text: string) => {
-    const activeKey = aiConfig.apiKeys.find(k => k.isActive)?.key;
-    if (!activeKey) {
+    const apiKeys = aiConfig.apiKeys.map(k => k.key);
+    if (apiKeys.length === 0) {
         setIsAiSettingsDialogOpen(true);
         return;
     }
@@ -573,7 +573,7 @@ export default function Home() {
     setIsMobileMenuOpen(false);
 
     try {
-        const result = await parseScheduleFromText({ text, apiKey: activeKey, model: aiConfig.model });
+        const result = await parseScheduleFromText({ text, apiKeys: apiKeys, model: aiConfig.model });
         if (result) {
             const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
                 ...item,
@@ -1126,23 +1126,14 @@ export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: {
 
     const addKey = () => {
         if (newKey && !aiConfig.apiKeys.some(k => k.key === newKey)) {
-            const newApiKeys = [...aiConfig.apiKeys, { id: `key-${Date.now()}`, key: newKey, isActive: aiConfig.apiKeys.length === 0 }];
+            const newApiKeys = [...aiConfig.apiKeys, { id: `key-${Date.now()}`, key: newKey }];
             updateAiConfig({ ...aiConfig, apiKeys: newApiKeys });
             setNewKey('');
         }
     };
 
     const deleteKey = (id: string) => {
-        const keyToDelete = aiConfig.apiKeys.find(k => k.id === id);
-        let newApiKeys = aiConfig.apiKeys.filter(k => k.id !== id);
-        if (keyToDelete?.isActive && newApiKeys.length > 0) {
-            newApiKeys[0].isActive = true;
-        }
-        updateAiConfig({ ...aiConfig, apiKeys: newApiKeys });
-    };
-
-    const setActiveKey = (id: string) => {
-        const newApiKeys = aiConfig.apiKeys.map(k => ({ ...k, isActive: k.id === id }));
+        const newApiKeys = aiConfig.apiKeys.filter(k => k.id !== id);
         updateAiConfig({ ...aiConfig, apiKeys: newApiKeys });
     };
 
@@ -1164,7 +1155,7 @@ export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: {
                     <Input 
                         value={aiConfig.model} 
                         onChange={(e) => setModel(e.target.value)}
-                        placeholder="например, googleai/gemini-2.5-pro"
+                        placeholder="например, gemini-2.5-pro"
                     />
                 </div>
 
@@ -1186,12 +1177,7 @@ export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: {
                         {aiConfig.apiKeys.length > 0 ? (
                             aiConfig.apiKeys.map((apiKey) => (
                                 <div key={apiKey.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                                    <Switch
-                                        checked={apiKey.isActive}
-                                        onCheckedChange={() => setActiveKey(apiKey.id)}
-                                        id={`switch-${apiKey.id}`}
-                                    />
-                                    <Label htmlFor={`switch-${apiKey.id}`} className="flex-1 truncate cursor-pointer">
+                                    <Label className="flex-1 truncate">
                                         {`...${apiKey.key.slice(-4)}`}
                                     </Label>
                                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteKey(apiKey.id)}>

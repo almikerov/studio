@@ -12,7 +12,7 @@ import { z } from 'zod';
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to translate.'),
   targetLangs: z.array(z.string()).describe('An array of ISO 639-1 language codes to translate the text into.'),
-  apiKey: z.string().describe('The API key for the AI service.'),
+  apiKeys: z.array(z.string()).describe('A list of API keys for the AI service to try.'),
   model: z.string().describe('The AI model to use for translation.'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
@@ -22,15 +22,15 @@ const TranslateTextOutputSchema = z.record(z.string());
 export type TranslateTextOutput = z.infer<typeof TranslateTextOutputSchema>;
 
 export async function translateText(input: TranslateTextInput): Promise<TranslateTextOutput> {
-  const { text, targetLangs, apiKey, model } = input;
+  const { text, targetLangs, apiKeys, model } = input;
 
   if (!text.trim() || targetLangs.length === 0) {
     return {};
   }
+  if (!apiKeys || apiKeys.length === 0) {
+    throw new Error("No API keys provided.");
+  }
 
-  const ai = genkit({
-    plugins: [googleAI({ apiKey })],
-  });
 
   const dynamicOutputSchema = z.object(
     targetLangs.reduce((acc, lang) => {
@@ -48,18 +48,35 @@ Original text: "${text}"
 Target languages: ${targetLangs.join(', ')}
 `;
 
-  const { output } = await ai.generate({
-    model: model,
-    prompt: prompt,
-    output: {
-      format: 'json',
-      schema: dynamicOutputSchema,
-    },
-  });
+  let lastError: any = null;
 
-  if (!output) {
-    throw new Error("AI returned no output for translation.");
+  for (const apiKey of apiKeys) {
+    try {
+      const ai = genkit({
+        plugins: [googleAI({ apiKey })],
+      });
+
+      const { output } = await ai.generate({
+        model: `googleai/${model}`,
+        prompt: prompt,
+        output: {
+          format: 'json',
+          schema: dynamicOutputSchema,
+        },
+      });
+
+      if (output) {
+        return output;
+      }
+    } catch (e) {
+      lastError = e;
+      console.warn(`API key ending in ...${apiKey.slice(-4)} failed. Trying next key.`);
+    }
   }
 
-  return output;
+  if (lastError) {
+    throw lastError;
+  }
+  
+  throw new Error("AI returned no output for translation after trying all keys.");
 }
