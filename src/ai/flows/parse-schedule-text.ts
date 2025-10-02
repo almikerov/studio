@@ -35,7 +35,7 @@ export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSche
 
 const scheduleParserPrompt = ai.definePrompt({
     name: 'scheduleParserPrompt',
-    model: 'googleai/gemini-1.5-pro-latest',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: ParseScheduleTextInputSchema },
     output: { schema: ParseScheduleTextOutputSchema },
     prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
