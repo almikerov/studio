@@ -33,19 +33,12 @@ const ParseScheduleTextOutputSchema = z.object({
 export type ParseScheduleTextOutput = z.infer<typeof ParseScheduleTextOutputSchema>;
 
 
-const scheduleParserFlow = ai.defineFlow(
-  {
-    name: 'scheduleParserFlow',
-    inputSchema: ParseScheduleTextInputSchema,
-    outputSchema: ParseScheduleTextOutputSchema,
-  },
-  async (input) => {
-    const prompt = ai.definePrompt({
-        name: 'scheduleParserPrompt',
-        model: 'gemini-1.5-flash',
-        input: { schema: ParseScheduleTextInputSchema },
-        output: { schema: ParseScheduleTextOutputSchema },
-        prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
+const prompt = ai.definePrompt({
+    name: 'scheduleParserPrompt',
+    model: 'gemini-1.5-flash',
+    input: { schema: ParseScheduleTextInputSchema },
+    output: { schema: ParseScheduleTextOutputSchema },
+    prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 Your task is to identify the schedule title, events, their times, types, and other metadata from the provided text. The output must be in the language of the input text.
 
 - The user can provide schedule items of different types: timed events, untimed tasks, dates, comments, and headers (h1, h2, h3).
@@ -65,10 +58,17 @@ Your task is to identify the schedule title, events, their times, types, and oth
 - Ignore any text that isn't a schedule item.
 
 Here is the text to parse:
-${input.text}
+{{{text}}}
 `
-    });
+});
 
+const scheduleParserFlow = ai.defineFlow(
+  {
+    name: 'scheduleParserFlow',
+    inputSchema: ParseScheduleTextInputSchema,
+    outputSchema: ParseScheduleTextOutputSchema,
+  },
+  async (input) => {
     const { output } = await prompt(input);
     return output!;
   }
