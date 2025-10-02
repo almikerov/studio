@@ -17,7 +17,6 @@ import { googleAI } from '@genkit-ai/google-genai';
 const TranslateScheduleInputSchema = z.object({
   descriptions: z.array(z.string()).describe('The schedule item descriptions to translate.'),
   targetLanguages: z.array(z.string()).describe('The target languages to translate the schedule into.'),
-  apiKeys: z.array(z.string()).optional().describe('An array of Gemini API keys to use for the request.'),
 });
 export type TranslateScheduleInput = z.infer<typeof TranslateScheduleInputSchema>;
 
@@ -46,9 +45,6 @@ const translateScheduleFlow = ai.defineFlow(
         model: 'gemini-1.5-pro',
         input: { schema: z.object({ descriptions: z.array(z.string()) }) },
         output: { schema: TranslateScheduleOutputSchema },
-        config: {
-            plugins: input.apiKeys && input.apiKeys.length > 0 ? [googleAI({ apiKeys: input.apiKeys })] : undefined,
-        },
         prompt: `Your task is to translate a list of schedule items into multiple languages.
 
 **Key vocabulary for translation:**

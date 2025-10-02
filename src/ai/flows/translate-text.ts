@@ -17,7 +17,6 @@ import { googleAI } from '@genkit-ai/google-genai';
 const TranslateTextInputSchema = z.object({
   text: z.string().describe('The text to translate.'),
   targetLanguages: z.array(z.string()).describe('The list of target languages to translate the text into.'),
-  apiKeys: z.array(z.string()).optional().describe('An array of Gemini API keys to use for the request.'),
 });
 export type TranslateTextInput = z.infer<typeof TranslateTextInputSchema>;
 
@@ -40,9 +39,6 @@ const translateTextFlow = ai.defineFlow(
             model: 'gemini-1.5-pro',
             input: { schema: z.object({ text: z.string() }) },
             output: { schema: TranslateTextOutputSchema },
-            config: {
-                plugins: input.apiKeys && input.apiKeys.length > 0 ? [googleAI({ apiKeys: input.apiKeys })] : undefined,
-            },
             prompt: `You are a translation expert. You will be given a text and a list of target languages.
 Your job is to translate the text into each of the target languages.
 Return a JSON object where the 'translations' key holds an object with language codes as keys and the translated text as values. Do not wrap the JSON in markdown.

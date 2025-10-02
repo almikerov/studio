@@ -324,7 +324,6 @@ export default function Home() {
       const result = await translateSchedule({ 
         descriptions, 
         targetLanguages: selectedLanguages,
-        apiKeys: apiKeys.map(k => k.key),
       });
       
       setSchedule(prev => prev.map(item => {
@@ -554,7 +553,7 @@ export default function Home() {
     setIsMobileMenuOpen(false);
 
     try {
-      const result = await parseScheduleFromText({ text, apiKeys: apiKeys.map(k => k.key) });
+      const result = await parseScheduleFromText({ text });
       const newScheduleItems: ScheduleItem[] = result.schedule.map(item => ({
         ...item,
         id: `${Date.now()}-${Math.random()}`,
@@ -566,7 +565,6 @@ export default function Home() {
       const translatedTitle = await translateText({
         text: newCardTitle,
         targetLanguages: ['ru'],
-        apiKeys: apiKeys.map(k => k.key),
       });
 
       setState({
@@ -1124,36 +1122,13 @@ export function ApiKeyManagerDialogContent({ apiKeys, updateApiKeys, onClose }: 
         <>
             <DialogHeader>
                 <DialogTitle>Конфигурация Gemini API</DialogTitle>
-                <DialogDescription>Добавьте и управляйте вашими API ключами. Если один ключ не сработает, приложение автоматически попробует следующий.</DialogDescription>
+                <DialogDescription>
+                  Для использования AI-функций необходим ключ Gemini API. Genkit будет автоматически использовать ключ, заданный в переменной окружения `GEMINI_API_KEY`.
+                  <br /><br />
+                  Пожалуйста, создайте файл `.env` в корневой директории вашего проекта и добавьте в него ваш ключ:
+                  <pre className="mt-2 p-2 bg-muted rounded-md text-sm"><code>GEMINI_API_KEY=ВАШ_API_КЛЮЧ</code></pre>
+                </DialogDescription>
             </DialogHeader>
-            <div className="py-4 space-y-4">
-                <div className="flex gap-2">
-                    <Input
-                        type="password"
-                        placeholder="Новый API ключ"
-                        value={newApiKey}
-                        onChange={(e) => setNewApiKey(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddKey()}
-                    />
-                    <Button onClick={handleAddKey}><Plus/></Button>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                    <Label>Сохраненные ключи</Label>
-                    {apiKeys.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">Нет ключей</p>
-                    ) : (
-                        apiKeys.map(apiKey => {
-                            if (!apiKey || !apiKey.key) return null;
-                            return (
-                                <div key={apiKey.id} className="flex items-center justify-between gap-2 p-2 border rounded-md">
-                                    <span className="font-mono text-sm truncate">...{apiKey.key.slice(-4)}</span>
-                                    <Button variant="ghost" size="icon" className="hover:text-destructive" onClick={() => handleDeleteKey(apiKey.id)}><Trash size={16}/></Button>
-                                </div>
-                            )
-                        })
-                    )}
-                </div>
-            </div>
             <DialogFooter>
                 <Button onClick={onClose}>Закрыть</Button>
             </DialogFooter>
@@ -1167,8 +1142,7 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     return (
         <>
             <DialogHeader>
-                <DialogTitle>Раскрасить расписание</DialogTitle>
-                <DialogDescription>Примените цвет к элементам вашего расписания.</DialogDescription>
+                <DialogTitle>Раскрасить расписание</DialogTitle>                <DialogDescription>Примените цвет к элементам вашего расписания.</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
                 <div className="space-y-2">

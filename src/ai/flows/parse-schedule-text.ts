@@ -16,7 +16,6 @@ import { googleAI } from '@genkit-ai/google-genai';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
-  apiKeys: z.array(z.string()).optional().describe('An array of Gemini API keys to use for the request.'),
 });
 export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
 
@@ -48,9 +47,6 @@ const scheduleParserFlow = ai.defineFlow(
         model: 'gemini-1.5-pro',
         input: { schema: z.object({ text: z.string() }) },
         output: { schema: ParseScheduleTextOutputSchema },
-        config: {
-            plugins: input.apiKeys && input.apiKeys.length > 0 ? [googleAI({ apiKeys: input.apiKeys })] : undefined,
-        },
         prompt: `You are an expert assistant for parsing unstructured text into a structured schedule.
 The output language must be the same as the input language.
 
