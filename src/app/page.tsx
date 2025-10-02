@@ -317,7 +317,7 @@ export default function Home() {
     setIsTranslating(true);
 
     const itemsToTranslate = schedule
-        .filter(item => item.description && item.type !== 'comment')
+        .filter(item => item.description)
         .map(item => ({ id: item.id, text: item.description }));
 
     if (itemsToTranslate.length === 0) {
@@ -1228,3 +1228,5 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
