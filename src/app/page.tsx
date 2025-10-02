@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -35,7 +36,7 @@ import { cn } from '@/lib/utils';
 import { useHistory } from '@/hooks/use-history';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type AiConfig, type ApiKey, getAiConfig, saveAiConfig, AVAILABLE_MODELS } from '@/ai/config';
+import { type AiConfig, type ApiKey, getAiConfig, saveAiConfig } from '@/ai/config';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -135,7 +136,7 @@ export default function Home() {
   const [isAiSettingsDialogOpen, setIsAiSettingsDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
-  const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: AVAILABLE_MODELS[0] });
+  const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: 'googleai/gemini-2.5-pro' });
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
 
 
@@ -1160,16 +1161,11 @@ export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: {
             <div className="py-4 space-y-6">
                 <div className="space-y-2">
                     <Label>Модель ИИ</Label>
-                    <Select value={aiConfig.model} onValueChange={setModel}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Выберите модель" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {AVAILABLE_MODELS.map(model => (
-                                <SelectItem key={model} value={model}>{model}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Input 
+                        value={aiConfig.model} 
+                        onChange={(e) => setModel(e.target.value)}
+                        placeholder="например, googleai/gemini-2.5-pro"
+                    />
                 </div>
 
                 <div className="space-y-4">
