@@ -402,7 +402,7 @@ export default function Home() {
             
             document.body.appendChild(clone);
 
-            // 3. Wait for the next animation frame to let the browser apply styles
+            // 3. Wait for the browser to apply styles and render
             requestAnimationFrame(() => {
                 setTimeout(async () => { // Additional timeout to ensure images are loaded
                     try {
@@ -423,7 +423,7 @@ export default function Home() {
                         document.body.removeChild(clone);
                         setIsDownloading(false);
                     }
-                }, 2000); // 2 second delay for images to load
+                }, 500); // 0.5 second delay for images to load.
             });
         });
     };
@@ -1245,3 +1245,6 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
 
     
 
+
+
+    
