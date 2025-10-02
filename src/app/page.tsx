@@ -1196,13 +1196,8 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     const [selectedColor, setSelectedColor] = useState(itemColors[0]);
 
     const handleApplySingleColor = () => {
-        onColorize('single', selectedColor);
+        onColorize('single', selectedColor === 'none' ? undefined : selectedColor);
     };
-
-    const handleClearColor = () => {
-        onColorize('single', undefined);
-    };
-
 
     return (
         <>
@@ -1219,7 +1214,7 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
                                 variant={selectedColor === 'none' ? 'secondary' : 'ghost'}
                                 size="icon"
                                 className="h-10 w-10 rounded-full"
-                                onClick={() => { setSelectedColor('none'); onColorize('single', undefined); }}
+                                onClick={() => setSelectedColor('none')}
                             >
                                 <div className="h-6 w-6 rounded-full border-2 border-dashed" />
                             </Button>
@@ -1249,3 +1244,4 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
 }
 
     
+
