@@ -203,7 +203,14 @@ export default function Home() {
   useEffect(() => {
     if (!state) return;
     try {
-        const stateToSave = { schedule, cardTitle, imageUrl, translationDisplayMode, selectedLanguages, textBlockTranslations };
+        const stateToSave = { 
+          schedule, 
+          cardTitle, 
+          // imageUrl is excluded to prevent localStorage quota errors
+          translationDisplayMode, 
+          selectedLanguages, 
+          textBlockTranslations 
+        };
         localStorage.setItem('multiScheduleState', JSON.stringify(stateToSave));
     } catch (error) {
         console.error("Failed to save state to localStorage", error);
