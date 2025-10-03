@@ -28,7 +28,7 @@ export function getAiConfig(): AiConfig {
   // Return default config
   return {
     apiKeys: [],
-    model: 'gemini-2.5-pro',
+    model: 'gemini-2.5-light',
   };
 }
 

@@ -137,7 +137,7 @@ export default function Home() {
   const [isAiSettingsDialogOpen, setIsAiSettingsDialogOpen] = useState(false);
   const [isRenderOptionsOpen, setIsRenderOptionsOpen] = useState(false);
   const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
-  const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: 'gemini-2.5-pro' });
+  const [aiConfig, setAiConfig] = useState<AiConfig>(getAiConfig());
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
@@ -380,6 +380,32 @@ export default function Home() {
     const isDarkMode = document.documentElement.classList.contains('dark');
     const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
 
+    // This is the filter that will fetch and embed images.
+    const embedImages = async (node: HTMLElement) => {
+        if (node.tagName === 'IMG') {
+            // Only process images that are not already data URIs
+            if (node.src && !node.src.startsWith('data:')) {
+                try {
+                    const response = await fetch(node.src);
+                    const blob = await response.blob();
+                    const dataUrl = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    node.src = dataUrl;
+                } catch (err) {
+                    console.error('Failed to embed image:', err);
+                    // If fetching fails, we might leave the original src or remove it.
+                    // For now, let's leave it, html-to-image might still handle it.
+                }
+            }
+        }
+    };
+    
+
+    // We can't directly modify the passed element, so we clone it.
     const clone = element.cloneNode(true) as HTMLElement;
 
     clone.classList.add('cloned-for-rendering');
@@ -391,7 +417,7 @@ export default function Home() {
             cardElement.classList.add('hide-border-on-print');
         }
     }
-
+    
     if (options.renderAsMobile) {
         clone.style.width = '420px';
         clone.classList.add('render-mobile-padding');
@@ -407,18 +433,29 @@ export default function Home() {
 
     document.body.appendChild(clone);
 
+    let blob: Blob | null = null;
     try {
-        const blob = await htmlToImage.toBlob(clone, {
-            pixelRatio: 2,
+        blob = await htmlToImage.toBlob(clone, { 
+            pixelRatio: 2, 
             backgroundColor: backgroundColor,
+            filter: (node) => {
+                // Ensure the node is an element before processing
+                if (node instanceof HTMLElement) {
+                    // Your existing filter logic to hide certain elements can go here
+                    const el = node as HTMLElement;
+                    if (el.dataset.noPrint === 'true') {
+                        return false;
+                    }
+                }
+                return true;
+            }
         });
-        return blob;
     } catch (error) {
         console.error("Error generating blob with html-to-image", error);
-        return null;
     } finally {
         document.body.removeChild(clone);
     }
+    return blob;
   };
 
   const handleDownloadImage = async (options: RenderOptions) => {
@@ -458,7 +495,25 @@ export default function Home() {
   const handlePrepareShare = async (options: RenderOptions) => {
     setIsDownloading(true);
     setLastRenderOptions(options);
-    const blob = await generateBlob(options);
+    let blob: Blob | null = null;
+    let retries = 0;
+    while (!blob && retries < 10) {
+        blob = await generateBlob(options);
+        if (!blob) {
+            retries++;
+            console.log(`Render attempt ${retries} failed, retrying...`);
+            await new Promise(resolve => setTimeout(resolve, 50));
+        } else {
+             const clonedElement = printableAreaRef.current?.cloneNode(true) as HTMLElement | undefined;
+             if (clonedElement && imageUrl && !clonedElement.querySelector(`img[src="${imageUrl}"]`)) {
+                 blob = null; // Invalidate blob if image is not there
+                 retries++;
+                 console.log(`Image not found in render attempt ${retries}, retrying...`);
+                 await new Promise(resolve => setTimeout(resolve, 50));
+                 continue;
+             }
+        }
+    }
     setIsDownloading(false);
 
     if (!blob) {
@@ -1209,7 +1264,7 @@ export function AiSettingsDialogContent({ aiConfig, updateAiConfig, onClose }: {
                 </div>
             </div>
             <DialogFooter>
-                <Button onClick={onClose}>Закрыть</Button>
+                <Button onClick={onClose}>Сохранить</Button>
             </DialogFooter>
         </>
     );
