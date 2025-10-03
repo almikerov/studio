@@ -162,11 +162,11 @@ export default function Home() {
     try {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
-        const { schedule, cardTitle, /* imageUrl is excluded */ translationDisplayMode: storedMode, selectedLanguages: storedLangs, textBlockTranslations: storedTextBlocks } = JSON.parse(storedState);
+        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode, selectedLanguages: storedLangs, textBlockTranslations: storedTextBlocks } = JSON.parse(storedState);
         setState({
             schedule: schedule || defaultSchedule,
             cardTitle: cardTitle || 'Расписание на день',
-            imageUrl: null // Always start with no image from localStorage
+            imageUrl: imageUrl || null
         }, true);
 
         if (storedMode) setTranslationDisplayMode(storedMode);
@@ -206,7 +206,7 @@ export default function Home() {
         const stateToSave = { 
           schedule, 
           cardTitle, 
-          // imageUrl is excluded to prevent localStorage quota errors
+          imageUrl,
           translationDisplayMode, 
           selectedLanguages, 
           textBlockTranslations 
@@ -382,12 +382,6 @@ export default function Home() {
 
     const clone = element.cloneNode(true) as HTMLElement;
 
-    // Check if the image exists in the clone if an imageUrl is provided
-    if (imageUrl && !clone.querySelector('img[data-id="schedule-image"]')) {
-        console.warn("Image not found in cloned element, retrying...");
-        return null; // Indicates failure, so the calling function can retry
-    }
-
     clone.classList.add('cloned-for-rendering');
     if (options.withShadow) {
         clone.style.border = '20px solid transparent';
@@ -417,32 +411,6 @@ export default function Home() {
         const blob = await htmlToImage.toBlob(clone, {
             pixelRatio: 2,
             backgroundColor: backgroundColor,
-            filter: (node) => {
-                // Do not transfrom data URIs
-                if (node instanceof HTMLImageElement && node.src.startsWith('data:')) {
-                    return true;
-                }
-
-                // If image has a src, fetch it and convert to data URI
-                if (node instanceof HTMLImageElement && node.src) {
-                    return new Promise(async (resolve) => {
-                        try {
-                            const response = await fetch(node.src);
-                            const blob = await response.blob();
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                                node.src = reader.result as string;
-                                resolve(true);
-                            };
-                            reader.onerror = () => resolve(false);
-                            reader.readAsDataURL(blob);
-                        } catch (e) {
-                            resolve(false);
-                        }
-                    });
-                }
-                return true;
-            }
         });
         return blob;
     } catch (error) {
@@ -490,17 +458,7 @@ export default function Home() {
   const handlePrepareShare = async (options: RenderOptions) => {
     setIsDownloading(true);
     setLastRenderOptions(options);
-    let blob: Blob | null = null;
-    
-    // Retry mechanism
-    for (let i = 0; i < 10; i++) {
-        blob = await generateBlob(options);
-        if (blob) {
-            break; // Success
-        }
-        // Wait a bit before retrying
-        await new Promise(resolve => setTimeout(resolve, 200 * (i + 1)));
-    }
+    const blob = await generateBlob(options);
     setIsDownloading(false);
 
     if (!blob) {
@@ -1307,6 +1265,8 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
 
     
 
