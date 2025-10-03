@@ -322,6 +322,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                             <DialogTrigger asChild>
                                 <Button variant="ghost" className="p-0 h-auto w-auto cursor-pointer">
                                     <Image
+                                        data-id="schedule-image"
                                         src={imageUrl}
                                         alt="Schedule image"
                                         width={isRenderMobile ? 40 : 96}

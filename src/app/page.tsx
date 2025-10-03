@@ -141,6 +141,7 @@ export default function Home() {
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [lastRenderOptions, setLastRenderOptions] = useState<RenderOptions | null>(null);
 
 
   const setSchedule = (updater: (prev: ScheduleItem[]) => ScheduleItem[], overwriteHistory = false) => {
@@ -370,31 +371,10 @@ export default function Home() {
     setTextBlockTranslations({});
   };
   
-  const imageFilter = async (node: HTMLElement): Promise<boolean> => {
-      if (node instanceof HTMLImageElement && node.src && !node.src.startsWith('data:')) {
-          try {
-              const response = await fetch(node.src);
-              const blob = await response.blob();
-              const dataUrl = await new Promise<string>((resolve, reject) => {
-                  const reader = new FileReader();
-                  reader.onloadend = () => resolve(reader.result as string);
-                  reader.onerror = reject;
-                  reader.readAsDataURL(blob);
-              });
-              node.srcset = '';
-              node.src = dataUrl;
-          } catch (e) {
-              console.error('Failed to fetch and convert image', e);
-          }
-      }
-      return true;
-  }
-
-
   const generateBlob = async (options: RenderOptions): Promise<Blob | null> => {
     const element = printableAreaRef.current;
     if (!element) {
-      return null;
+        return null;
     }
 
     const isDarkMode = document.documentElement.classList.contains('dark');
@@ -403,29 +383,29 @@ export default function Home() {
     const clone = element.cloneNode(true) as HTMLElement;
 
     // Check if the image exists in the clone if an imageUrl is provided
-    if (imageUrl && !clone.querySelector('img[src="'+imageUrl+'"]')) {
+    if (imageUrl && !clone.querySelector('img[data-id="schedule-image"]')) {
         console.warn("Image not found in cloned element, retrying...");
         return null; // Indicates failure, so the calling function can retry
     }
-    
+
     clone.classList.add('cloned-for-rendering');
     if (options.withShadow) {
-      clone.style.border = '20px solid transparent';
+        clone.style.border = '20px solid transparent';
     } else {
-      const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
-      if (cardElement) {
-        cardElement.classList.add('hide-border-on-print');
-      }
+        const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+        if (cardElement) {
+            cardElement.classList.add('hide-border-on-print');
+        }
     }
 
     if (options.renderAsMobile) {
-      clone.style.width = '420px';
-      clone.classList.add('render-mobile-padding');
+        clone.style.width = '420px';
+        clone.classList.add('render-mobile-padding');
     } else if (options.fitContent) {
-      clone.style.width = 'auto';
-      clone.style.display = 'inline-block';
+        clone.style.width = 'auto';
+        clone.style.display = 'inline-block';
     } else {
-      clone.style.width = `${element.offsetWidth}px`;
+        clone.style.width = `${element.offsetWidth}px`;
     }
 
     clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
@@ -434,24 +414,48 @@ export default function Home() {
     document.body.appendChild(clone);
 
     try {
-      const blob = await htmlToImage.toBlob(clone, {
-        pixelRatio: 2,
-        backgroundColor: backgroundColor,
-        filter: imageFilter,
-        cacheBust: true,
-      });
-      return blob;
+        const blob = await htmlToImage.toBlob(clone, {
+            pixelRatio: 2,
+            backgroundColor: backgroundColor,
+            filter: (node) => {
+                // Do not transfrom data URIs
+                if (node instanceof HTMLImageElement && node.src.startsWith('data:')) {
+                    return true;
+                }
+
+                // If image has a src, fetch it and convert to data URI
+                if (node instanceof HTMLImageElement && node.src) {
+                    return new Promise(async (resolve) => {
+                        try {
+                            const response = await fetch(node.src);
+                            const blob = await response.blob();
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                node.src = reader.result as string;
+                                resolve(true);
+                            };
+                            reader.onerror = () => resolve(false);
+                            reader.readAsDataURL(blob);
+                        } catch (e) {
+                            resolve(false);
+                        }
+                    });
+                }
+                return true;
+            }
+        });
+        return blob;
     } catch (error) {
-      console.error("Error generating blob with html-to-image", error);
-      return null;
+        console.error("Error generating blob with html-to-image", error);
+        return null;
     } finally {
-      document.body.removeChild(clone);
+        document.body.removeChild(clone);
     }
   };
 
-
   const handleDownloadImage = async (options: RenderOptions) => {
     setIsDownloading(true);
+    setLastRenderOptions(options);
     const blob = await generateBlob(options);
     setIsDownloading(false);
     if (!blob) return;
@@ -465,6 +469,7 @@ export default function Home() {
 
   const handleCopyImage = async (options: RenderOptions) => {
     setIsDownloading(true);
+    setLastRenderOptions(options);
     const blob = await generateBlob(options);
     setIsDownloading(false);
     if (!blob) {
@@ -484,7 +489,9 @@ export default function Home() {
 
   const handlePrepareShare = async (options: RenderOptions) => {
     setIsDownloading(true);
+    setLastRenderOptions(options);
     let blob: Blob | null = null;
+    
     // Retry mechanism
     for (let i = 0; i < 10; i++) {
         blob = await generateBlob(options);
@@ -776,8 +783,8 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             isLoading={isLoading}
             isTranslating={isTranslating}
             isDownloading={isDownloading}
-            onDownload={() => openRenderOptions(handleDownloadImage)}
-            onCopy={() => openRenderOptions(handleCopyImage)}
+            onDownload={() => openRenderOptions((options) => handleDownloadImage({ ...options, withShadow: true }))}
+            onCopy={() => openRenderOptions((options) => handleCopyImage({ ...options, withShadow: false }))}
             savedTemplates={savedTemplates}
             onLoadTemplate={handleLoadTemplate}
             onDeleteTemplate={handleDeleteTemplate}
@@ -1151,11 +1158,18 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
               <DialogDescription>Ваше изображение готово для отправки.</DialogDescription>
             </DialogHeader>
             <div className="py-4">
-              {shareImageUrl && <Image src={shareImageUrl} alt="Preview" width={400} height={400} className="w-full h-auto rounded-md" />}
+              {isDownloading ? (
+                  <div className="flex items-center justify-center h-48">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+              ) : (
+                shareImageUrl && <Image src={shareImageUrl} alt="Preview" width={400} height={400} className="w-full h-auto rounded-md" />
+              )}
             </div>
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setShareImageBlob(null)}>Отмена</Button>
-              <Button onClick={executeShare}>Поделиться</Button>
+              <Button variant="secondary" onClick={() => { if (lastRenderOptions) handlePrepareShare(lastRenderOptions) }}>Нет картинки</Button>
+              <Button onClick={executeShare} disabled={isDownloading}>Поделиться</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
