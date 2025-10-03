@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -1176,7 +1177,11 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
                     <Loader2 className="h-8 w-8 animate-spin" />
                   </div>
               ) : (
-                shareImageUrl && <Image src={shareImageUrl} alt="Preview" width={400} height={400} className="w-full h-auto rounded-md" />
+                shareImageUrl && (
+                  <div className="overflow-y-auto max-h-[60vh] rounded-md">
+                    <Image src={shareImageUrl} alt="Preview" width={400} height={400} className="w-full h-auto" />
+                  </div>
+                )
               )}
             </div>
             <DialogFooter className="gap-2">
@@ -1326,3 +1331,4 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
     
 
     
+
