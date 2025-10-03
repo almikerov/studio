@@ -38,6 +38,7 @@ import { useHistory } from '@/hooks/use-history';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AiConfig, type ApiKey, getAiConfig, saveAiConfig } from '@/ai/config';
+import Image from 'next/image';
 
 
 export const AVAILABLE_LANGUAGES = [
@@ -139,6 +140,8 @@ export default function Home() {
   const [renderAction, setRenderAction] = useState<((options: Omit<RenderOptions, 'withShadow'>) => void) | null>(null);
   const [aiConfig, setAiConfig] = useState<AiConfig>({ apiKeys: [], model: 'gemini-2.5-pro' });
   const [isColorizeOpen, setIsColorizeOpen] = useState(false);
+  const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
 
 
   const setSchedule = (updater: (prev: ScheduleItem[]) => ScheduleItem[], overwriteHistory = false) => {
@@ -361,152 +364,137 @@ export default function Home() {
     setTextBlockTranslations({});
   };
   
-    const generateCanvas = (options: RenderOptions): Promise<HTMLCanvasElement> => {
-        return new Promise(async (resolve, reject) => {
-            const element = printableAreaRef.current;
-            if (!element) {
-                return reject(new Error("Printable area not found"));
-            }
+  const generateBlob = async (options: RenderOptions): Promise<Blob | null> => {
+    const element = printableAreaRef.current;
+    if (!element) {
+      return null;
+    }
 
-            setIsDownloading(true);
+    setIsDownloading(true);
 
-            const isDarkMode = document.documentElement.classList.contains('dark');
-            const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
 
-            // 1. Create a clone of the node
-            const clone = element.cloneNode(true) as HTMLElement;
-            clone.classList.add('cloned-for-rendering');
-            
-            // 2. Apply styles for rendering
-            if (options.withShadow) {
-                clone.style.border = '20px solid transparent';
-            } else {
-                const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
-                if (cardElement) {
-                    cardElement.classList.add('hide-border-on-print');
-                }
-            }
-            
-            if (options.renderAsMobile) {
-                clone.style.width = '420px'; 
-                clone.classList.add('render-mobile-padding');
-            } else if (options.fitContent) {
-                clone.style.width = 'auto';
-                clone.style.display = 'inline-block';
-            } else {
-                clone.style.width = `${element.offsetWidth}px`;
-            }
+    const clone = element.cloneNode(true) as HTMLElement;
+    clone.classList.add('cloned-for-rendering');
 
-            clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
-            clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
-            
-            document.body.appendChild(clone);
+    if (options.withShadow) {
+      clone.style.border = '20px solid transparent';
+    } else {
+      const cardElement = clone.querySelector('.shadow-lg.sm\\:border');
+      if (cardElement) {
+        cardElement.classList.add('hide-border-on-print');
+      }
+    }
 
-            // 3. Wait for the browser to apply styles and render
-            requestAnimationFrame(() => {
-                setTimeout(async () => { // Additional timeout to ensure images are loaded
-                    try {
-                        const canvas = await htmlToImage.toCanvas(clone, {
-                            pixelRatio: 2,
-                            backgroundColor: backgroundColor,
-                            fetchRequestInit: {
-                                mode: 'cors',
-                                cache: 'no-cache'
-                            }
-                        });
-                        resolve(canvas);
-                    } catch (error) {
-                        console.error("Error generating canvas with html-to-image", error);
-                        reject(error);
-                    } finally {
-                        // 4. Clean up
-                        document.body.removeChild(clone);
-                        setIsDownloading(false);
-                    }
-                }, 500); // 0.5 second delay for images to load.
-            });
-        });
-    };
+    if (options.renderAsMobile) {
+      clone.style.width = '420px';
+      clone.classList.add('render-mobile-padding');
+    } else if (options.fitContent) {
+      clone.style.width = 'auto';
+      clone.style.display = 'inline-block';
+    } else {
+      clone.style.width = `${element.offsetWidth}px`;
+    }
 
+    clone.querySelectorAll('[data-no-print="true"]').forEach(el => (el as HTMLElement).style.display = 'none');
+    clone.querySelectorAll('[data-make-invisible]').forEach(el => (el as HTMLElement).style.visibility = 'hidden');
 
-  const handleDownloadImage = async (options: RenderOptions) => {
+    document.body.appendChild(clone);
+
     try {
-        const canvas = await generateCanvas(options);
-        if (!canvas) return;
-        
-        const link = document.createElement('a');
-        link.download = 'multischedule.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+      const blob = await htmlToImage.toBlob(clone, {
+        pixelRatio: 2,
+        backgroundColor: backgroundColor,
+        cacheBust: true,
+      });
+      return blob;
     } catch (error) {
-        console.error("Download failed:", error);
+      console.error("Error generating blob with html-to-image", error);
+      return null;
+    } finally {
+      document.body.removeChild(clone);
+      setIsDownloading(false);
     }
   };
 
-  const handleCopyImage = async (options: RenderOptions) => {
-    try {
-        const canvas = await generateCanvas(options);
-        if (!canvas) return;
 
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-            throw new Error('Не удалось создать blob из canvas');
-            }
-            window.focus(); // Ensure document is focused before clipboard write
-            await navigator.clipboard.write([
+  const handleDownloadImage = async (options: RenderOptions) => {
+    const blob = await generateBlob(options);
+    if (!blob) return;
+
+    const link = document.createElement('a');
+    link.download = 'multischedule.png';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const handleCopyImage = async (options: RenderOptions) => {
+    const blob = await generateBlob(options);
+    if (!blob) {
+      console.error('Не удалось создать blob из canvas');
+      return;
+    }
+    
+    try {
+        window.focus();
+        await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob })
-            ]);
-        }, 'image/png');
+        ]);
     } catch (err) {
         console.error("Ошибка копирования в буфер обмена: ", err);
     }
   }
 
-  const handleShareImage = async (options: RenderOptions) => {
-    try {
-      const canvas = await generateCanvas(options);
-      if (!canvas) {
-        throw new Error('Canvas generation failed');
+  const handlePrepareShare = async (options: RenderOptions) => {
+    const blob = await generateBlob(options);
+    if (!blob) {
+      return;
+    }
+    setShareImageBlob(blob);
+
+    // Create a temporary URL for preview
+    const url = URL.createObjectURL(blob);
+    setShareImageUrl(url);
+  };
+  
+  const executeShare = async () => {
+    if (!shareImageBlob) return;
+  
+    const file = new File([shareImageBlob], "multischedule.png", { type: "image/png" });
+    const filesArray = [file];
+  
+    if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+      try {
+        await navigator.share({
+          files: filesArray,
+          title: 'Мое расписание',
+          text: cardTitle,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Не удалось отправить картинку:', error);
+        }
       }
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          console.error('Не удалось создать blob из canvas');
-          return;
-        }
-
-        const file = new File([blob], "multischedule.png", { type: "image/png" });
-        const filesArray = [file];
-
-        if (navigator.canShare && navigator.canShare({ files: filesArray })) {
-          try {
-            await navigator.share({
-              files: filesArray,
-              title: 'Мое расписание',
-              text: cardTitle,
-            });
-            console.log('Успешно отправлено!');
-          } catch (error) {
-            if ((error as Error).name !== 'AbortError') {
-              console.error('Не удалось отправить картинку:', error);
-            }
-          }
-        } else {
-          console.log("Этот браузер не поддерживает шаринг файлов.");
-          // Fallback: download the image
-          const link = document.createElement('a');
-          link.download = 'multischedule.png';
-          link.href = URL.createObjectURL(blob);
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
-      }, 'image/png');
-
-    } catch (error) {
-      console.error('Не удалось создать или отправить картинку:', error);
+    } else {
+        // Fallback for browsers that can't share files
+        const link = document.createElement('a');
+        link.download = 'multischedule.png';
+        link.href = URL.createObjectURL(shareImageBlob);
+        link.click();
+        URL.revokeObjectURL(link.href);
     }
   };
 
+  useEffect(() => {
+    // Clean up the object URL when the component unmounts or the share dialog is closed
+    return () => {
+      if (shareImageUrl) {
+        URL.revokeObjectURL(shareImageUrl);
+      }
+    };
+  }, [shareImageUrl]);
 
   const handleSaveEvent = (eventData: Partial<ScheduleItem>) => {
     const { description, type } = eventData;
@@ -892,7 +880,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
 
                       <div>
                         <h3 className="mb-2 font-semibold text-sm text-muted-foreground px-2">Экспорт</h3>
-                        <Button onClick={() => openRenderOptions((options) => handleShareImage({ ...options, withShadow: false }))} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
+                        <Button onClick={() => openRenderOptions((options) => handlePrepareShare({ ...options, withShadow: false }))} variant="ghost" className="justify-start w-full" disabled={isDownloading}>
                           {isDownloading ? <Loader2 className="mr-2 animate-spin" /> : <Share className="mr-2" />}
                           Поделиться...
                         </Button>
@@ -1109,6 +1097,23 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
               </div>
           </DialogContent>
         </Dialog>
+        
+        <Dialog open={!!shareImageBlob} onOpenChange={(open) => { if (!open) setShareImageBlob(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Поделиться изображением</DialogTitle>
+              <DialogDescription>Ваше изображение готово для отправки.</DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              {shareImageUrl && <Image src={shareImageUrl} alt="Preview" width={400} height={400} className="w-full h-auto rounded-md" />}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShareImageBlob(null)}>Отмена</Button>
+              <Button onClick={executeShare}>Поделиться</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </main>
   );
@@ -1242,9 +1247,3 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
-
-    
-
-
-
-    
