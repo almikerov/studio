@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -162,11 +161,11 @@ export default function Home() {
     try {
       const storedState = localStorage.getItem('multiScheduleState');
       if (storedState) {
-        const { schedule, cardTitle, imageUrl, translationDisplayMode: storedMode, selectedLanguages: storedLangs, textBlockTranslations: storedTextBlocks } = JSON.parse(storedState);
+        const { schedule, cardTitle, /* imageUrl is excluded */ translationDisplayMode: storedMode, selectedLanguages: storedLangs, textBlockTranslations: storedTextBlocks } = JSON.parse(storedState);
         setState({
             schedule: schedule || defaultSchedule,
             cardTitle: cardTitle || 'Расписание на день',
-            imageUrl: imageUrl || null
+            imageUrl: null // Always start with no image from localStorage
         }, true);
 
         if (storedMode) setTranslationDisplayMode(storedMode);
@@ -371,6 +370,25 @@ export default function Home() {
     setTextBlockTranslations({});
   };
   
+  const imageFilter = async (node: HTMLElement): Promise<void> => {
+      if (node instanceof HTMLImageElement && node.src && !node.src.startsWith('data:')) {
+          try {
+              const response = await fetch(node.src, { mode: 'cors' });
+              const blob = await response.blob();
+              const dataUrl = await new Promise<string>((resolve) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resolve(reader.result as string);
+                  reader.readAsDataURL(blob);
+              });
+              node.srcset = '';
+              node.src = dataUrl;
+          } catch (e) {
+              console.error('Failed to fetch and convert image', e);
+          }
+      }
+  }
+
+
   const generateBlob = async (options: RenderOptions): Promise<Blob | null> => {
     const element = printableAreaRef.current;
     if (!element) {
@@ -413,7 +431,7 @@ export default function Home() {
       const blob = await htmlToImage.toBlob(clone, {
         pixelRatio: 2,
         backgroundColor: backgroundColor,
-        cacheBust: true,
+        filter: imageFilter,
       });
       return blob;
     } catch (error) {
@@ -1114,7 +1132,7 @@ const handleRemoveLanguageFromTextBlock = (lang: string) => {
             <div className="py-4">
               {shareImageUrl && <Image src={shareImageUrl} alt="Preview" width={400} height={400} className="w-full h-auto rounded-md" />}
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setShareImageBlob(null)}>Отмена</Button>
               <Button onClick={executeShare}>Поделиться</Button>
             </DialogFooter>
@@ -1254,3 +1272,7 @@ export function ColorizeDialogContent({ onColorize, itemColors }: { onColorize: 
         </>
     );
 }
+
+    
+
+    
