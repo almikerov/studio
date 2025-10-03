@@ -370,14 +370,15 @@ export default function Home() {
     setTextBlockTranslations({});
   };
   
-  const imageFilter = async (node: HTMLElement): Promise<void> => {
+  const imageFilter = async (node: HTMLElement): Promise<boolean> => {
       if (node instanceof HTMLImageElement && node.src && !node.src.startsWith('data:')) {
           try {
-              const response = await fetch(node.src, { mode: 'cors' });
+              const response = await fetch(node.src);
               const blob = await response.blob();
-              const dataUrl = await new Promise<string>((resolve) => {
+              const dataUrl = await new Promise<string>((resolve, reject) => {
                   const reader = new FileReader();
                   reader.onloadend = () => resolve(reader.result as string);
+                  reader.onerror = reject;
                   reader.readAsDataURL(blob);
               });
               node.srcset = '';
@@ -386,6 +387,7 @@ export default function Home() {
               console.error('Failed to fetch and convert image', e);
           }
       }
+      return true;
   }
 
 
@@ -395,14 +397,18 @@ export default function Home() {
       return null;
     }
 
-    setIsDownloading(true);
-
     const isDarkMode = document.documentElement.classList.contains('dark');
     const backgroundColor = isDarkMode ? '#09090b' : '#ffffff';
 
     const clone = element.cloneNode(true) as HTMLElement;
-    clone.classList.add('cloned-for-rendering');
 
+    // Check if the image exists in the clone if an imageUrl is provided
+    if (imageUrl && !clone.querySelector('img[src="'+imageUrl+'"]')) {
+        console.warn("Image not found in cloned element, retrying...");
+        return null; // Indicates failure, so the calling function can retry
+    }
+    
+    clone.classList.add('cloned-for-rendering');
     if (options.withShadow) {
       clone.style.border = '20px solid transparent';
     } else {
@@ -432,6 +438,7 @@ export default function Home() {
         pixelRatio: 2,
         backgroundColor: backgroundColor,
         filter: imageFilter,
+        cacheBust: true,
       });
       return blob;
     } catch (error) {
@@ -439,13 +446,14 @@ export default function Home() {
       return null;
     } finally {
       document.body.removeChild(clone);
-      setIsDownloading(false);
     }
   };
 
 
   const handleDownloadImage = async (options: RenderOptions) => {
+    setIsDownloading(true);
     const blob = await generateBlob(options);
+    setIsDownloading(false);
     if (!blob) return;
 
     const link = document.createElement('a');
@@ -456,7 +464,9 @@ export default function Home() {
   };
 
   const handleCopyImage = async (options: RenderOptions) => {
+    setIsDownloading(true);
     const blob = await generateBlob(options);
+    setIsDownloading(false);
     if (!blob) {
       console.error('Не удалось создать blob из canvas');
       return;
@@ -473,13 +483,25 @@ export default function Home() {
   }
 
   const handlePrepareShare = async (options: RenderOptions) => {
-    const blob = await generateBlob(options);
+    setIsDownloading(true);
+    let blob: Blob | null = null;
+    // Retry mechanism
+    for (let i = 0; i < 10; i++) {
+        blob = await generateBlob(options);
+        if (blob) {
+            break; // Success
+        }
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 200 * (i + 1)));
+    }
+    setIsDownloading(false);
+
     if (!blob) {
-      return;
+        console.error("Failed to generate image blob after multiple attempts.");
+        return;
     }
     setShareImageBlob(blob);
 
-    // Create a temporary URL for preview
     const url = URL.createObjectURL(blob);
     setShareImageUrl(url);
   };
@@ -522,13 +544,12 @@ export default function Home() {
   }, [shareImageUrl]);
 
   const handleSaveEvent = (eventData: Partial<ScheduleItem>) => {
-    const { description, type } = eventData;
   
-    if (!description) {
+    if (!eventData.description) {
       return;
     }
   
-    if (savedEvents.some(e => e.description.toLowerCase() === description.toLowerCase())) {
+    if (savedEvents.some(e => e.description.toLowerCase() === eventData.description!.toLowerCase())) {
       return;
     }
   
