@@ -66,12 +66,11 @@ export const EditableField = ({
   };
   
   const handleClick = (e: React.MouseEvent) => {
-    if (isMobile) return;
     e.stopPropagation();
     setIsEditing(true);
   }
 
-  if (isEditing && !isMobile) {
+  if (isEditing) {
     if (isTextarea) {
         return <Textarea
             ref={textareaRef}
@@ -98,5 +97,5 @@ export const EditableField = ({
     />
   }
 
-  return <Component onClick={handleClick} className={`${className} ${!isMobile ? 'cursor-pointer' : ''} min-h-[1em]`} {...props}>{value || placeholder}</Component>
+  return <Component onClick={handleClick} className={`${className} cursor-pointer min-h-[1em]`} {...props}>{value || placeholder}</Component>
 }
