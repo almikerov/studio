@@ -15,7 +15,6 @@ interface EditableFieldProps {
   isTextarea?: boolean;
   isMobile?: boolean | undefined;
   'data-id'?: string;
-  disableEditing?: boolean;
 }
 
 export const EditableField = ({ 
@@ -26,8 +25,6 @@ export const EditableField = ({
     inputType = 'text',
     placeholder,
     isTextarea = false,
-    isMobile,
-    disableEditing = false,
     ...props
 }: EditableFieldProps) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -69,7 +66,6 @@ export const EditableField = ({
   
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (disableEditing) return;
     setIsEditing(true);
   }
 
@@ -100,5 +96,5 @@ export const EditableField = ({
     />
   }
 
-  return <Component onClick={handleClick} className={`${className} ${!disableEditing ? 'cursor-pointer' : ''} min-h-[1em]`} {...props}>{value || placeholder}</Component>
+  return <Component onClick={handleClick} className={`${className} cursor-pointer min-h-[1em]`} {...props}>{value || placeholder}</Component>
 }

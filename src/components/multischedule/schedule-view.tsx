@@ -69,7 +69,7 @@ export function ScheduleView({
   const isRenderMobile = renderOptions?.renderAsMobile ?? isMobile;
 
   useEffect(() => {
-    if (editingEvent) { // For mobile modal
+    if (editingEvent) {
         setEditedTime(editingEvent.time);
         setEditedDescription(editingEvent.description || '');
         setEditedTranslations(editingEvent.translations || {});
@@ -82,9 +82,7 @@ export function ScheduleView({
 
   
   const handleEdit = (item: ScheduleItem) => {
-    if (isMobile) {
-      handleOpenEditModal(item);
-    }
+    handleOpenEditModal(item);
   };
 
   const handleSave = (id: string) => {
@@ -96,9 +94,7 @@ export function ScheduleView({
       translations: editedTranslations,
     });
     
-    if (isMobile) {
-      handleCloseEditModal();
-    }
+    handleCloseEditModal();
   };
 
   const handleTranslationChange = (id: string, lang: string, text: string) => {
@@ -130,7 +126,7 @@ export function ScheduleView({
 
     onUpdateEvent(id, updatePayload);
     
-    if (isMobile && editingEvent?.id === id) {
+    if (editingEvent?.id === id) {
         setEditedType(type);
     }
   };
@@ -149,7 +145,6 @@ export function ScheduleView({
         handleCloseEditModal();
     };
 
-    const isRegularEvent = ['timed', 'untimed'].includes(editedType);
     const isTranslatable = ['timed', 'untimed', 'h1', 'h2', 'h3', 'comment', 'date'].includes(editedType);
 
 
@@ -215,49 +210,33 @@ export function ScheduleView({
             {/* Date specific inputs */}
             {editedType === 'date' && (
               <div className="space-y-2">
-                {isMobile ? (
-                    <Input
-                        type="date"
-                        value={editedDate ? format(editedDate, 'yyyy-MM-dd') : ''}
-                        onChange={(e) => {
-                            const newDate = new Date(e.target.value);
-                            // Adjust for timezone offset
-                            const timezoneOffset = newDate.getTimezoneOffset() * 60000;
-                            const adjustedDate = new Date(newDate.getTime() + timezoneOffset);
-                            setEditedDate(adjustedDate);
-                            onUpdateEvent(item.id, { date: adjustedDate.toISOString() });
-                        }}
-                        className="w-full text-lg h-12"
-                    />
-                ) : (
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !editedDate && "text-muted-foreground"
-                                )}
-                            >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {editedDate ? format(editedDate, "dd.MM.yyyy", { locale: ru }) : <span>Выберите дату</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                             <Calendar
-                                mode="single"
-                                selected={editedDate}
-                                onSelect={(date) => {
-                                    setEditedDate(date);
-                                    if (date) {
-                                        onUpdateEvent(item.id, { date: date.toISOString() });
-                                    }
-                                }}
-                                initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                )}
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !editedDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {editedDate ? format(editedDate, "dd.MM.yyyy", { locale: ru }) : <span>Выберите дату</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                         <Calendar
+                            mode="single"
+                            selected={editedDate}
+                            onSelect={(date) => {
+                                setEditedDate(date);
+                                if (date) {
+                                    onUpdateEvent(item.id, { date: date.toISOString() });
+                                }
+                            }}
+                            initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
               </div>
             )}
 
@@ -363,8 +342,8 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          'group/item flex items-center gap-2 p-2 rounded-md',
-                          isMobile ? 'cursor-pointer' : 'hover:bg-secondary/50',
+                          'group/item flex items-center gap-2 p-2 rounded-md cursor-pointer',
+                          'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
@@ -398,28 +377,11 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                             {item.type === 'comment' ? (
                                 <div className="flex-1 flex flex-col">
                                     <div className='flex items-center gap-2 w-full'>
-                                        <EditableField
-                                            disableEditing={!isMobile}
-                                            isMobile={isMobile}
-                                            value={item.description}
-                                            setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                            className={cn("text-card-foreground text-sm italic text-muted-foreground", !item.description && "w-full")}
-                                            isTextarea={true}
-                                            data-id="description"
-                                        />
+                                        <p className="text-card-foreground text-sm italic text-muted-foreground">{item.description}</p>
                                         {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                             <div className="flex items-center text-muted-foreground text-sm italic">
-                                                ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text], idx) => (
-                                                  <EditableField
-                                                      key={lang}
-                                                      disableEditing={!isMobile}
-                                                      isMobile={isMobile}
-                                                      value={text}
-                                                      setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                      className="inline"
-                                                      as="span"
-                                                      isTextarea={true}
-                                                  />
+                                                ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
+                                                  <span key={lang}>{text}</span>
                                                 )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                             </div>
                                         )}
@@ -427,16 +389,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm italic text-muted-foreground mt-1 flex flex-col">
                                             {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
-                                              <EditableField
-                                                  key={lang}
-                                                  disableEditing={!isMobile}
-                                                  isMobile={isMobile}
-                                                  value={text}
-                                                  setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                  className="w-full"
-                                                  as="div"
-                                                  isTextarea={true}
-                                              />
+                                              <div key={lang}>{text}</div>
                                             ))}
                                         </div>
                                     )}
@@ -444,44 +397,16 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                             ) : item.type === 'date' && item.date ? (
                                 <div className="flex flex-col flex-1">
                                     <div className="flex items-center gap-2 w-full">
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button variant="ghost" className="font-semibold text-lg text-muted-foreground p-0 h-auto">
-                                                    {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={new Date(item.date)}
-                                                    onSelect={(date) => date && onUpdateEvent(item.id, { date: date.toISOString() })}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
+                                        <div className="font-semibold text-lg text-muted-foreground p-0 h-auto">
+                                            {format(new Date(item.date), 'dd.MM.yyyy', { locale: ru })}
+                                        </div>
                                         <div className="flex-1 flex flex-col w-full">
                                             <div className="flex items-center gap-2">
-                                                <EditableField
-                                                    disableEditing={!isMobile}
-                                                    isMobile={isMobile}
-                                                    value={item.description || ''}
-                                                    setValue={(val) => onUpdateEvent(item.id, { description: val })}
-                                                    className={cn("text-base font-normal text-muted-foreground", !item.description && "w-full")}
-                                                    isTextarea={true}
-                                                />
+                                                <p className="text-base font-normal text-muted-foreground">{item.description || ''}</p>
                                                 {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                     <span className="text-muted-foreground text-base font-normal">
                                                         ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
-                                                            <EditableField
-                                                                key={lang}
-                                                                disableEditing={!isMobile}
-                                                                isMobile={isMobile}
-                                                                value={text}
-                                                                setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                                className="inline"
-                                                                as="span"
-                                                                isTextarea={true}
-                                                            />
+                                                            <span key={lang}>{text}</span>
                                                         )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                                     </span>
                                                 )}
@@ -489,16 +414,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                              {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <div className="text-sm text-muted-foreground mt-1 flex flex-col">
                                                     {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
-                                                      <EditableField
-                                                          key={lang}
-                                                          disableEditing={!isMobile}
-                                                          isMobile={isMobile}
-                                                          value={text}
-                                                          setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                          className="w-full"
-                                                          as="div"
-                                                          isTextarea={true}
-                                                      />
+                                                      <div key={lang}>{text}</div>
                                                     ))}
                                                 </div>
                                             )}
@@ -509,35 +425,17 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                             ) : item.type === 'h1' || item.type === 'h2' || item.type === 'h3' ? (
                                 <div className="flex-1 flex flex-col">
                                   <div className="flex items-center gap-2 w-full">
-                                    <EditableField 
-                                      disableEditing={!isMobile}
-                                      isMobile={isMobile}
-                                      as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
-                                      className={cn(
+                                    <div className={cn(
                                           'font-bold',
-                                          !item.description && 'w-full',
                                           item.type === 'h1' && 'text-xl',
                                           item.type === 'h2' && 'text-lg',
                                           item.type === 'h3' && 'text-base'
                                       )}
-                                      value={item.description} 
-                                      setValue={(val) => onUpdateEvent(item.id, {description: val})} 
-                                      data-id="description"
-                                      isTextarea={true}
-                                    />
+                                    >{item.description}</div>
                                     {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="flex items-center text-muted-foreground font-normal">
                                             ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
-                                                <EditableField
-                                                    key={lang}
-                                                    disableEditing={!isMobile}
-                                                    isMobile={isMobile}
-                                                    value={text}
-                                                    setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                    className="inline"
-                                                    as="span"
-                                                    isTextarea={true}
-                                                />
+                                                <span key={lang}>{text}</span>
                                             )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                         </div>
                                     )}
@@ -545,16 +443,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                     {(translationDisplayMode === 'block' && item.translations && Object.keys(item.translations).length > 0) && (
                                         <div className="text-sm text-muted-foreground mt-1 flex flex-col">
                                             {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
-                                              <EditableField
-                                                  key={lang}
-                                                  disableEditing={!isMobile}
-                                                  isMobile={isMobile}
-                                                  value={text}
-                                                  setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                  className="w-full"
-                                                  as="div"
-                                                  isTextarea={true}
-                                              />
+                                             <div key={lang}>{text}</div>
                                             ))}
                                         </div>
                                     )}
@@ -563,41 +452,16 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                 <div className="flex w-full items-center">
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem] flex items-center">
-                                            <EditableField
-                                                disableEditing={!isMobile}
-                                                isMobile={isMobile}
-                                                value={item.time}
-                                                setValue={(val) => onUpdateEvent(item.id, { time: val })}
-                                                className="font-mono text-base font-semibold"
-                                                inputType="time"
-                                            />
+                                           <p className="font-mono text-base font-semibold">{item.time}</p>
                                         </div>
                                      )}
                                      <div className={cn("flex-1 text-card-foreground py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')}>
                                         <div className={cn('flex items-center gap-2', !item.description && "w-full")}>
-                                            <EditableField
-                                                disableEditing={!isMobile}
-                                                isMobile={isMobile}
-                                                value={item.description}
-                                                setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
-                                                className={cn("inline", !item.description && "w-full")}
-                                                as="span"
-                                                data-id="description"
-                                                isTextarea={true}
-                                            />
+                                            <span className="inline">{item.description}</span>
                                             {(translationDisplayMode === 'inline' && item.translations && Object.keys(item.translations).length > 0) && (
                                                 <span className="text-muted-foreground">
                                                     ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
-                                                        <EditableField
-                                                            key={lang}
-                                                            disableEditing={!isMobile}
-                                                            isMobile={isMobile}
-                                                            value={text}
-                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                            className="inline"
-                                                            as="span"
-                                                            isTextarea={true}
-                                                        />
+                                                       <span key={lang}>{text}</span>
                                                     )).reduce((prev, curr) => <>{prev}, {curr}</> as any)})
                                                 </span>
                                             )}
@@ -607,15 +471,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                             <div className="text-sm text-muted-foreground mt-1">
                                                 {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                     <div key={lang} className="flex items-center">
-                                                        <EditableField
-                                                            disableEditing={!isMobile}
-                                                            isMobile={isMobile}
-                                                            value={text}
-                                                            setValue={(val) => handleTranslationChange(item.id, lang, val)}
-                                                            className="block w-full"
-                                                            as="div"
-                                                            isTextarea={true}
-                                                        />
+                                                        <div>{text}</div>
                                                     </div>
                                                 ))}
                                             </div>
@@ -632,13 +488,13 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2">
                                     <div className="flex flex-col gap-1">
-                                        <Button variant={item.type === 'timed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'timed')}>Со временем</Button>
-                                        <Button variant={item.type === 'untimed' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'untimed')}>Без времени</Button>
-                                        <Button variant={item.type === 'date' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'date')}>Дата</Button>
-                                        <Button variant={item.type === 'h1' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h1')}>H1</Button>
-                                        <Button variant={item.type === 'h2' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h2')}>H2</Button>
-                                        <Button variant={item.type === 'h3' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'h3')}>H3</Button>
-                                        <Button variant={item.type === 'comment' ? 'secondary' : 'ghost'} size="sm" onClick={() => handleTypeChange(item.id, 'comment')}>Комментарий</Button>
+                                        <Button variant={item.type === 'timed' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'timed');}}>Со временем</Button>
+                                        <Button variant={item.type === 'untimed' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'untimed');}}>Без времени</Button>
+                                        <Button variant={item.type === 'date' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'date');}}>Дата</Button>
+                                        <Button variant={item.type === 'h1' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'h1');}}>H1</Button>
+                                        <Button variant={item.type === 'h2' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'h2');}}>H2</Button>
+                                        <Button variant={item.type === 'h3' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'h3');}}>H3</Button>
+                                        <Button variant={item.type === 'comment' ? 'secondary' : 'ghost'} size="sm" onClick={(e) => { e.stopPropagation(); handleTypeChange(item.id, 'comment');}}>Комментарий</Button>
                                     </div>
                                 </PopoverContent>
                             </Popover>
@@ -648,11 +504,11 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-2">
                                     <div className="flex gap-1">
-                                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, undefined)}>
+                                    <Button variant={!item.color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleColorChange(item.id, undefined);}}>
                                         <div className="h-4 w-4 rounded-full border" />
                                     </Button>
                                     {itemColors.map(color => (
-                                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => handleColorChange(item.id, color)}>
+                                        <Button key={color} variant={item.color === color ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); handleColorChange(item.id, color);}}>
                                         <div className={`h-4 w-4 rounded-full bg-${color}-500`} />
                                         </Button>
                                     ))}
@@ -718,7 +574,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
         <Button className="rounded-full h-16 w-16" size="icon" onClick={() => setIsAddEventDialogOpen(true)}><Plus className="h-8 w-8" /></Button>
       </CardFooter>
 
-      <Dialog open={isMobile && !!editingEvent} onOpenChange={(open) => !open && handleCloseEditModal()}>
+      <Dialog open={!!editingEvent} onOpenChange={(open) => !open && handleCloseEditModal()}>
           <DialogContent className="max-w-sm">
               <DialogHeader>
                   <DialogTitle>Редактировать событие</DialogTitle>
