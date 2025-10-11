@@ -67,6 +67,7 @@ export const EditableField = ({
   
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isMobile) return;
     setIsEditing(true);
   }
 

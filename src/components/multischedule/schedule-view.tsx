@@ -23,6 +23,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import html2canvas from 'html2canvas';
 
 
 
@@ -313,7 +314,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
       <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
-                <EditableField isMobile={isMobile} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
+                <EditableField isMobile={undefined} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
              <div className="flex items-center gap-2">
                  <div data-id="schedule-image-wrapper">
@@ -719,7 +720,3 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
     </Card>
   );
 }
-
-    
-
-    
