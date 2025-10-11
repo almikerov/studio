@@ -314,7 +314,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
       <CardHeader className="p-4 sm:p-6 pb-0 sm:pb-0">
         <div className="flex justify-between items-start gap-4">
             <div className="flex-1">
-                <EditableField isMobile={undefined} as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
+                <EditableField as="h1" value={cardTitle} setValue={setCardTitle} className="text-2xl font-bold leading-none tracking-tight" />
             </div>
              <div className="flex items-center gap-2">
                  <div data-id="schedule-image-wrapper">
@@ -364,7 +364,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                         {...provided.draggableProps}
                         className={cn(
                           'group/item flex items-center gap-2 p-2 rounded-md',
-                          !isMobile && 'hover:bg-secondary/50',
+                          isMobile ? 'cursor-pointer' : 'hover:bg-secondary/50',
                           snapshot.isDragging ? 'bg-secondary shadow-lg' : '',
                            item.color ? `bg-${item.color}-100 dark:bg-${item.color}-900/30` : ''
                         )}
@@ -399,6 +399,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                 <div className="flex-1 flex flex-col">
                                     <div className='flex items-center gap-2 w-full'>
                                         <EditableField
+                                            disableEditing={!isMobile}
                                             isMobile={isMobile}
                                             value={item.description}
                                             setValue={(val) => onUpdateEvent(item.id, { description: val })}
@@ -411,6 +412,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                                 ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text], idx) => (
                                                   <EditableField
                                                       key={lang}
+                                                      disableEditing={!isMobile}
                                                       isMobile={isMobile}
                                                       value={text}
                                                       setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -427,6 +429,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                             {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
+                                                  disableEditing={!isMobile}
                                                   isMobile={isMobile}
                                                   value={text}
                                                   setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -459,6 +462,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                         <div className="flex-1 flex flex-col w-full">
                                             <div className="flex items-center gap-2">
                                                 <EditableField
+                                                    disableEditing={!isMobile}
                                                     isMobile={isMobile}
                                                     value={item.description || ''}
                                                     setValue={(val) => onUpdateEvent(item.id, { description: val })}
@@ -470,6 +474,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                                         ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                             <EditableField
                                                                 key={lang}
+                                                                disableEditing={!isMobile}
                                                                 isMobile={isMobile}
                                                                 value={text}
                                                                 setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -486,6 +491,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                                     {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                       <EditableField
                                                           key={lang}
+                                                          disableEditing={!isMobile}
                                                           isMobile={isMobile}
                                                           value={text}
                                                           setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -504,6 +510,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                 <div className="flex-1 flex flex-col">
                                   <div className="flex items-center gap-2 w-full">
                                     <EditableField 
+                                      disableEditing={!isMobile}
                                       isMobile={isMobile}
                                       as={item.type === 'h1' ? 'h2' : item.type === 'h2' ? 'h3' : 'h4'}
                                       className={cn(
@@ -523,6 +530,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                             ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                 <EditableField
                                                     key={lang}
+                                                    disableEditing={!isMobile}
                                                     isMobile={isMobile}
                                                     value={text}
                                                     setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -539,6 +547,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                             {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                               <EditableField
                                                   key={lang}
+                                                  disableEditing={!isMobile}
                                                   isMobile={isMobile}
                                                   value={text}
                                                   setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -555,6 +564,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                      {item.type === 'timed' && (
                                         <div className="p-1 rounded-md w-20 sm:w-auto text-center sm:text-left min-w-[5rem] flex items-center">
                                             <EditableField
+                                                disableEditing={!isMobile}
                                                 isMobile={isMobile}
                                                 value={item.time}
                                                 setValue={(val) => onUpdateEvent(item.id, { time: val })}
@@ -563,13 +573,10 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                             />
                                         </div>
                                      )}
-                                     <div className={cn("flex-1 text-card-foreground cursor-pointer py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')} onClick={(e) => {
-                                            if (isMobile) return;
-                                            const descEl = e.currentTarget.querySelector('[data-id=description]') as HTMLElement;
-                                            descEl?.click();
-                                        }}>
+                                     <div className={cn("flex-1 text-card-foreground py-1", item.type === 'untimed' && 'pl-1 sm:pl-0')}>
                                         <div className={cn('flex items-center gap-2', !item.description && "w-full")}>
                                             <EditableField
+                                                disableEditing={!isMobile}
                                                 isMobile={isMobile}
                                                 value={item.description}
                                                 setValue={(val) => onUpdateEvent(item.id, { ...item, description: val })}
@@ -583,6 +590,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                                     ({Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                         <EditableField
                                                             key={lang}
+                                                            disableEditing={!isMobile}
                                                             isMobile={isMobile}
                                                             value={text}
                                                             setValue={(val) => handleTranslationChange(item.id, lang, val)}
@@ -600,6 +608,7 @@ const showTextBlock = translationDisplayMode === 'text-block' && selectedLanguag
                                                 {Object.entries(item.translations).filter(([lang]) => selectedLanguages.includes(lang)).map(([lang, text]) => (
                                                     <div key={lang} className="flex items-center">
                                                         <EditableField
+                                                            disableEditing={!isMobile}
                                                             isMobile={isMobile}
                                                             value={text}
                                                             setValue={(val) => handleTranslationChange(item.id, lang, val)}
