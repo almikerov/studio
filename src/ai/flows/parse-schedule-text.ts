@@ -9,10 +9,9 @@
  * - ParseScheduleTextOutput - The return type for the parseScheduleTextOutput function.
  */
 
-import {ai} from '@/ai/genkit';
+import {genkit} from 'genkit';
 import {z} from 'genkit';
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
+import {googleAI} from '@genkit-ai/google-genai';
 
 const ParseScheduleTextInputSchema = z.object({
   text: z.string().describe('The raw text containing schedule information.'),
@@ -21,7 +20,9 @@ const ParseScheduleTextInputSchema = z.object({
     .describe('A list of API keys for the AI service to try.'),
   model: z.string().describe('The AI model to use for parsing.'),
 });
-export type ParseScheduleTextInput = z.infer<typeof ParseScheduleTextInputSchema>;
+export type ParseScheduleTextInput = z.infer<
+  typeof ParseScheduleTextInputSchema
+>;
 
 const ParsedScheduleItemSchema = z.object({
   time: z
@@ -91,10 +92,11 @@ export async function parseScheduleFromText(
 The output language must be the same as the input language. Your output MUST be a valid JSON object matching the requested schema.
 
 - Generate a main title for the schedule and put it in 'cardTitle'.
-- If the text contains only one distinct date, use it for the 'cardTitle' (e.g., "Schedule for June 5th"). Do not create a 'date' type item in this case.
+- If the text contains a date, use it for the 'cardTitle' in DD.MM.YYYY format (e.g., "Расписание на 10.10.2024"). Do not create a 'date' type item if there is only one distinct date.
 - For each item, determine its 'type': 'timed', 'untimed', 'date', 'h1', 'h2', 'h3', 'comment'.
 - For 'timed' events, the 'time' field MUST be in HH:mm format.
 - For ALL OTHER types ('untimed', 'date', 'h1', 'h2', 'h3', 'comment'), the 'time' field MUST be an empty string: "".
+- If an item mentions a deadline (e.g., 'до 10:00', 'к 15:00'), treat it as a 'comment' and keep the original text, including the time part, in the 'description'. For such items, 'type' must be 'comment' and 'time' must be "".
 - For 'date' items, the 'date' field must be a valid ISO date string.
 - The 'description' for each item should start with a capital letter.
 - Assign 'icon' only if it is clearly suggested in the text. Do not assign colors.
